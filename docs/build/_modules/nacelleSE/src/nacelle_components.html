@@ -1,0 +1,762 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>nacelleSE.src.nacelle_components &mdash; nacellSE-and-hubSE 0.1.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/nrel.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="nacellSE-and-hubSE 0.1.0 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li><a href="../../../index.html">nacellSE-and-hubSE 0.1.0 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" accesskey="U">Module code</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <h1>Source code for nacelleSE.src.nacelle_components</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">nacelle.py</span>
+
+<span class="sd">Created by Katherine Dykes 2012.</span>
+<span class="sd">Copyright (c) NREL. All rights reserved.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">common</span> <span class="kn">import</span> <span class="n">SubComponent</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">zope.interface</span> <span class="kn">import</span> <span class="n">implements</span>
+
+<span class="c"># -------------------------------------------------</span>
+
+<div class="viewcode-block" id="LowSpeedShaft"><a class="viewcode-back" href="../../../documentation.html#nacelleSE.src.nacelle_components.LowSpeedShaft">[docs]</a><span class="k">class</span> <span class="nc">LowSpeedShaft</span><span class="p">():</span>
+    <span class="n">implements</span><span class="p">(</span><span class="n">SubComponent</span><span class="p">)</span>
+    <span class="sd">&#39;&#39;&#39; LowSpeedShaft class</span>
+<span class="sd">          The LowSpeedShaft class is used to represent the low speed shaft component of a wind turbine drivetrain. </span>
+<span class="sd">          It contains the general properties for a wind turbine component as well as additional design load and dimentional attributes as listed below.</span>
+<span class="sd">          It contains an update method to determine the mass, mass properties, and dimensions of the component.            </span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="LowSpeedShaft.__init__"><a class="viewcode-back" href="../../../generated/nacelleSE.src.nacelle_components.LowSpeedShaft.__init__.html#nacelleSE.src.nacelle_components.LowSpeedShaft.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">RotorDiam</span><span class="p">,</span> <span class="n">RotorMass</span><span class="p">,</span> <span class="n">RotorTorque</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39; </span>
+<span class="sd">        Initializes low speed shaft component </span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        RotorDiam : float</span>
+<span class="sd">          The wind turbine rotor diameter [m]</span>
+<span class="sd">        RotorMass : float</span>
+<span class="sd">          The wind turbine rotor mass [kg]</span>
+<span class="sd">        RotorTorque : float</span>
+<span class="sd">          The input torque from the wind turbine at rated power after accounting for drivetrain losses [N*m]</span>
+<span class="sd">        designTQ : float</span>
+<span class="sd">          Design torque for the low speed shaft based on input torque from the rotor at rated speed accounting for drivetrain losses - multiplied by a safety factor</span>
+<span class="sd">        designBL : float</span>
+<span class="sd">          Design bending load based on low speed shaft based on rotor mass</span>
+<span class="sd">        length : float</span>
+<span class="sd">          Low Speed Shaft length [m]</span>
+<span class="sd">        diameter : float</span>
+<span class="sd">          Low Speed shaft outer diameter [m]</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">designTQ</span> <span class="o">=</span> <span class="mf">0.00</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">designBL</span> <span class="o">=</span> <span class="mf">0.00</span>
+
+        <span class="c"># compute masses, dimensions and cost</span>
+        <span class="n">ioratio</span>   <span class="o">=</span> <span class="mf">0.100</span>                                    <span class="c"># constant value for inner/outer diameter ratio (should depend on LSS type)                                                  </span>
+        <span class="n">hollow</span>    <span class="o">=</span> <span class="mi">1</span><span class="o">/</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="p">(</span><span class="n">ioratio</span><span class="p">)</span><span class="o">**</span><span class="mi">4</span><span class="p">)</span>                    <span class="c"># hollowness factor based on diameter ratio</span>
+
+        <span class="n">TQsafety</span>       <span class="o">=</span> <span class="mf">3.0</span>                                    <span class="c"># safety factor for design torque applied to rotor torque</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">designTQ</span> <span class="o">=</span><span class="p">(</span><span class="n">TQsafety</span> <span class="o">*</span> <span class="n">RotorTorque</span><span class="p">)</span>            <span class="c"># LSS design torque [Nm]</span>
+
+        <span class="n">lenFact</span>        <span class="o">=</span> <span class="mf">0.03</span>                                   <span class="c"># constant value for length as a function of rotor diameter (should depend on LSS type) </span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="p">(</span><span class="n">lenFact</span> <span class="o">*</span> <span class="n">RotorDiam</span> <span class="p">)</span>              <span class="c"># LSS shaft length [m]                                                                  </span>
+        <span class="n">maFact</span>         <span class="o">=</span> <span class="mi">5</span>                                 <span class="c"># moment arm factor from shaft lenght (should depend on shaft type)</span>
+        <span class="n">mmtArm</span>    <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">/</span> <span class="n">maFact</span>            <span class="c"># LSS moment arm [m] - from hub to first main bearing</span>
+        <span class="n">BLsafety</span>       <span class="o">=</span> <span class="mf">1.25</span>                                   <span class="c"># saftey factor on bending load</span>
+        <span class="n">g</span>              <span class="o">=</span> <span class="mf">9.81</span>                              <span class="c"># gravitational constant [m / s^2]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">designBL</span>  <span class="o">=</span> <span class="n">BLsafety</span> <span class="o">*</span> <span class="n">g</span> <span class="o">*</span> <span class="n">RotorMass</span>          <span class="c"># LSS design bending load [N]                                                  </span>
+        <span class="n">bendMom</span>   <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">designBL</span> <span class="o">*</span> <span class="n">mmtArm</span>       <span class="c"># LSS design bending moment [Nm]</span>
+
+        <span class="n">yieldst</span>        <span class="o">=</span> <span class="mf">371000000.0</span>                             <span class="c"># BS1503-622 yield stress [Pa] (should be adjusted depending on material type)</span>
+        <span class="n">endurstsp</span>      <span class="o">=</span> <span class="mf">309000000.0</span>                             <span class="c"># BS1503-625 specimen endurance limit [Pa] (should be adjusted depending on material type)</span>
+        <span class="n">endurFact</span>      <span class="o">=</span> <span class="mf">0.23</span>                                    <span class="c"># factor for specimen to component endurance limit </span>
+                                                                <span class="c"># (0.75 surface condition * 0.65 size * 0.52 reliability * 1 temperature * 0.91 stress concentration)</span>
+        <span class="n">endurst</span>        <span class="o">=</span> <span class="n">endurstsp</span> <span class="o">*</span> <span class="n">endurFact</span>                   <span class="c"># endurance limit [Pa] for LSS</span>
+        <span class="n">SOsafety</span>       <span class="o">=</span> <span class="mf">3.25</span>                               <span class="c"># Soderberg Line approach factor for safety </span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">diameter</span> <span class="o">=</span> <span class="p">(((</span><span class="mi">32</span><span class="o">/</span><span class="n">pi</span><span class="p">)</span><span class="o">*</span><span class="n">hollow</span><span class="o">*</span><span class="n">SOsafety</span><span class="o">*</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">designTQ</span> <span class="o">/</span> <span class="n">yieldst</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">+</span><span class="p">(</span><span class="n">bendMom</span><span class="o">/</span><span class="n">endurst</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="mf">0.5</span><span class="p">))</span><span class="o">**</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="mf">3.</span><span class="p">))</span>                               
+                                                            <span class="c"># outer diameter [m] computed by Westinghouse Code Formula based on Soderberg Line approach to fatigue design</span>
+        <span class="n">inDiam</span>    <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">diameter</span> <span class="o">*</span> <span class="n">ioratio</span>            <span class="c"># inner diameter [m]</span>
+
+        
+        <span class="n">massFact</span>       <span class="o">=</span> <span class="mf">1.25</span>                                    <span class="c"># mass weight factor (should depend on LSS/drivetrain type, currently from windpact modifications to account for flange weight)                                                                       </span>
+        <span class="n">steeldens</span>      <span class="o">=</span> <span class="mi">7860</span>                                    <span class="c"># steel density [kg / m^3]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">mass</span> <span class="o">=</span> <span class="p">(</span><span class="n">massFact</span><span class="o">*</span><span class="p">(</span><span class="n">pi</span><span class="o">/</span><span class="mi">4</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">diameter</span><span class="o">**</span><span class="mi">2</span><span class="o">-</span><span class="n">inDiam</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="o">*</span><span class="n">steeldens</span><span class="p">)</span>      <span class="c"># mass of LSS [kg]  </span>
+
+        <span class="c"># calculate mass properties        </span>
+        <span class="n">cm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">])</span>
+        <span class="n">cm</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span> <span class="p">(</span><span class="mf">0.035</span> <span class="o">-</span> <span class="mf">0.01</span><span class="p">)</span> <span class="o">*</span> <span class="n">RotorDiam</span>            <span class="c"># cm based on WindPACT work - halfway between locations of two main bearings</span>
+        <span class="n">cm</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">cm</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.025</span> <span class="o">*</span> <span class="n">RotorDiam</span>                      
+        <span class="bp">self</span><span class="o">.</span><span class="n">cm</span> <span class="o">=</span> <span class="n">cm</span>
+
+        <span class="n">I</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span>
+        <span class="n">I</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mass</span> <span class="o">*</span> <span class="p">(</span><span class="n">inDiam</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">diameter</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="mi">8</span>
+        <span class="n">I</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mass</span> <span class="o">*</span> <span class="p">(</span><span class="n">inDiam</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">diameter</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="mi">4</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span> <span class="o">/</span> <span class="mi">16</span>
+        <span class="n">I</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>  <span class="o">=</span> <span class="n">I</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">I</span> <span class="o">=</span> <span class="n">I</span>
+
+<span class="c">#-------------------------------------------------------------------------------</span>
+</div></div>
+<span class="k">class</span> <span class="nc">Bearing</span><span class="p">():</span>
+	  <span class="n">implements</span><span class="p">(</span><span class="n">SubComponent</span><span class="p">)</span>
+	  <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">	     Bearing class for a generic bearing</span>
+<span class="sd">	  &#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="MainBearings"><a class="viewcode-back" href="../../../documentation.html#nacelleSE.src.nacelle_components.MainBearings">[docs]</a><span class="k">class</span> <span class="nc">MainBearings</span><span class="p">():</span>
+    <span class="n">implements</span><span class="p">(</span><span class="n">SubComponent</span><span class="p">)</span> 
+    <span class="sd">&#39;&#39;&#39; MainBearings class          </span>
+<span class="sd">          The MainBearings class is used to represent the main bearing components of a wind turbine drivetrain. It contains two subcomponents (main bearing and second bearing) which also inherit from the SubComponent class.</span>
+<span class="sd">          It contains the general properties for a wind turbine component as well as additional design load and dimentional attributes as listed below.</span>
+<span class="sd">          It contains an update method to determine the mass, mass properties, and dimensions of the component.           </span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+<div class="viewcode-block" id="MainBearings.__init__"><a class="viewcode-back" href="../../../generated/nacelleSE.src.nacelle_components.MainBearings.__init__.html#nacelleSE.src.nacelle_components.MainBearings.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">lss</span><span class="p">,</span> <span class="n">RotorSpeed</span><span class="p">,</span> <span class="n">RotorDiam</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39; Initializes main bearings component </span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        lss : LowSpeedShaft object</span>
+<span class="sd">          The low speed shaft object of a wind turbine drivetrain</span>
+<span class="sd">        RotorSpeed : float</span>
+<span class="sd">          Speed of the rotor at rated power [rpm]</span>
+<span class="sd">        RotorDiam : float</span>
+<span class="sd">          The wind turbine rotor diameter [m]</span>
+<span class="sd">        inDiam : float</span>
+<span class="sd">          inner diameter of bearings - equivalent to low speed shaft outer diameter</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">mainBearing</span> <span class="o">=</span> <span class="n">Bearing</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">secondBearing</span> <span class="o">=</span> <span class="n">Bearing</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">inDiam</span>     <span class="o">=</span> <span class="mf">0.0</span>
+      
+        <span class="c"># compute masses, dimensions and cost</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="mf">9.81</span>                                           <span class="c"># gravitational constant [m / s^2]</span>
+        <span class="n">design1SL</span> <span class="o">=</span> <span class="p">(</span><span class="mf">4.0</span> <span class="o">/</span> <span class="mf">3.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">lss</span><span class="o">.</span><span class="n">designTQ</span> <span class="o">+</span> <span class="n">lss</span><span class="o">.</span><span class="n">mass</span> <span class="o">*</span> <span class="p">(</span><span class="n">g</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span>
+                                                           <span class="c"># front bearing static design load [N] based on default equation (should depend on LSS type)</span>
+        <span class="n">design2SL</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="mf">3.0</span><span class="p">)</span> <span class="o">*</span> <span class="n">lss</span><span class="o">.</span><span class="n">designTQ</span> <span class="o">-</span> <span class="n">lss</span><span class="o">.</span><span class="n">mass</span> <span class="o">*</span> <span class="p">(</span><span class="n">g</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span>
+                                                           <span class="c"># rear bearing static design load [N] based on default equation (should depend on LSS type)</span>
+        <span class="n">design1DL</span> <span class="o">=</span> <span class="mf">2.29</span> <span class="o">*</span> <span class="n">design1SL</span> <span class="o">*</span> <span class="p">(</span><span class="n">RotorSpeed</span> <span class="o">**</span> <span class="mf">0.3</span><span class="p">)</span>
+                                                           <span class="c"># front bearing dynamic design load [N]</span>
+        <span class="n">design2DL</span> <span class="o">=</span> <span class="mf">2.29</span> <span class="o">*</span> <span class="n">design2SL</span> <span class="o">*</span> <span class="p">(</span><span class="n">RotorSpeed</span> <span class="o">**</span> <span class="mf">0.3</span><span class="p">)</span>
+                                                           <span class="c"># rear bearing dynamic design load [N]</span>
+
+        <span class="n">ratingDL</span>  <span class="o">=</span> <span class="mf">17.96</span> <span class="o">*</span> <span class="p">((</span><span class="n">lss</span><span class="o">.</span><span class="n">diameter</span> <span class="o">*</span> <span class="mf">1000.0</span><span class="p">)</span> <span class="o">**</span> <span class="mf">1.9752</span><span class="p">)</span>  <span class="c"># basic dynamic load rating for a bearing given inside diameter based on catalogue regression</span>
+
+        <span class="n">massFact</span>  <span class="o">=</span> <span class="mf">0.25</span>                                 <span class="c"># bearing weight factor (should depend on drivetrain type) - using to adjust data closer to cost and scaling model estimates</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">design1DL</span> <span class="o">&lt;</span> <span class="n">ratingDL</span><span class="p">):</span>
+            <span class="n">b1mass</span> <span class="o">=</span> <span class="n">massFact</span> <span class="o">*</span> <span class="p">(</span><span class="mf">26.13</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">6</span><span class="p">)))</span> <span class="o">*</span> <span class="p">((</span><span class="n">lss</span><span class="o">.</span><span class="n">diameter</span> <span class="o">*</span> <span class="mf">1000.0</span><span class="p">)</span> <span class="o">**</span> <span class="mf">2.77</span><span class="p">)</span>
+                                                           <span class="c"># bearing mass [kg] for single row bearing (based on catalogue data regression)</span>
+            <span class="n">h1mass</span> <span class="o">=</span> <span class="n">massFact</span> <span class="o">*</span> <span class="p">(</span><span class="mf">67.44</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">6</span><span class="p">)))</span> <span class="o">*</span> <span class="p">((</span><span class="n">lss</span><span class="o">.</span><span class="n">diameter</span> <span class="o">*</span> <span class="mf">1000.0</span><span class="p">)</span> <span class="o">**</span> <span class="mf">2.64</span><span class="p">)</span>
+                                                           <span class="c"># bearing housing mass [kg] for single row bearing (based on catalogue data regression) </span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">b1mass</span> <span class="o">=</span> <span class="n">massFact</span> <span class="o">*</span> <span class="mf">1.7</span> <span class="o">*</span> <span class="p">(</span><span class="mf">26.13</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">6</span><span class="p">)))</span> <span class="o">*</span> <span class="p">((</span><span class="n">lss</span><span class="o">.</span><span class="n">diameter</span> <span class="o">*</span> <span class="mf">1000.0</span><span class="p">)</span> <span class="o">**</span> <span class="mf">2.77</span><span class="p">)</span>
+                                                          <span class="c"># bearing mass [kg] for double row bearing (based on catalogue data regression) </span>
+            <span class="n">h1mass</span> <span class="o">=</span> <span class="n">massFact</span> <span class="o">*</span> <span class="mf">1.5</span> <span class="o">*</span> <span class="p">(</span><span class="mf">67.44</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">6</span><span class="p">)))</span> <span class="o">*</span> <span class="p">((</span><span class="n">lss</span><span class="o">.</span><span class="n">diameter</span> <span class="o">*</span> <span class="mf">1000.0</span><span class="p">)</span> <span class="o">**</span> <span class="mf">2.64</span><span class="p">)</span>
+                                                          <span class="c"># bearing housing mass [kg] for double row bearing (based on catalogue data regression) </span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">design2DL</span> <span class="o">&lt;</span> <span class="n">ratingDL</span><span class="p">):</span>
+            <span class="n">b2mass</span> <span class="o">=</span> <span class="n">massFact</span> <span class="o">*</span> <span class="p">(</span><span class="mf">26.13</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">6</span><span class="p">)))</span> <span class="o">*</span> <span class="p">((</span><span class="n">lss</span><span class="o">.</span><span class="n">diameter</span> <span class="o">*</span> <span class="mf">1000.0</span><span class="p">)</span> <span class="o">**</span> <span class="mf">2.77</span><span class="p">)</span>
+                                                           <span class="c"># bearing mass [kg] for single row bearing (based on catalogue data regression)</span>
+            <span class="n">h2mass</span> <span class="o">=</span> <span class="n">massFact</span> <span class="o">*</span> <span class="p">(</span><span class="mf">67.44</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">6</span><span class="p">)))</span> <span class="o">*</span> <span class="p">((</span><span class="n">lss</span><span class="o">.</span><span class="n">diameter</span> <span class="o">*</span> <span class="mf">1000.0</span><span class="p">)</span> <span class="o">**</span> <span class="mf">2.64</span><span class="p">)</span>
+                                                           <span class="c"># bearing housing mass [kg] for single row bearing (based on catalogue data regression) </span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">b2mass</span> <span class="o">=</span> <span class="n">massFact</span> <span class="o">*</span> <span class="mf">1.7</span> <span class="o">*</span> <span class="p">(</span><span class="mf">26.13</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">6</span><span class="p">)))</span> <span class="o">*</span> <span class="p">((</span><span class="n">lss</span><span class="o">.</span><span class="n">diameter</span> <span class="o">*</span> <span class="mf">1000.0</span><span class="p">)</span> <span class="o">**</span> <span class="mf">2.77</span><span class="p">)</span>
+                                                          <span class="c"># bearing mass [kg] for double row bearing (based on catalogue data regression) </span>
+            <span class="n">h2mass</span> <span class="o">=</span> <span class="n">massFact</span> <span class="o">*</span> <span class="mf">1.5</span> <span class="o">*</span> <span class="p">(</span><span class="mf">67.44</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">6</span><span class="p">)))</span> <span class="o">*</span> <span class="p">((</span><span class="n">lss</span><span class="o">.</span><span class="n">diameter</span> <span class="o">*</span> <span class="mf">1000.0</span><span class="p">)</span> <span class="o">**</span> <span class="mf">2.64</span><span class="p">)</span>
+                                                          <span class="c"># bearing housing mass [kg] for double row bearing (based on catalogue data regression) </span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">mainBearing</span><span class="o">.</span><span class="n">mass</span> <span class="o">=</span> <span class="n">b1mass</span> <span class="o">+</span> <span class="n">h1mass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">secondBearing</span><span class="o">.</span><span class="n">mass</span> <span class="o">=</span> <span class="n">b2mass</span> <span class="o">+</span> <span class="n">h2mass</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">mass</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mainBearing</span><span class="o">.</span><span class="n">mass</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">secondBearing</span><span class="o">.</span><span class="n">mass</span><span class="p">)</span>
+
+        <span class="c"># calculate mass properties</span>
+        <span class="n">inDiam</span>  <span class="o">=</span> <span class="n">lss</span><span class="o">.</span><span class="n">diameter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">depth</span> <span class="o">=</span> <span class="p">(</span><span class="n">inDiam</span> <span class="o">*</span> <span class="mf">1.5</span><span class="p">)</span>
+
+        <span class="n">cmMB</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">])</span>
+        <span class="n">cmMB</span> <span class="o">=</span> <span class="p">([</span><span class="o">-</span> <span class="p">(</span><span class="mf">0.035</span> <span class="o">*</span> <span class="n">RotorDiam</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.025</span> <span class="o">*</span> <span class="n">RotorDiam</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mainBearing</span><span class="o">.</span><span class="n">cm</span> <span class="o">=</span> <span class="n">cmMB</span>
+
+        <span class="n">cmSB</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">])</span>
+        <span class="n">cmSB</span> <span class="o">=</span> <span class="p">([</span><span class="o">-</span> <span class="p">(</span><span class="mf">0.01</span> <span class="o">*</span> <span class="n">RotorDiam</span><span class="p">),</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.025</span> <span class="o">*</span> <span class="n">RotorDiam</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">secondBearing</span><span class="o">.</span><span class="n">cm</span> <span class="o">=</span> <span class="n">cmSB</span>
+
+        <span class="n">cm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">3</span><span class="p">)):</span>
+            <span class="c"># calculate center of mass</span>
+            <span class="n">cm</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mainBearing</span><span class="o">.</span><span class="n">mass</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">mainBearing</span><span class="o">.</span><span class="n">cm</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">secondBearing</span><span class="o">.</span><span class="n">mass</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">secondBearing</span><span class="o">.</span><span class="n">cm</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> \
+                      <span class="o">/</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mainBearing</span><span class="o">.</span><span class="n">mass</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">secondBearing</span><span class="o">.</span><span class="n">mass</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cm</span> <span class="o">=</span> <span class="n">cm</span>
+       
+        <span class="bp">self</span><span class="o">.</span><span class="n">b1I0</span> <span class="o">=</span> <span class="p">(</span><span class="n">b1mass</span> <span class="o">*</span> <span class="n">inDiam</span> <span class="o">**</span> <span class="mi">2</span> <span class="p">)</span> <span class="o">/</span> <span class="mi">4</span> <span class="o">+</span> <span class="p">(</span><span class="n">h1mass</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">depth</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="mi">4</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mainBearing</span><span class="o">.</span><span class="n">I</span> <span class="o">=</span> <span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">b1I0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b1I0</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b1I0</span> <span class="o">/</span> <span class="mi">2</span><span class="p">])</span> 
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">b2I0</span>  <span class="o">=</span> <span class="p">(</span><span class="n">b2mass</span> <span class="o">*</span> <span class="n">inDiam</span> <span class="o">**</span> <span class="mi">2</span> <span class="p">)</span> <span class="o">/</span> <span class="mi">4</span> <span class="o">+</span> <span class="p">(</span><span class="n">h2mass</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">depth</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="mi">4</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">secondBearing</span><span class="o">.</span><span class="n">I</span> <span class="o">=</span> <span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">b2I0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b2I0</span> <span class="o">/</span> <span class="mi">2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b2I0</span> <span class="o">/</span> <span class="mi">2</span><span class="p">])</span>
+
+        <span class="n">I</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">3</span><span class="p">)):</span>                        <span class="c"># calculating MOI, at nacelle center of gravity with origin at tower top center / yaw mass center, ignoring masses of non-drivetrain components / auxiliary systems</span>
+            <span class="c"># calculate moments around CM</span>
+            <span class="c"># sum moments around each components CM</span>
+            <span class="n">I</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>  <span class="o">=</span>  <span class="bp">self</span><span class="o">.</span><span class="n">mainBearing</span><span class="o">.</span><span class="n">I</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">secondBearing</span><span class="o">.</span><span class="n">I</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="c"># translate to nacelle CM using parallel axis theorem</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">3</span><span class="p">)):</span> 
+                <span class="k">if</span> <span class="n">i</span> <span class="o">!=</span> <span class="n">j</span><span class="p">:</span>
+                    <span class="n">I</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span>  <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mainBearing</span><span class="o">.</span><span class="n">mass</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mainBearing</span><span class="o">.</span><span class="n">cm</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">cm</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> \
+                                  <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">secondBearing</span><span class="o">.</span><span class="n">mass</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">secondBearing</span><span class="o">.</span><span class="n">cm</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">cm</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">I</span> <span class="o">=</span> <span class="n">I</span>
+
+<span class="c">#-------------------------------------------------------------------------------</span>
+</div></div>
+<div class="viewcode-block" id="Gearbox"><a class="viewcode-back" href="../../../documentation.html#nacelleSE.src.nacelle_components.Gearbox">[docs]</a><span class="k">class</span> <span class="nc">Gearbox</span><span class="p">():</span>
+    <span class="n">implements</span><span class="p">(</span><span class="n">SubComponent</span><span class="p">)</span>  
+    <span class="sd">&#39;&#39;&#39; Gearbox class          </span>
+<span class="sd">          The Gearbox class is used to represent the gearbox component of a wind turbine drivetrain.</span>
+<span class="sd">          It contains the general properties for a wind turbine component as well as additional design load and dimentional attributes as listed below.</span>
+<span class="sd">          It contains an update method to determine the mass, mass properties, and dimensions of the component.           </span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+<div class="viewcode-block" id="Gearbox.__init__"><a class="viewcode-back" href="../../../generated/nacelleSE.src.nacelle_components.Gearbox.__init__.html#nacelleSE.src.nacelle_components.Gearbox.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">iDsgn</span><span class="p">,</span><span class="n">RotorTorque</span><span class="p">,</span><span class="n">GearRatio</span><span class="p">,</span><span class="n">GearConfig</span><span class="p">,</span><span class="n">Bevel</span><span class="p">,</span><span class="n">RotorDiam</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Initializes gearbox component </span>
+<span class="sd">          </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        iDsgn : int</span>
+<span class="sd">          Integer which selects the type of gearbox based on drivetrain type: 1 = standard 3-stage gearbox, 2 = single-stage, 3 = multi-gen, 4 = direct drive</span>
+<span class="sd">          Method is currently configured only for type 1 drivetrains though the configuration can be single, double or triple staged with any combination of epicyclic and parallel stages.</span>
+<span class="sd">        RotorTorque : float</span>
+<span class="sd">          The input torque from the wind turbine at rated power after accounting for drivetrain losses [N*m]</span>
+<span class="sd">        MachineRating : float</span>
+<span class="sd">          The power rating for the overall wind turbine [kW]</span>
+<span class="sd">        GearRatio : float</span>
+<span class="sd">          Ratio of high speed to low speed shaft based on total gear ratio of gearbox</span>
+<span class="sd">        GearConfig : str</span>
+<span class="sd">          String that represents the configuration of the gearbox (stage number and types).</span>
+<span class="sd">          Possible configurations include &#39;e&#39;, &#39;p&#39;, &#39;pp&#39;, &#39;ep&#39;, &#39;ee&#39;, &#39;epp&#39;, &#39;eep&#39;, &#39;eee&#39;.</span>
+<span class="sd">        Bevel : int</span>
+<span class="sd">          Flag for the presence of a bevel stage - 1 if present, 0 if not; typically it is not present.</span>
+<span class="sd">        RotorDiam : float</span>
+<span class="sd">          The wind turbine rotor diameter [m]</span>
+<span class="sd">        stagemass : array</span>
+<span class="sd">          Array of stage masses for the gearbox [kg]</span>
+<span class="sd">        length : float</span>
+<span class="sd">          Gearbox critical length [m]</span>
+<span class="sd">        height : float</span>
+<span class="sd">          Gearbox critical height [m]</span>
+<span class="sd">        diameter : float</span>
+<span class="sd">          Gearbox diameter [m]</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">stagemass</span> <span class="o">=</span> <span class="p">[</span><span class="bp">None</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]</span>
+
+        <span class="c"># compute masses, dimensions and cost</span>
+        <span class="n">overallweightFact</span> <span class="o">=</span> <span class="mf">1.00</span>                          <span class="c"># default weight factor 1.0 (should depend on drivetrain design)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stagemass</span> <span class="o">=</span> <span class="p">[</span><span class="bp">None</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">]</span>       <span class="c"># TODO: problem initializing stagemass and accessing in compute</span>
+ 
+        <span class="c"># find weight of each stage depending on configuration</span>
+        <span class="c"># Gear ratio reduced for each stage based on principle that mixed epicyclic/parallel trains have a final stage ratio set at 1:2.5</span>
+        <span class="k">if</span> <span class="n">GearConfig</span> <span class="o">==</span> <span class="s">&#39;p&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stagemass</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__getParallelStageWeight</span><span class="p">(</span><span class="n">RotorTorque</span><span class="p">,</span><span class="n">GearRatio</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">GearConfig</span> <span class="o">==</span> <span class="s">&#39;e&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stagemass</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__getEpicyclicStageWeight</span><span class="p">(</span><span class="n">RotorTorque</span><span class="p">,</span><span class="n">GearRatio</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">GearConfig</span> <span class="o">==</span> <span class="s">&#39;pp&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stagemass</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__getParallelStageWeight</span><span class="p">(</span><span class="n">RotorTorque</span><span class="p">,</span><span class="n">GearRatio</span><span class="o">**</span><span class="mf">0.5</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stagemass</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__getParallelStageWeight</span><span class="p">(</span><span class="n">RotorTorque</span><span class="p">,</span><span class="n">GearRatio</span><span class="o">**</span><span class="mf">0.5</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">GearConfig</span> <span class="o">==</span> <span class="s">&#39;ep&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stagemass</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__getEpicyclicStageWeight</span><span class="p">(</span><span class="n">RotorTorque</span><span class="p">,</span><span class="n">GearRatio</span><span class="o">/</span><span class="mf">2.5</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stagemass</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__getParallelStageWeight</span><span class="p">(</span><span class="n">RotorTorque</span><span class="p">,</span><span class="mf">2.5</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">GearConfig</span> <span class="o">==</span> <span class="s">&#39;ee&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stagemass</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__getEpicyclicStageWeight</span><span class="p">(</span><span class="n">RotorTorque</span><span class="p">,</span><span class="n">GearRatio</span><span class="o">**</span><span class="mf">0.5</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stagemass</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__getEpicyclicStageWeight</span><span class="p">(</span><span class="n">RotorTorque</span><span class="p">,</span><span class="n">GearRatio</span><span class="o">**</span><span class="mf">0.5</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">GearConfig</span> <span class="o">==</span> <span class="s">&#39;eep&#39;</span><span class="p">:</span>
+            <span class="n">U1</span> <span class="o">=</span> <span class="p">(</span><span class="n">GearRatio</span><span class="o">/</span><span class="mf">3.0</span><span class="p">)</span><span class="o">**</span><span class="mf">0.5</span>
+            <span class="n">U2</span> <span class="o">=</span> <span class="p">(</span><span class="n">GearRatio</span><span class="o">/</span><span class="mf">3.0</span><span class="p">)</span><span class="o">**</span><span class="mf">0.5</span>
+            <span class="n">U3</span> <span class="o">=</span> <span class="mf">3.0</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stagemass</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__getEpicyclicStageWeight</span><span class="p">(</span><span class="n">RotorTorque</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="n">U1</span><span class="p">,</span><span class="n">U2</span><span class="p">,</span><span class="n">U3</span><span class="p">)</span>  <span class="c">#different than sunderland</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stagemass</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__getEpicyclicStageWeight</span><span class="p">(</span><span class="n">RotorTorque</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="n">U1</span><span class="p">,</span><span class="n">U2</span><span class="p">,</span><span class="n">U3</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stagemass</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__getParallelStageWeight</span><span class="p">(</span><span class="n">RotorTorque</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="n">U1</span><span class="p">,</span><span class="n">U2</span><span class="p">,</span><span class="n">U3</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">GearConfig</span> <span class="o">==</span> <span class="s">&#39;epp&#39;</span><span class="p">:</span>
+            <span class="n">U1</span> <span class="o">=</span> <span class="n">GearRatio</span><span class="o">**</span><span class="mf">0.33</span><span class="o">*</span><span class="mf">1.4</span>
+            <span class="n">U2</span> <span class="o">=</span> <span class="p">(</span><span class="n">GearRatio</span><span class="o">**</span><span class="mf">0.33</span><span class="o">/</span><span class="mf">1.18</span><span class="p">)</span>
+            <span class="n">U3</span> <span class="o">=</span> <span class="p">(</span><span class="n">GearRatio</span><span class="o">**</span><span class="mf">0.33</span><span class="o">/</span><span class="mf">1.18</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stagemass</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__getEpicyclicStageWeight</span><span class="p">(</span><span class="n">RotorTorque</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="n">U1</span><span class="p">,</span><span class="n">U2</span><span class="p">,</span><span class="n">U3</span><span class="p">)</span>    <span class="c"># not in sunderland</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stagemass</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__getParallelStageWeight</span><span class="p">(</span><span class="n">RotorTorque</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="n">U1</span><span class="p">,</span><span class="n">U2</span><span class="p">,</span><span class="n">U3</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stagemass</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__getParallelStageWeight</span><span class="p">(</span><span class="n">RotorTorque</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="n">U1</span><span class="p">,</span><span class="n">U2</span><span class="p">,</span><span class="n">U3</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">GearConfig</span> <span class="o">==</span> <span class="s">&#39;eee&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stagemass</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__getEpicyclicStageWeight</span><span class="p">(</span><span class="n">RotorTorque</span><span class="p">,</span><span class="n">GearRatio</span><span class="o">**</span><span class="p">(</span><span class="mf">0.33</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stagemass</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__getEpicyclicStageWeight</span><span class="p">(</span><span class="n">RotorTorque</span><span class="p">,</span><span class="n">GearRatio</span><span class="o">**</span><span class="p">(</span><span class="mf">0.33</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stagemass</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__getEpicyclicStageWeight</span><span class="p">(</span><span class="n">RotorTorque</span><span class="p">,</span><span class="n">GearRatio</span><span class="o">**</span><span class="p">(</span><span class="mf">0.33</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">GearConfig</span> <span class="o">==</span> <span class="s">&#39;ppp&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stagemass</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__getParallelStageWeight</span><span class="p">(</span><span class="n">RotorTorque</span><span class="p">,</span><span class="n">GearRatio</span><span class="o">**</span><span class="p">(</span><span class="mf">0.33</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stagemass</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__getParallelStageWeight</span><span class="p">(</span><span class="n">RotorTorque</span><span class="p">,</span><span class="n">GearRatio</span><span class="o">**</span><span class="p">(</span><span class="mf">0.33</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stagemass</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__getParallelStageWeight</span><span class="p">(</span><span class="n">RotorTorque</span><span class="p">,</span><span class="n">GearRatio</span><span class="o">**</span><span class="p">(</span><span class="mf">0.33</span><span class="p">))</span>
+
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">Bevel</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stagemass</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0454</span> <span class="o">*</span> <span class="p">(</span><span class="n">RotorTorque</span> <span class="o">**</span> <span class="mf">0.85</span><span class="p">)</span>
+
+        <span class="n">mass</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">4</span><span class="p">):</span>
+            <span class="n">mass</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stagemass</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">mass</span>     <span class="o">*=</span> <span class="n">overallweightFact</span>  
+        <span class="bp">self</span><span class="o">.</span><span class="n">mass</span> <span class="o">=</span> <span class="p">(</span><span class="n">mass</span><span class="p">)</span>
+
+        <span class="c"># calculate mass properties</span>
+        <span class="n">cm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">])</span>
+        <span class="n">cm</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>   <span class="o">=</span> <span class="n">cm</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">cm</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>   <span class="o">=</span> <span class="mf">0.025</span> <span class="o">*</span> <span class="n">RotorDiam</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cm</span> <span class="o">=</span> <span class="n">cm</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.012</span> <span class="o">*</span> <span class="n">RotorDiam</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">height</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.015</span> <span class="o">*</span> <span class="n">RotorDiam</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">diameter</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.75</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">height</span><span class="p">)</span>
+
+        <span class="n">I</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span>
+        <span class="n">I</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mass</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">diameter</span> <span class="o">**</span> <span class="mi">2</span> <span class="p">)</span> <span class="o">/</span> <span class="mi">8</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mass</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">height</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="mi">8</span>
+        <span class="n">I</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mass</span> <span class="o">*</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">diameter</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="mi">2</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="mf">0.25</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">height</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span> <span class="o">/</span> <span class="mi">8</span>
+        <span class="n">I</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">I</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>       
+        <span class="bp">self</span><span class="o">.</span><span class="n">I</span> <span class="o">=</span> <span class="n">I</span>
+</div>
+    <span class="k">def</span> <span class="nf">__getParallelStageWeight</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">RotorTorque</span><span class="p">,</span><span class="n">stage</span><span class="p">,</span><span class="n">StageRatio1</span><span class="p">,</span><span class="n">StageRatio2</span><span class="p">,</span><span class="n">StageRatio3</span><span class="p">):</span>
+
+        <span class="sd">&#39;&#39;&#39; </span>
+<span class="sd">          This method calculates the stage weight for a parallel stage in a gearbox based on the input torque, stage number, and stage ratio for each individual stage.</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        
+        <span class="n">serviceFact</span>     <span class="o">=</span> <span class="mf">1.00</span>                                <span class="c"># default service factor for a gear stage is 1.75 based on full span VP (should depend on control type)</span>
+        <span class="n">applicationFact</span> <span class="o">=</span> <span class="mf">0.4</span>                             <span class="c"># application factor ???        </span>
+        <span class="n">stageweightFact</span> <span class="o">=</span> <span class="mf">8.029</span> <span class="c">#/2                           # stage weight factor applied to each Gearbox stage</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">RotorTorque</span> <span class="o">*</span> <span class="n">serviceFact</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">200000.0</span><span class="p">:</span>       <span class="c"># design factor for design and manufacture of Gearbox</span>
+            <span class="n">designFact</span> <span class="o">=</span> <span class="mf">925.0</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="n">RotorTorque</span> <span class="o">*</span> <span class="n">serviceFact</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">700000.0</span><span class="p">:</span>
+            <span class="n">designFact</span> <span class="o">=</span> <span class="mf">1000.0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">designFact</span> <span class="o">=</span> <span class="mf">1100.0</span>                            <span class="c"># TODO: should be an exception for all 2 stage Gearboxes to have designFact = 1000</span>
+            
+        <span class="k">if</span> <span class="n">stage</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">Qr</span>         <span class="o">=</span> <span class="n">RotorTorque</span>
+            <span class="n">StageRatio</span> <span class="o">=</span> <span class="n">StageRatio1</span>
+        <span class="k">elif</span> <span class="n">stage</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">Qr</span>         <span class="o">=</span> <span class="n">RotorTorque</span><span class="o">/</span><span class="n">StageRatio1</span>
+            <span class="n">StageRatio</span> <span class="o">=</span> <span class="n">StageRatio2</span>
+        <span class="k">elif</span> <span class="n">stage</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">Qr</span>         <span class="o">=</span> <span class="n">RotorTorque</span><span class="o">/</span><span class="p">(</span><span class="n">StageRatio1</span><span class="o">*</span><span class="n">StageRatio2</span><span class="p">)</span>
+            <span class="n">StageRatio</span> <span class="o">=</span> <span class="n">StageRatio3</span>
+
+        <span class="n">gearFact</span> <span class="o">=</span> <span class="n">applicationFact</span> <span class="o">/</span> <span class="n">designFact</span>          <span class="c"># Gearbox factor for design, manufacture and application of Gearbox</span>
+        
+        <span class="n">gearweightFact</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">StageRatio</span><span class="p">)</span> <span class="o">+</span> <span class="n">StageRatio</span> <span class="o">+</span> <span class="p">(</span><span class="n">StageRatio</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+                                                         <span class="c"># Gearbox weight factor for relationship of stage ratio required and relative stage volume</span>
+
+        <span class="n">stageWeight</span> <span class="o">=</span> <span class="n">stageweightFact</span> <span class="o">*</span> <span class="n">Qr</span> <span class="o">*</span> <span class="n">serviceFact</span> <span class="o">*</span> <span class="n">gearFact</span> <span class="o">*</span> <span class="n">gearweightFact</span>
+                                                         <span class="c"># forumula for parallel gearstage weight based on sunderland model</span>
+
+        <span class="k">return</span> <span class="n">stageWeight</span>
+
+    <span class="k">def</span> <span class="nf">__getEpicyclicStageWeight</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">RotorTorque</span><span class="p">,</span><span class="n">stage</span><span class="p">,</span><span class="n">StageRatio1</span><span class="p">,</span><span class="n">StageRatio2</span><span class="p">,</span><span class="n">StageRatio3</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39; </span>
+<span class="sd">          This method calculates the stage weight for a epicyclic stage in a gearbox based on the input torque, stage number, and stage ratio for each individual stage</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">serviceFact</span>     <span class="o">=</span> <span class="mf">1.00</span>                                <span class="c"># default service factor for a gear stage is 1.75 based on full span VP (should depend on control type)</span>
+        <span class="n">applicationFact</span> <span class="o">=</span> <span class="mf">0.4</span>                             <span class="c"># application factor ???        </span>
+        <span class="n">stageweightFact</span> <span class="o">=</span> <span class="mf">8.029</span><span class="o">/</span><span class="mi">12</span>                          <span class="c"># stage weight factor applied to each Gearbox stage</span>
+        <span class="n">OptWheels</span>       <span class="o">=</span> <span class="mf">3.0</span>                                    <span class="c"># default optional wheels (should depend on stage design)</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">RotorTorque</span> <span class="o">*</span> <span class="n">serviceFact</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">200000.0</span><span class="p">:</span>       <span class="c"># design factor for design and manufacture of Gearbox</span>
+            <span class="n">designFact</span> <span class="o">=</span> <span class="mf">850.0</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="n">RotorTorque</span> <span class="o">*</span> <span class="n">serviceFact</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">700000.0</span><span class="p">:</span>
+            <span class="n">designFact</span> <span class="o">=</span> <span class="mf">950.0</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">designFact</span> <span class="o">=</span> <span class="mf">1100.0</span>
+           
+        <span class="k">if</span> <span class="n">stage</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">Qr</span>         <span class="o">=</span> <span class="n">RotorTorque</span>
+            <span class="n">StageRatio</span> <span class="o">=</span> <span class="n">StageRatio1</span>
+        <span class="k">elif</span> <span class="n">stage</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">Qr</span>         <span class="o">=</span> <span class="n">RotorTorque</span><span class="o">/</span><span class="n">StageRatio1</span>
+            <span class="n">StageRatio</span> <span class="o">=</span> <span class="n">StageRatio2</span>
+        <span class="k">elif</span> <span class="n">stage</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="n">Qr</span>         <span class="o">=</span> <span class="n">RotorTorque</span><span class="o">/</span><span class="p">(</span><span class="n">StageRatio1</span><span class="o">*</span><span class="n">StageRatio2</span><span class="p">)</span>
+            <span class="n">StageRatio</span> <span class="o">=</span> <span class="n">StageRatio3</span>
+
+        <span class="n">gearFact</span> <span class="o">=</span> <span class="n">applicationFact</span> <span class="o">/</span> <span class="n">designFact</span>          <span class="c"># Gearbox factor for design, manufacture and application of Gearbox</span>
+       
+        <span class="n">sunwheelratio</span>  <span class="o">=</span> <span class="p">(</span><span class="n">StageRatio</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>             <span class="c"># sun wheel ratio for epicyclic Gearbox stage based on stage ratio</span>
+        <span class="n">gearweightFact</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">OptWheels</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="n">OptWheels</span> <span class="o">*</span> <span class="n">sunwheelratio</span><span class="p">))</span> <span class="o">+</span> <span class="n">sunwheelratio</span> <span class="o">+</span> \
+                         <span class="p">((</span><span class="mi">1</span> <span class="o">+</span> <span class="n">sunwheelratio</span><span class="p">)</span> <span class="o">/</span> <span class="n">OptWheels</span><span class="p">)</span> <span class="o">*</span> <span class="p">((</span><span class="n">StageRatio</span> <span class="o">-</span> <span class="mf">1.</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+                                                         <span class="c"># Gearbox weight factor for relationship of stage ratio required and relative stage volume</span>
+
+        <span class="n">stageWeight</span>    <span class="o">=</span> <span class="n">stageweightFact</span> <span class="o">*</span> <span class="n">Qr</span> <span class="o">*</span> <span class="n">serviceFact</span> <span class="o">*</span> <span class="n">gearFact</span> <span class="o">*</span> <span class="n">gearweightFact</span>
+                                                         <span class="c"># forumula for epicyclic gearstage weight based on sunderland model</span>
+
+        <span class="k">return</span> <span class="n">stageWeight</span>
+
+<div class="viewcode-block" id="Gearbox.getStageMass"><a class="viewcode-back" href="../../../generated/nacelleSE.src.nacelle_components.Gearbox.getStageMass.html#nacelleSE.src.nacelle_components.Gearbox.getStageMass">[docs]</a>    <span class="k">def</span> <span class="nf">getStageMass</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        This method returns an array of the stage masses for individual stages in a gearbox</span>
+<span class="sd">       </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        self.stagemass : array</span>
+<span class="sd">           Array of individual stage masses for a gearbox</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">stagemass</span>        
+
+<span class="c">#-------------------------------------------------------------------------------</span>
+</div></div>
+<span class="k">class</span> <span class="nc">HighSpeedShaft</span><span class="p">():</span>
+	  <span class="n">implements</span><span class="p">(</span><span class="n">SubComponent</span><span class="p">)</span>
+	  <span class="sd">&#39;&#39;&#39; </span>
+<span class="sd">	     Basic class for a high speed shaft.</span>
+<span class="sd">	  &#39;&#39;&#39;</span>
+
+<span class="k">class</span> <span class="nc">MechanicalBrake</span><span class="p">():</span>
+	  <span class="n">implements</span><span class="p">(</span><span class="n">SubComponent</span><span class="p">)</span>
+	  <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">	     Basic class for mechanical brake.</span>
+<span class="sd">	  &#39;&#39;&#39;</span>
+              
+<div class="viewcode-block" id="HighSpeedSide"><a class="viewcode-back" href="../../../documentation.html#nacelleSE.src.nacelle_components.HighSpeedSide">[docs]</a><span class="k">class</span> <span class="nc">HighSpeedSide</span><span class="p">():</span>
+    <span class="n">implements</span><span class="p">(</span><span class="n">SubComponent</span><span class="p">)</span>
+    <span class="sd">&#39;&#39;&#39; </span>
+<span class="sd">    HighSpeedShaft class          </span>
+<span class="sd">          The HighSpeedShaft class is used to represent the high speed shaft and mechanical brake components of a wind turbine drivetrain.</span>
+<span class="sd">          It contains the general properties for a wind turbine component as well as additional design load and dimentional attributes as listed below.</span>
+<span class="sd">          It contains an update method to determine the mass, mass properties, and dimensions of the component.            </span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="HighSpeedSide.__init__"><a class="viewcode-back" href="../../../generated/nacelleSE.src.nacelle_components.HighSpeedSide.__init__.html#nacelleSE.src.nacelle_components.HighSpeedSide.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">MachineRating</span><span class="p">,</span><span class="n">RotorTorque</span><span class="p">,</span><span class="n">GearRatio</span><span class="p">,</span><span class="n">RotorDiam</span><span class="p">,</span><span class="n">lssOutDiam</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39; Initializes high speed shaft and mechanical brake component </span>
+<span class="sd">          </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        MachineRating : float</span>
+<span class="sd">          The power rating for the overall wind turbine [kW]</span>
+<span class="sd">        RotorTorque : float</span>
+<span class="sd">          The input torque from the wind turbine at rated power after accounting for drivetrain losses [N*m]</span>
+<span class="sd">        GearRatio : float</span>
+<span class="sd">          Ratio of high speed to low speed shaft based on total gear ratio of gearbox</span>
+<span class="sd">        RotorDiam : float</span>
+<span class="sd">          The wind turbine rotor diameter [m]</span>
+<span class="sd">        lssOutDiam : float</span>
+<span class="sd">          outer diameter of low speed shaft [m]    </span>
+<span class="sd">        diameter : float</span>
+<span class="sd">          diameter of high speed shaft</span>
+<span class="sd">        length : float</span>
+<span class="sd">          length of high speed shaft    </span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">HSS</span> <span class="o">=</span> <span class="n">HighSpeedShaft</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">MechBrake</span> <span class="o">=</span> <span class="n">MechanicalBrake</span><span class="p">()</span>
+        
+        <span class="c"># compute masses, dimensions and cost        </span>
+        <span class="n">designTQ</span> <span class="o">=</span> <span class="n">RotorTorque</span> <span class="o">/</span> <span class="n">GearRatio</span>               <span class="c"># design torque [Nm] based on rotor torque and Gearbox ratio</span>
+        <span class="n">massFact</span> <span class="o">=</span> <span class="mf">0.025</span>                                 <span class="c"># mass matching factor default value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">HSS</span><span class="o">.</span><span class="n">mass</span> <span class="o">=</span> <span class="p">(</span><span class="n">massFact</span> <span class="o">*</span> <span class="n">designTQ</span><span class="p">)</span>
+        
+        <span class="bp">self</span><span class="o">.</span><span class="n">MechBrake</span><span class="o">.</span><span class="n">mass</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">HSS</span><span class="o">.</span><span class="n">mass</span><span class="p">)</span>      <span class="c"># relationship derived from HSS multiplier for University of Sunderland model compared to NREL CSM for 750 kW and 1.5 MW turbines</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">mass</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">MechBrake</span><span class="o">.</span><span class="n">mass</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">HSS</span><span class="o">.</span><span class="n">mass</span><span class="p">)</span>                      
+
+        <span class="c"># calculate mass properties</span>
+        <span class="n">cm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">])</span>
+        <span class="n">cm</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>   <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="mf">0.0125</span> <span class="o">*</span> <span class="n">RotorDiam</span><span class="p">)</span>
+        <span class="n">cm</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>   <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">cm</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>   <span class="o">=</span> <span class="mf">0.025</span> <span class="o">*</span> <span class="n">RotorDiam</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cm</span> <span class="o">=</span> <span class="n">cm</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">diameter</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.5</span> <span class="o">*</span> <span class="n">lssOutDiam</span><span class="p">)</span>                     <span class="c"># based on WindPACT relationships for full HSS / mechanical brake assembly</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.025</span><span class="p">)</span>
+
+        <span class="n">I</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span>
+        <span class="n">I</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>    <span class="o">=</span> <span class="mf">0.25</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">*</span> <span class="mf">3.14159</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">diameter</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">GearRatio</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">diameter</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="mi">8</span>
+        <span class="n">I</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>    <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mass</span> <span class="o">*</span> <span class="p">((</span><span class="mi">3</span><span class="o">/</span><span class="mi">4</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">diameter</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span> <span class="o">/</span> <span class="mi">12</span>
+        <span class="n">I</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>    <span class="o">=</span> <span class="n">I</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>      
+        <span class="bp">self</span><span class="o">.</span><span class="n">I</span> <span class="o">=</span> <span class="n">I</span>
+
+<span class="c">#-------------------------------------------------------------------------------</span>
+</div></div>
+<div class="viewcode-block" id="Generator"><a class="viewcode-back" href="../../../documentation.html#nacelleSE.src.nacelle_components.Generator">[docs]</a><span class="k">class</span> <span class="nc">Generator</span><span class="p">():</span>
+    <span class="n">implements</span><span class="p">(</span><span class="n">SubComponent</span><span class="p">)</span>
+    <span class="sd">&#39;&#39;&#39;Generator class          </span>
+<span class="sd">          The Generator class is used to represent the generator of a wind turbine drivetrain.</span>
+<span class="sd">          It contains the general properties for a wind turbine component as well as additional design load and dimentional attributes as listed below.</span>
+<span class="sd">          It contains an update method to determine the mass, mass properties, and dimensions of the component.           </span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+<div class="viewcode-block" id="Generator.__init__"><a class="viewcode-back" href="../../../generated/nacelleSE.src.nacelle_components.Generator.__init__.html#nacelleSE.src.nacelle_components.Generator.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">iDsgn</span><span class="p">,</span><span class="n">MachineRating</span><span class="p">,</span><span class="n">RotorSpeed</span><span class="p">,</span><span class="n">RotorDiam</span><span class="p">,</span><span class="n">GearRatio</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39; Initializes generator component </span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        iDsgn : int</span>
+<span class="sd">          Integer which selects the type of gearbox based on drivetrain type: 1 = standard 3-stage gearbox, 2 = single-stage, 3 = multi-gen, 4 = direct drive</span>
+<span class="sd">          Method is currently configured only for type 1 drivetrains.</span>
+<span class="sd">        MachineRating : float</span>
+<span class="sd">          The power rating for the overall wind turbine [kW]</span>
+<span class="sd">        RotorTorque : float</span>
+<span class="sd">          The input torque from the wind turbine at rated power after accounting for drivetrain losses [N*m]</span>
+<span class="sd">        GearRatio : float</span>
+<span class="sd">          Ratio of high speed to low speed shaft based on total gear ratio of gearbox</span>
+<span class="sd">        RotorDiam : float</span>
+<span class="sd">          The wind turbine rotor diameter [m]</span>
+<span class="sd">        length : float</span>
+<span class="sd">          Generator critical length [m]</span>
+<span class="sd">        width : float</span>
+<span class="sd">          Generator critical width [m]</span>
+<span class="sd">        depth : float</span>
+<span class="sd">          Generator critical depth [m]</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="n">massCoeff</span> <span class="o">=</span> <span class="p">[</span><span class="bp">None</span><span class="p">,</span> <span class="mf">6.4737</span><span class="p">,</span> <span class="mf">10.51</span> <span class="p">,</span>  <span class="mf">5.34</span>  <span class="p">,</span> <span class="mf">37.68</span>  <span class="p">]</span>           
+        <span class="n">massExp</span>   <span class="o">=</span> <span class="p">[</span><span class="bp">None</span><span class="p">,</span> <span class="mf">0.9223</span><span class="p">,</span> <span class="mf">0.9223</span><span class="p">,</span>  <span class="mf">0.9223</span><span class="p">,</span> <span class="mi">1</span>      <span class="p">]</span>
+
+        <span class="n">CalcRPM</span>    <span class="o">=</span> <span class="mi">80</span> <span class="o">/</span> <span class="p">(</span><span class="n">RotorDiam</span><span class="o">*</span><span class="mf">0.5</span><span class="o">*</span><span class="n">pi</span><span class="o">/</span><span class="mi">30</span><span class="p">)</span>
+        <span class="n">CalcTorque</span> <span class="o">=</span> <span class="p">(</span><span class="n">MachineRating</span><span class="o">*</span><span class="mf">1.1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">CalcRPM</span> <span class="o">*</span> <span class="n">pi</span><span class="o">/</span><span class="mi">30</span><span class="p">)</span>
+        
+        <span class="k">if</span> <span class="p">(</span><span class="n">iDsgn</span> <span class="o">&lt;</span> <span class="mi">4</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mass</span> <span class="o">=</span> <span class="p">(</span><span class="n">massCoeff</span><span class="p">[</span><span class="n">iDsgn</span><span class="p">]</span> <span class="o">*</span> <span class="n">MachineRating</span> <span class="o">**</span> <span class="n">massExp</span><span class="p">[</span><span class="n">iDsgn</span><span class="p">])</span>   
+        <span class="k">else</span><span class="p">:</span>  <span class="c"># direct drive</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mass</span> <span class="o">=</span> <span class="p">(</span><span class="n">massCoeff</span><span class="p">[</span><span class="n">iDsgn</span><span class="p">]</span> <span class="o">*</span> <span class="n">CalcTorque</span> <span class="o">**</span> <span class="n">massExp</span><span class="p">[</span><span class="n">iDsgn</span><span class="p">])</span>  
+
+        <span class="c"># calculate mass properties</span>
+        <span class="n">cm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">])</span>
+        <span class="n">cm</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="o">=</span> <span class="mf">0.0125</span> <span class="o">*</span> <span class="n">RotorDiam</span>
+        <span class="n">cm</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>  <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">cm</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>  <span class="o">=</span> <span class="mf">0.025</span> <span class="o">*</span> <span class="n">RotorDiam</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cm</span> <span class="o">=</span> <span class="n">cm</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.6</span> <span class="o">*</span> <span class="mf">0.015</span> <span class="o">*</span> <span class="n">RotorDiam</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">depth</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.015</span> <span class="o">*</span> <span class="n">RotorDiam</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">depth</span><span class="p">)</span>
+
+        <span class="n">I</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span>
+        <span class="n">I</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>   <span class="o">=</span> <span class="p">((</span><span class="mf">4.86</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">5</span><span class="p">)))</span> <span class="o">*</span> <span class="p">(</span><span class="n">RotorDiam</span> <span class="o">**</span> <span class="mf">5.333</span><span class="p">))</span> <span class="o">+</span> <span class="p">(((</span><span class="mi">2</span><span class="o">/</span><span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">mass</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">depth</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="mi">8</span><span class="p">)</span>
+        <span class="n">I</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>   <span class="o">=</span> <span class="p">(</span><span class="n">I</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">GearRatio</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">+</span> <span class="p">((</span><span class="mi">1</span><span class="o">/</span><span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">mass</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="mi">12</span><span class="p">)</span> <span class="o">+</span> <span class="p">(((</span><span class="mi">2</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">mass</span><span class="p">)</span> <span class="o">*</span> \
+                   <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">depth</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="mi">4</span><span class="o">/</span><span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span> <span class="o">/</span> <span class="mi">16</span> <span class="p">)</span>
+        <span class="n">I</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>   <span class="o">=</span> <span class="n">I</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>                           
+        <span class="bp">self</span><span class="o">.</span><span class="n">I</span> <span class="o">=</span> <span class="n">I</span>
+
+<span class="c">#-------------------------------------------------------------------------------</span>
+</div></div>
+<div class="viewcode-block" id="Bedplate"><a class="viewcode-back" href="../../../documentation.html#nacelleSE.src.nacelle_components.Bedplate">[docs]</a><span class="k">class</span> <span class="nc">Bedplate</span><span class="p">():</span>
+    <span class="n">implements</span><span class="p">(</span><span class="n">SubComponent</span><span class="p">)</span>
+    <span class="sd">&#39;&#39;&#39; Bedplate class         </span>
+<span class="sd">          The Bedplate class is used to represent the bedplate of a wind turbine drivetrain.</span>
+<span class="sd">          It contains the general properties for a wind turbine component as well as additional design load and dimentional attributes as listed below.</span>
+<span class="sd">          It contains an update method to determine the mass, mass properties, and dimensions of the component.           </span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    
+<div class="viewcode-block" id="Bedplate.__init__"><a class="viewcode-back" href="../../../generated/nacelleSE.src.nacelle_components.Bedplate.__init__.html#nacelleSE.src.nacelle_components.Bedplate.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">iDsgn</span><span class="p">,</span><span class="n">RotorTorque</span><span class="p">,</span><span class="n">RotorMass</span><span class="p">,</span><span class="n">RotorThrust</span><span class="p">,</span><span class="n">RotorDiam</span><span class="p">,</span><span class="n">TowerTopDiam</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39; Initializes bedplate component </span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        iDsgn : int</span>
+<span class="sd">          Integer which selects the type of gearbox based on drivetrain type: 1 = standard 3-stage gearbox, 2 = single-stage, 3 = multi-gen, 4 = direct drive</span>
+<span class="sd">          Method is currently configured only for type 1 drivetrains.</span>
+<span class="sd">        RotorTorque : float</span>
+<span class="sd">          The input torque from the wind turbine at rated power after accounting for drivetrain losses [N*m]</span>
+<span class="sd">        RotorMass : float</span>
+<span class="sd">          Mass of the rotor [kg]</span>
+<span class="sd">        RotorThrust : float</span>
+<span class="sd">          Maximum thrust from the rotor applied to the drivetrain under extreme conditions [N]</span>
+<span class="sd">        RotorDiam : float</span>
+<span class="sd">          The wind turbine rotor diameter [m]</span>
+<span class="sd">        TowerTopDiam : float</span>
+<span class="sd">          Diameter of the turbine tower top [m] </span>
+<span class="sd">        length : float</span>
+<span class="sd">          Bedplate critical length [m]</span>
+<span class="sd">        width : float</span>
+<span class="sd">          Bedplate critical width [m]</span>
+<span class="sd">        area : float</span>
+<span class="sd">          Bedplate base area [m^2]</span>
+<span class="sd">        height : float</span>
+<span class="sd">          Bedplate critical height [m]</span>
+<span class="sd">        depth : float</span>
+<span class="sd">          Bedplate critical depth [m]</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+
+        <span class="c"># compute masses, dimensions and cost</span>
+        <span class="c"># bedplate sizing based on superposition of loads for rotor torque, thurst, weight         #TODO: only handles bedplate for a traditional drivetrain configuration</span>
+        <span class="n">bedplateWeightFact</span> <span class="o">=</span> <span class="mf">2.86</span>                                   <span class="c"># toruqe weight factor for bedplate (should depend on drivetrain, bedplate type)</span>
+
+        <span class="n">torqueweightCoeff</span> <span class="o">=</span> <span class="mf">0.00368</span>                   <span class="c"># regression coefficient multiplier for bedplate weight based on rotor torque</span>
+        <span class="n">MassFromTorque</span>    <span class="o">=</span> <span class="n">bedplateWeightFact</span> <span class="o">*</span> <span class="p">(</span><span class="n">torqueweightCoeff</span> <span class="o">*</span> <span class="n">RotorTorque</span><span class="p">)</span>
+                                                                  
+        <span class="n">thrustweightCoeff</span> <span class="o">=</span> <span class="mf">0.00158</span>                                 <span class="c"># regression coefficient multiplier for bedplate weight based on rotor thrust</span>
+        <span class="n">MassFromThrust</span>    <span class="o">=</span> <span class="n">bedplateWeightFact</span> <span class="o">*</span> <span class="p">(</span><span class="n">thrustweightCoeff</span> <span class="o">*</span> <span class="p">(</span><span class="n">RotorThrust</span> <span class="o">*</span> <span class="n">TowerTopDiam</span><span class="p">))</span>
+
+        <span class="n">rotorweightCoeff</span>    <span class="o">=</span> <span class="mf">0.015</span>                                    <span class="c"># regression coefficient multiplier for bedplate weight based on rotor weight</span>
+        <span class="n">MassFromRotorWeight</span> <span class="o">=</span> <span class="n">bedplateWeightFact</span> <span class="o">*</span> <span class="p">(</span><span class="n">rotorweightCoeff</span> <span class="o">*</span> <span class="p">(</span><span class="n">RotorMass</span> <span class="o">*</span> <span class="n">TowerTopDiam</span><span class="p">))</span>
+        
+        <span class="c"># additional weight ascribed to bedplate area</span>
+        <span class="n">BPlengthFact</span>    <span class="o">=</span> <span class="mf">1.5874</span>                                       <span class="c"># bedplate length factor (should depend on drivetrain, bedplate type)</span>
+        <span class="n">nacellevolFact</span>  <span class="o">=</span> <span class="mf">0.052</span>                                      <span class="c"># nacelle volume factor (should depend on drivetrain, bedplate type)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="p">(</span><span class="n">BPlengthFact</span> <span class="o">*</span> <span class="n">nacellevolFact</span> <span class="o">*</span> <span class="n">RotorDiam</span><span class="p">)</span>     <span class="c"># bedplate length [m] calculated as a function of rotor diameter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">width</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span>                              <span class="c"># bedplate width [m] assumed to be half of bedplate length</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">area</span>       <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span>                        <span class="c"># bedplate area [m^2]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">height</span> <span class="o">=</span> <span class="p">((</span><span class="mi">2</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span><span class="p">)</span>                         <span class="c"># bedplate height [m] calculated based on cladding area</span>
+        <span class="n">areaweightCoeff</span> <span class="o">=</span> <span class="mi">100</span>                                       <span class="c"># regression coefficient multiplier for bedplate weight based on bedplate area</span>
+        <span class="n">MassFromArea</span>    <span class="o">=</span> <span class="n">bedplateWeightFact</span> <span class="o">*</span> <span class="p">(</span><span class="n">areaweightCoeff</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">area</span><span class="p">)</span>
+    
+        <span class="c"># total mass is calculated based on adding masses attributed to rotor torque, thrust, weight and bedplate area</span>
+        <span class="n">TotalMass</span> <span class="o">=</span> <span class="n">MassFromTorque</span> <span class="o">+</span> <span class="n">MassFromThrust</span> <span class="o">+</span> <span class="n">MassFromRotorWeight</span> <span class="o">+</span> <span class="n">MassFromArea</span>
+
+        <span class="c"># for single-stage and multi-generator - bedplate mass based on regresstion to rotor diameter</span>
+        <span class="c"># for geared and direct drive - bedplate mass based on total mass as calculated above</span>
+        <span class="n">massCoeff</span>    <span class="o">=</span> <span class="p">[</span><span class="bp">None</span><span class="p">,</span><span class="mi">22448</span><span class="p">,</span><span class="mf">1.29490</span><span class="p">,</span><span class="mf">1.72080</span><span class="p">,</span><span class="mi">22448</span> <span class="p">]</span>
+        <span class="n">massExp</span>      <span class="o">=</span> <span class="p">[</span><span class="bp">None</span><span class="p">,</span>    <span class="mi">0</span><span class="p">,</span><span class="mf">1.9525</span><span class="p">,</span> <span class="mf">1.9525</span> <span class="p">,</span>    <span class="mi">0</span> <span class="p">]</span>
+        <span class="n">massCoeff</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">TotalMass</span>  
+        <span class="n">ddweightfact</span> <span class="o">=</span> <span class="mf">0.55</span>                                         <span class="c"># direct drive bedplate weight assumed to be 55% of modular geared type</span>
+        <span class="n">massCoeff</span><span class="p">[</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="n">TotalMass</span> <span class="o">*</span> <span class="n">ddweightfact</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">mass</span> <span class="o">=</span> <span class="p">(</span><span class="n">massCoeff</span><span class="p">[</span><span class="n">iDsgn</span><span class="p">]</span> <span class="o">*</span> <span class="n">RotorDiam</span> <span class="o">**</span> <span class="n">massExp</span><span class="p">[</span><span class="n">iDsgn</span><span class="p">]</span> <span class="p">)</span>
+        
+        <span class="c"># calculate mass properties</span>
+        <span class="n">cm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">])</span>
+        <span class="n">cm</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">cm</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">cm</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0122</span> <span class="o">*</span> <span class="n">RotorDiam</span>                             <span class="c"># half distance from shaft to yaw axis</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cm</span> <span class="o">=</span> <span class="n">cm</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">depth</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span>
+
+        <span class="n">I</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span>
+        <span class="n">I</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mass</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">width</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">depth</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="mi">8</span>
+        <span class="n">I</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>  <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mass</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">depth</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">width</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="mi">4</span><span class="o">/</span><span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="o">/</span> <span class="mi">16</span>
+        <span class="n">I</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>  <span class="o">=</span> <span class="n">I</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>                          
+        <span class="bp">self</span><span class="o">.</span><span class="n">I</span> <span class="o">=</span> <span class="n">I</span>
+
+<span class="c">#-------------------------------------------------------------------------------</span>
+   </div></div>
+<div class="viewcode-block" id="YawSystem"><a class="viewcode-back" href="../../../documentation.html#nacelleSE.src.nacelle_components.YawSystem">[docs]</a><span class="k">class</span> <span class="nc">YawSystem</span><span class="p">():</span>
+    <span class="n">implements</span><span class="p">(</span><span class="n">SubComponent</span><span class="p">)</span>
+    <span class="sd">&#39;&#39;&#39; YawSystem class</span>
+<span class="sd">          The YawSystem class is used to represent the yaw system of a wind turbine drivetrain.</span>
+<span class="sd">          It contains the general properties for a wind turbine component as well as additional design load and dimentional attributes as listed below.</span>
+<span class="sd">          It contains an update method to determine the mass, mass properties, and dimensions of the component.</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+ 
+<div class="viewcode-block" id="YawSystem.__init__"><a class="viewcode-back" href="../../../generated/nacelleSE.src.nacelle_components.YawSystem.__init__.html#nacelleSE.src.nacelle_components.YawSystem.__init__">[docs]</a>    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">RotorDiam</span><span class="p">,</span><span class="n">RotorThrust</span><span class="p">,</span><span class="n">TowerTopDiam</span><span class="p">,</span><span class="n">AboveYawMass</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39; Initializes yaw system </span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        RotorDiam : float</span>
+<span class="sd">          The wind turbine rotor diameter [m]</span>
+<span class="sd">        RotorThrust : float</span>
+<span class="sd">          Maximum thrust from the rotor applied to the drivetrain under extreme conditions [N]</span>
+<span class="sd">        TowerTopDiam : float</span>
+<span class="sd">          Diameter of the turbine tower top [m]</span>
+<span class="sd">        AboveYawMass : float</span>
+<span class="sd">          Mass of the system above the yaw bearing [kg]</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+        
+        <span class="c"># yaw weight depends on moment due to weight of components above yaw bearing and moment due to max thrust load</span>
+        <span class="c">#AboveYawMass = 350000 # verboseging number based on 5 MW RNA mass</span>
+        <span class="n">yawfactor</span> <span class="o">=</span> <span class="mf">0.41</span> <span class="o">*</span> <span class="p">(</span><span class="mf">2.4</span> <span class="o">*</span> <span class="p">(</span><span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">3</span><span class="p">)))</span>                   <span class="c"># should depend on rotor configuration: blade number and hub type</span>
+        <span class="n">weightMom</span> <span class="o">=</span> <span class="n">AboveYawMass</span> <span class="o">*</span> <span class="n">RotorDiam</span>                    <span class="c"># moment due to weight above yaw system</span>
+        <span class="n">thrustMom</span> <span class="o">=</span> <span class="n">RotorThrust</span> <span class="o">*</span> <span class="n">TowerTopDiam</span>                  <span class="c"># moment due to rotor thrust</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mass</span> <span class="o">=</span> <span class="p">(</span><span class="n">yawfactor</span> <span class="o">*</span> <span class="p">(</span><span class="mf">0.4</span> <span class="o">*</span> <span class="n">weightMom</span> <span class="o">+</span> <span class="mf">0.975</span> <span class="o">*</span> <span class="n">thrustMom</span><span class="p">))</span>
+        
+        <span class="c"># calculate mass properties</span>
+        <span class="c"># yaw system assumed to be collocated to tower top center              </span>
+        <span class="n">cm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">,</span><span class="mf">0.0</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cm</span> <span class="o">=</span> <span class="n">cm</span>
+
+        <span class="n">I</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">I</span> <span class="o">=</span> <span class="n">I</span>
+</div></div>
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s">&#39;__main__&#39;</span><span class="p">:</span>
+     <span class="k">pass</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../../genindex.html" title="General Index"
+             >index</a></li>
+        <li><a href="../../../index.html">nacellSE-and-hubSE 0.1.0 documentation</a> &raquo;</li>
+          <li><a href="../../index.html" >Module code</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2013, NREL.
+      Last updated on Aug 30, 2013.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.1.3.
+    </div>
+  </body>
+</html>

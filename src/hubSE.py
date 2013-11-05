@@ -11,20 +11,25 @@ from math import pi
 
 from hubSE_components import Hub, PitchSystem, Spinner, HubSystemAdder
 
-class HubSE(Assembly):
-    ''' 
-       HubSE class
-          The HubSE class is used to represent the hub system of a wind turbine.             
-    '''
+class HubBase(Assembly):
 
     # variables
     bladeMass = Float(iotype='in', units='kg', desc='mass of one blade')
     rotorBendingMoment = Float(iotype='in', units='N*m', desc='flapwise bending moment at blade root')
     rotorDiameter = Float(iotype='in', units='m', desc='rotor diameter')
+    bladeRootDiameter = Float(iotype='in', units='m', desc='blade root diameter')
+    
+    # parameters
+    bladeNumber = Int(3, iotype='in', desc='number of turbine blades')
+
+class HubSE(HubBase):
+    ''' 
+       HubSE class
+          The HubSE class is used to represent the hub system of a wind turbine.             
+    '''
     
     # parameters
     hubDiameter = Float(0.0, iotype='in', units='m', desc='hub diameter')
-    bladeNumber = Int(3, iotype='in', desc='number of turbine blades')
 
     def configure(self):
 
@@ -62,21 +67,11 @@ class HubSE(Assembly):
 
 #-------------------------------------------------------------------------------
 
-class HubSE_drive(Assembly):
+class HubSE_drive(HubBase):
     ''' 
        HubSE class
           The HubSE class is used to represent the hub system of a wind turbine.             
     '''
-
-    # variables
-    #bladeMass = Float(iotype='in', units='kg', desc='mass of one blade')
-    rotorBendingMoment = Float(iotype='in', units='N*m', desc='maximum aerodynamic bending moment')
-    rotorDiameter = Float(iotype='in', units='m', desc='rotor diameter')
-    bladeRootDiameter = Float(iotype='in', units='m', desc='blade root diameter')
-    
-    # parameters
-    #hubDiameter = Float(0.0, iotype='in', units='m', desc='hub diameter')
-    bladeNumber = Int(3, iotype='in', desc='number of turbine blades')
 
     def configure(self):
 

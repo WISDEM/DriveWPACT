@@ -11,11 +11,8 @@ from math import pi
 
 from nacelleSE_components import LowSpeedShaft, MainBearing, SecondBearing, Gearbox, HighSpeedSide, Generator, Bedplate, AboveYawMassAdder, YawSystem, NacelleSystemAdder
 
-class NacelleSE(Assembly):
-    ''' 
-       NacelleSE class
-          The NacelleSE class is used to represent the nacelle system of a wind turbine.             
-    '''
+class NacelleBase(Assembly):
+
     # variables
     rotorDiameter = Float(iotype='in', units='m', desc='rotor diameter')
     rotorMass = Float(iotype='in', units='kg', desc='rotor mass')
@@ -25,12 +22,21 @@ class NacelleSE(Assembly):
     machineRating = Float(iotype='in', units='kW', desc='machine rating of generator')
     gearRatio = Float(iotype='in', desc='overall gearbox ratio')
     towerTopDiameter = Float(iotype='in', units='m', desc='diameter of tower top')
+    rotorBendingMoment = Float(iotype='in', units='N*m', desc='maximum aerodynamic bending moment')
 
     # parameters
     drivetrainDesign = Int(iotype='in', desc='type of gearbox based on drivetrain type: 1 = standard 3-stage gearbox, 2 = single-stage, 3 = multi-gen, 4 = direct drive')
     crane = Bool(iotype='in', desc='flag for presence of crane')
     bevel = Int(iotype='in', desc='Flag for the presence of a bevel stage - 1 if present, 0 if not')
     gearConfiguration = Str(iotype='in', desc='tring that represents the configuration of the gearbox (stage number and types)')
+
+#-------------------------------------------------------------------------------------
+
+class NacelleSE(NacelleBase):
+    ''' 
+       NacelleSE class
+          The NacelleSE class is used to represent the nacelle system of a wind turbine.             
+    '''
 
     def configure(self):
 
@@ -119,30 +125,14 @@ class NacelleSE(Assembly):
 
 #------------------------------------------------------------------
 
-class NacelleSE_drive(Assembly):
+class NacelleSE_drive(NacelleBase):
 
     ''' 
        NacelleSE class
           The NacelleSE class is used to represent the nacelle system of a wind turbine.             
     '''
-    # variables
-    rotorDiameter = Float(iotype='in', units='m', desc='rotor diameter')
-    rotorMass = Float(iotype='in', units='kg', desc='rotor mass')
-    rotorTorque = Float(iotype='in', units='N*m', desc='rotor torque at rated power')
-    rotorThrust = Float(iotype='in', units='N', desc='maximum rotor thrust')
-    rotorSpeed = Float(iotype='in', units='m/s', desc='rotor speed at rated')
-    machineRating = Float(iotype='in', units='kW', desc='machine rating of generator')
-    gearRatio = Float(iotype='in', desc='overall gearbox ratio')
-    towerTopDiameter = Float(iotype='in', units='m', desc='diameter of tower top')
-    # new variables
-    rotorBendingMoment = Float(iotype='in', units='N*m', desc='maximum aerodynamic bending moment')
 
     # parameters
-    drivetrainDesign = Int(iotype='in', desc='type of gearbox based on drivetrain type: 1 = standard 3-stage gearbox, 2 = single-stage, 3 = multi-gen, 4 = direct drive')
-    crane = Bool(iotype='in', desc='flag for presence of crane')
-    bevel = Int(iotype='in', desc='Flag for the presence of a bevel stage - 1 if present, 0 if not')
-    gearConfiguration = Str(iotype='in', desc='tring that represents the configuration of the gearbox (stage number and types)')
-    # new parameters
     shaftAngle = Float(iotype='in', units='deg', desc='Angle of the LSS inclindation with respect to the horizontal')
     shaftLength = Float(iotype='in', units='m', desc='length of low speed shaft')
     shaftD1 = Float(iotype='in', units='m', desc='Fraction of LSS distance from gearbox to downwind main bearing')
@@ -172,7 +162,7 @@ class NacelleSE_drive(Assembly):
 
     def configure(self):
 
-        # select components
+        '''# select components
         self.add('aboveYawMassAdder', AboveYawMassAdder())
         self.add('nacelleSystem', NacelleSystemAdder())
         self.add('lowSpeedShaft', LowSpeedShaft())
@@ -239,7 +229,7 @@ class NacelleSE_drive(Assembly):
         # create passthroughs
         self.create_passthrough('nacelleSystem.mass')
         self.create_passthrough('nacelleSystem.cm')
-        self.create_passthrough('nacelleSystem.I')
+        self.create_passthrough('nacelleSystem.I')'''
         
 
     '''def getNacelleComponentMasses(self):

@@ -20,7 +20,7 @@ class Hub(Component):
     '''
 
     # variables
-    rootMoment = Float(iotype='in', units='N*m', desc='flapwise bending moment at blade root')
+    rotorBendingMoment = Float(iotype='in', units='N*m', desc='flapwise bending moment at blade root')
     rotorDiameter = Float(iotype='in', units='m', desc='rotor diameter')
     
     # parameters

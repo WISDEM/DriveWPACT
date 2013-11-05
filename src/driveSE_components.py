@@ -126,7 +126,7 @@ class Hub(Component):
 
 #-------------------------------------------------------------------------------
 
-class LowSpeedShaft(Component):
+class LowSpeedShaft_drive(Component):
     ''' LowSpeedShaft class
           The LowSpeedShaft class is used to represent the low speed shaft component of a wind turbine drivetrain. 
           It contains the general properties for a wind turbine component as well as additional design load and dimentional attributes as listed below.

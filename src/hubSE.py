@@ -60,6 +60,58 @@ class HubSE(Assembly):
         self.create_passthrough('hubSystem.cm')
         self.create_passthrough('hubSystem.I')
 
+#-------------------------------------------------------------------------------
+
+class HubSE_drive(Assembly):
+    ''' 
+       HubSE class
+          The HubSE class is used to represent the hub system of a wind turbine.             
+    '''
+
+    # variables
+    #bladeMass = Float(iotype='in', units='kg', desc='mass of one blade')
+    rotorBendingMoment = Float(iotype='in', units='N*m', desc='maximum aerodynamic bending moment')
+    rotorDiameter = Float(iotype='in', units='m', desc='rotor diameter')
+    bladeRootDiameter = Float(iotype='in', units='m', desc='blade root diameter')
+    
+    # parameters
+    #hubDiameter = Float(0.0, iotype='in', units='m', desc='hub diameter')
+    bladeNumber = Int(3, iotype='in', desc='number of turbine blades')
+
+    def configure(self):
+
+        # select components
+        self.add('hubSystem', HubSystemAdder())
+        self.add('hub', Hub())
+        self.add('pitchSystem', PitchSystem())
+        self.add('spinner', Spinner())
+        
+        # workflow
+        self.driver.workflow.add(['hubSystem','hub', 'pitchSystem', 'spinner'])
+        
+        # connect inputs
+        self.connect('bladeMass', ['pitchSystem.bladeMass'])
+        self.connect('rootMoment', ['hub.rootMoment', 'pitchSystem.rootMoment'])
+        self.connect('bladeNumber', ['hub.bladeNumber', 'pitchSystem.bladeNumber'])
+        self.connect('rotorDiameter', ['hub.rotorDiameter', 'pitchSystem.rotorDiameter', 'spinner.rotorDiameter'])
+        self.connect('hubDiameter', ['hub.hubDiameter', 'pitchSystem.hubDiameter', 'spinner.hubDiameter'])
+        
+        # connect components
+        self.connect('hub.mass', 'hubSystem.hubMass')
+        self.connect('hub.cm', 'hubSystem.hubCM')
+        self.connect('hub.I', 'hubSystem.hubI')
+        self.connect('pitchSystem.mass', 'hubSystem.pitchMass')
+        self.connect('pitchSystem.cm', 'hubSystem.pitchCM')
+        self.connect('pitchSystem.I', 'hubSystem.pitchI')
+        self.connect('spinner.mass', 'hubSystem.spinnerMass')
+        self.connect('spinner.cm', 'hubSystem.spinnerCM')
+        self.connect('spinner.I', 'hubSystem.spinnerI')
+        
+        # create passthroughs
+        self.create_passthrough('hubSystem.mass')
+        self.create_passthrough('hubSystem.cm')
+        self.create_passthrough('hubSystem.I')
+
 
 #-------------------------------------------------------------------------------
 

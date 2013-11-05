@@ -119,6 +119,144 @@ class NacelleSE(Assembly):
 
 #------------------------------------------------------------------
 
+class NacelleSE_drive(Assembly):
+
+    ''' 
+       NacelleSE class
+          The NacelleSE class is used to represent the nacelle system of a wind turbine.             
+    '''
+    # variables
+    rotorDiameter = Float(iotype='in', units='m', desc='rotor diameter')
+    rotorMass = Float(iotype='in', units='kg', desc='rotor mass')
+    rotorTorque = Float(iotype='in', units='N*m', desc='rotor torque at rated power')
+    rotorThrust = Float(iotype='in', units='N', desc='maximum rotor thrust')
+    rotorSpeed = Float(iotype='in', units='m/s', desc='rotor speed at rated')
+    machineRating = Float(iotype='in', units='kW', desc='machine rating of generator')
+    gearRatio = Float(iotype='in', desc='overall gearbox ratio')
+    towerTopDiameter = Float(iotype='in', units='m', desc='diameter of tower top')
+    # new variables
+    rotorBendingMoment = Float(iotype='in', units='N*m', desc='maximum aerodynamic bending moment')
+
+    # parameters
+    drivetrainDesign = Int(iotype='in', desc='type of gearbox based on drivetrain type: 1 = standard 3-stage gearbox, 2 = single-stage, 3 = multi-gen, 4 = direct drive')
+    crane = Bool(iotype='in', desc='flag for presence of crane')
+    bevel = Int(iotype='in', desc='Flag for the presence of a bevel stage - 1 if present, 0 if not')
+    gearConfiguration = Str(iotype='in', desc='tring that represents the configuration of the gearbox (stage number and types)')
+    # new parameters
+    shaftAngle = Float(iotype='in', units='deg', desc='Angle of the LSS inclindation with respect to the horizontal')
+    shaftLength = Float(iotype='in', units='m', desc='length of low speed shaft')
+    shaftD1 = Float(iotype='in', units='m', desc='Fraction of LSS distance from gearbox to downwind main bearing')
+    shaftD2 = Float(iotype='in', units='m', desc='raction of LSS distance from gearbox to upwind main bearing')
+    shaftRatio = Float(0.0, iotype='in', desc='Ratio of inner diameter to outer diameter.  Leave zero for solid LSS')
+    # potential additional new parameters
+    '''        name : str
+          Name of the gearbox.
+        gbxPower : float
+          Rated power of the gearbox [W].
+        ratio : float
+          Overall gearbox speedup ratio.
+        gearConfig : str
+          String describing configuration of each gear stage.  Use 'e' for epicyclic and 'p' for parallel, for example 'eep' would be epicyclic-epicyclic-parallel.
+        Np : array
+          Array describing the number of planets in each stage.  For example if gearConfig is 'eep' Np could be [3 3 1].
+        eff : float
+          Mechanical efficiency of the gearbox.
+        ratioType : str
+          Describes how individual stage ratios will be calculated.  Can be 'empirical' which uses the Sunderland model, or 'optimal' which finds the stage ratios that minimize overall mass.
+        shType : str
+          Describes the shaft type and applies a corresponding application factor.  Can be 'normal' or 'short'.
+        uptowerTransformer : int
+          Determines if the transformer is uptower ('1') or downtower ('0').
+        numYawMotors : int
+          Number of yaw motors.'''
+
+    def configure(self):
+
+        # select components
+        self.add('aboveYawMassAdder', AboveYawMassAdder())
+        self.add('nacelleSystem', NacelleSystemAdder())
+        self.add('lowSpeedShaft', LowSpeedShaft())
+        self.add('mainBearing', MainBearing())
+        self.add('secondBearing',SecondBearing())
+        self.add('gearbox', Gearbox())
+        self.add('highSpeedSide', HighSpeedSide())
+        self.add('generator', Generator())
+        self.add('bedplate', Bedplate())
+        self.add('yawSystem', YawSystem())
+        
+        # workflow
+        self.driver.workflow.add(['aboveYawMassAdder', 'nacelleSystem', 'lowSpeedShaft', 'mainBearing', 'secondBearing', 'gearbox', 'highSpeedSide', 'generator', 'bedplate', 'yawSystem'])
+        
+        # connect inputs
+        self.connect('rotorDiameter', ['lowSpeedShaft.rotorDiameter', 'mainBearing.rotorDiameter', 'secondBearing.rotorDiameter', 'gearbox.rotorDiameter', 'highSpeedSide.rotorDiameter', \
+                     'generator.rotorDiameter', 'bedplate.rotorDiameter', 'yawSystem.rotorDiameter'])
+        self.connect('rotorTorque', ['lowSpeedShaft.rotorTorque', 'gearbox.rotorTorque', 'highSpeedSide.rotorTorque', 'bedplate.rotorTorque'])
+        self.connect('rotorMass', ['lowSpeedShaft.rotorMass', 'bedplate.rotorMass'])
+        self.connect('rotorSpeed', ['mainBearing.rotorSpeed', 'secondBearing.rotorSpeed'])
+        self.connect('rotorThrust', ['bedplate.rotorThrust', 'yawSystem.rotorThrust'])
+        self.connect('towerTopDiameter', ['bedplate.towerTopDiameter', 'yawSystem.towerTopDiameter'])
+        self.connect('machineRating', ['generator.machineRating', 'aboveYawMassAdder.machineRating'])
+        self.connect('drivetrainDesign', ['gearbox.drivetrainDesign', 'generator.drivetrainDesign', 'bedplate.drivetrainDesign'])
+        self.connect('gearRatio', ['gearbox.gearRatio', 'generator.gearRatio', 'highSpeedSide.gearRatio'])
+        self.connect('gearConfiguration', 'gearbox.gearConfiguration')
+        self.connect('bevel', 'gearbox.bevel')
+        self.connect('crane', 'aboveYawMassAdder.crane')
+        
+        
+        # connect components
+        self.connect('lowSpeedShaft.designTorque', ['mainBearing.lssDesignTorque', 'secondBearing.lssDesignTorque'])
+        self.connect('lowSpeedShaft.diameter', ['mainBearing.lssDiameter', 'secondBearing.lssDiameter', 'highSpeedSide.lssDiameter'])
+        self.connect('bedplate.length', 'aboveYawMassAdder.bedplateLength')
+        self.connect('bedplate.width', 'aboveYawMassAdder.bedplateWidth')
+
+        self.connect('lowSpeedShaft.mass', ['mainBearing.lowSpeedShaftMass', 'secondBearing.lowSpeedShaftMass', 'aboveYawMassAdder.lowSpeedShaftMass', 'nacelleSystem.lowSpeedShaftMass'])
+        self.connect('mainBearing.mass', ['aboveYawMassAdder.mainBearingMass', 'nacelleSystem.mainBearingMass'])
+        self.connect('secondBearing.mass', ['aboveYawMassAdder.secondBearingMass', 'nacelleSystem.secondBearingMass'])
+        self.connect('gearbox.mass', ['aboveYawMassAdder.gearboxMass', 'nacelleSystem.gearboxMass'])
+        self.connect('highSpeedSide.mass', ['aboveYawMassAdder.highSpeedSideMass', 'nacelleSystem.highSpeedSideMass'])
+        self.connect('generator.mass', ['aboveYawMassAdder.generatorMass', 'nacelleSystem.generatorMass'])
+        self.connect('bedplate.mass', ['aboveYawMassAdder.bedplateMass', 'nacelleSystem.bedplateMass'])
+        self.connect('aboveYawMassAdder.mainframeMass', 'nacelleSystem.mainframeMass')
+        self.connect('yawSystem.mass', ['nacelleSystem.yawMass'])
+        self.connect('aboveYawMassAdder.aboveYawMass', ['yawSystem.aboveYawMass', 'nacelleSystem.aboveYawMass'])
+
+        self.connect('lowSpeedShaft.cm', ['nacelleSystem.lowSpeedShaftCM'])
+        self.connect('mainBearing.cm', 'nacelleSystem.mainBearingCM')
+        self.connect('secondBearing.cm', 'nacelleSystem.secondBearingCM')
+        self.connect('gearbox.cm', ['nacelleSystem.gearboxCM'])
+        self.connect('highSpeedSide.cm', ['nacelleSystem.highSpeedSideCM'])
+        self.connect('generator.cm', ['nacelleSystem.generatorCM'])
+        self.connect('bedplate.cm', ['nacelleSystem.bedplateCM'])
+
+        self.connect('lowSpeedShaft.I', ['nacelleSystem.lowSpeedShaftI'])
+        self.connect('mainBearing.I', 'nacelleSystem.mainBearingI')
+        self.connect('secondBearing.I', 'nacelleSystem.secondBearingI')
+        self.connect('gearbox.I', ['nacelleSystem.gearboxI'])
+        self.connect('highSpeedSide.I', ['nacelleSystem.highSpeedSideI'])
+        self.connect('generator.I', ['nacelleSystem.generatorI'])
+        self.connect('bedplate.I', ['nacelleSystem.bedplateI'])
+            
+        # create passthroughs
+        self.create_passthrough('nacelleSystem.mass')
+        self.create_passthrough('nacelleSystem.cm')
+        self.create_passthrough('nacelleSystem.I')
+        
+
+    '''def getNacelleComponentMasses(self):
+        """ Returns detailed nacelle assembly masses
+        
+        detailedMasses : array_like of float
+           detailed masses for nacelle components
+        """
+        
+        detailedMasses = [self.lowSpeedShaftMass, self.mainBearingsMass, self.gearboxMass, self.highSpeedSideMass, self.generatorMass, self.vspdEtronicsMass, \
+                self.econnectionsMass, self.hydrCoolingMass, \
+                self.ControlsMass, self.yawMass, self.mainframeMass, self.nacelleCovMass]
+
+        return detailedMasses'''
+
+#------------------------------------------------------------------
+
 def example():
 
     # test of module for turbine data set

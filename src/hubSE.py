@@ -19,7 +19,7 @@ class HubSE(Assembly):
 
     # variables
     bladeMass = Float(iotype='in', units='kg', desc='mass of one blade')
-    rootMoment = Float(iotype='in', units='N*m', desc='flapwise bending moment at blade root')
+    rotorBendingMoment = Float(iotype='in', units='N*m', desc='flapwise bending moment at blade root')
     rotorDiameter = Float(iotype='in', units='m', desc='rotor diameter')
     
     # parameters
@@ -39,7 +39,7 @@ class HubSE(Assembly):
         
         # connect inputs
         self.connect('bladeMass', ['pitchSystem.bladeMass'])
-        self.connect('rootMoment', ['hub.rootMoment', 'pitchSystem.rootMoment'])
+        self.connect('rotorBendingMoment', ['hub.rotorBendingMoment', 'pitchSystem.rotorBendingMoment'])
         self.connect('bladeNumber', ['hub.bladeNumber', 'pitchSystem.bladeNumber'])
         self.connect('rotorDiameter', ['hub.rotorDiameter', 'pitchSystem.rotorDiameter', 'spinner.rotorDiameter'])
         self.connect('hubDiameter', ['hub.hubDiameter', 'pitchSystem.hubDiameter', 'spinner.hubDiameter'])
@@ -80,7 +80,7 @@ class HubSE_drive(Assembly):
 
     def configure(self):
 
-        # select components
+        '''# select components
         self.add('hubSystem', HubSystemAdder())
         self.add('hub', Hub())
         self.add('pitchSystem', PitchSystem())
@@ -91,7 +91,7 @@ class HubSE_drive(Assembly):
         
         # connect inputs
         self.connect('bladeMass', ['pitchSystem.bladeMass'])
-        self.connect('rootMoment', ['hub.rootMoment', 'pitchSystem.rootMoment'])
+        self.connect('rotorBendingMoment', ['hub.rotorBendingMoment', 'pitchSystem.rotorBendingMoment'])
         self.connect('bladeNumber', ['hub.bladeNumber', 'pitchSystem.bladeNumber'])
         self.connect('rotorDiameter', ['hub.rotorDiameter', 'pitchSystem.rotorDiameter', 'spinner.rotorDiameter'])
         self.connect('hubDiameter', ['hub.hubDiameter', 'pitchSystem.hubDiameter', 'spinner.hubDiameter'])
@@ -110,7 +110,7 @@ class HubSE_drive(Assembly):
         # create passthroughs
         self.create_passthrough('hubSystem.mass')
         self.create_passthrough('hubSystem.cm')
-        self.create_passthrough('hubSystem.I')
+        self.create_passthrough('hubSystem.I')'''
 
 
 #-------------------------------------------------------------------------------
@@ -129,7 +129,7 @@ def example():
     AirDensity= 1.225 # kg/(m^3)
     Solidity  = 0.0517 
     RatedWindSpeed = 11.05 # m/s
-    hub.rootMoment = (3.06 * pi / 8) * AirDensity * (RatedWindSpeed ** 2) * (Solidity * (hub.rotorDiameter ** 3)) / hub.bladeNumber
+    hub.rotorBendingMoment = (3.06 * pi / 8) * AirDensity * (RatedWindSpeed ** 2) * (Solidity * (hub.rotorDiameter ** 3)) / hub.bladeNumber
     
     hub.run()
 
@@ -153,7 +153,7 @@ def example2():
     AirDensity= 1.225
     Solidity  = 0.065
     RatedWindSpeed = 12.12
-    hub.rootMoment = (3.06 * pi / 8) * AirDensity * (RatedWindSpeed ** 2) * (Solidity * (hub.rotorDiameter ** 3)) / hub.bladeNumber
+    hub.rotorBendingMoment = (3.06 * pi / 8) * AirDensity * (RatedWindSpeed ** 2) * (Solidity * (hub.rotorDiameter ** 3)) / hub.bladeNumber
 
     hub.run()
 
@@ -174,7 +174,7 @@ def example2():
     AirDensity = 1.225
     Solidity = 0.07 # uknown value
     RatedWindSpeed = 16.0
-    hub.rootMoment = (3.06 * pi / 8) * AirDensity * (RatedWindSpeed ** 2) * (Solidity * (hub.rotorDiameter ** 3)) / hub.bladeNumber
+    hub.rotorBendingMoment = (3.06 * pi / 8) * AirDensity * (RatedWindSpeed ** 2) * (Solidity * (hub.rotorDiameter ** 3)) / hub.bladeNumber
 
     hub.run()
 
@@ -195,7 +195,7 @@ def example2():
     AirDensity = 1.225
     Solidity = 0.06 # unknown value
     RatedWindSpeed = 12.0 # expected to be closer to 1.5 and 5 MW
-    hub.rootMoment = (3.06 * pi / 8) * AirDensity * (RatedWindSpeed ** 2) * (Solidity * (hub.rotorDiameter ** 3)) / hub.bladeNumber 
+    hub.rotorBendingMoment = (3.06 * pi / 8) * AirDensity * (RatedWindSpeed ** 2) * (Solidity * (hub.rotorDiameter ** 3)) / hub.bladeNumber 
 
     hub.run()
     

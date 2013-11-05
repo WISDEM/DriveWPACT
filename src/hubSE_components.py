@@ -38,7 +38,7 @@ class Hub(Component):
         
         Parameters
         ----------
-        rootMoment : float
+        rotorBendingMoment : float
           maximum flap-wise root moment for the blade (if == 0, then it is set within compute method) [Nm]
         rotorDiameter : float
           The wind turbine rotor diameter [m]
@@ -69,11 +69,11 @@ class Hub(Component):
         hubmatlstress    = 371000000.0                                # allowable stress of hub material (N / m^2)
 
         # Root moment required as input, could be undone
-        '''if RootMoment == 0.0:
-            RootMoment = (3.06 * pi / 8) * AirDensity * (RatedWindSpeed ** 2) * (Solidity * (RotorDiam ** 3)) / BladeNum
+        '''if rotorBendingMoment == 0.0:
+            rotorBendingMoment = (3.06 * pi / 8) * AirDensity * (RatedWindSpeed ** 2) * (Solidity * (RotorDiam ** 3)) / BladeNum
                                                             # simplified equation for blade root moment (Sunderland model) if one is not provided'''
         
-        self.mass =50 * hubgeomFact * hubloadFact * hubcontFact * self.bladeNumber * self.rootMoment * (hubmatldensity / hubmatlstress)
+        self.mass =50 * hubgeomFact * hubloadFact * hubcontFact * self.bladeNumber * self.rotorBendingMoment * (hubmatldensity / hubmatlstress)
                                                             # mass of hub based on Sunderland model
                                                             # 31.4 adapted to 50 to fit 5 MW data
 
@@ -98,23 +98,23 @@ class Hub(Component):
         self.I = (I)
 
         # derivatives
-        d_hubMass_d_rootMoment = 50 * hubgeomFact * hubloadFact * hubcontFact * self.bladeNumber * (hubmatldensity / hubmatlstress)
+        d_hubMass_d_rotorBendingMoment = 50 * hubgeomFact * hubloadFact * hubcontFact * self.bladeNumber * (hubmatldensity / hubmatlstress)
         d_cm_d_rotorDiameter = np.array([-0.05, 0.0, 0.025])
-        d_I_d_rootMoment = 0.4 * d_hubMass_d_rootMoment * ((0.5**5 - (0.05 - 0.055/3.3)**5)/(0.5**3 - (0.05 - 0.055/3.3)**3)) * self.diameter**2
+        d_I_d_rotorBendingMoment = 0.4 * d_hubMass_d_rotorBendingMoment * ((0.5**5 - (0.05 - 0.055/3.3)**5)/(0.5**3 - (0.05 - 0.055/3.3)**3)) * self.diameter**2
         d_I_d_hubDiameter = 2 * 0.4 * self.mass * ((0.5**5 - (0.05 - 0.055/3.3)**5)/(0.5**3 - (0.05 - 0.055/3.3)**3)) * self.diameter
         
         # Jacobian
-        self.J = np.array([[d_hubMass_d_rootMoment, 0, 0], \
+        self.J = np.array([[d_hubMass_d_rotorBendingMoment, 0, 0], \
                            [0, d_cm_d_rotorDiameter[0], 0], \
                            [0, d_cm_d_rotorDiameter[1], 0], \
                            [0, d_cm_d_rotorDiameter[2], 0], \
-                           [d_I_d_rootMoment, 0, d_I_d_hubDiameter], \
-                           [d_I_d_rootMoment, 0, d_I_d_hubDiameter], \
-                           [d_I_d_rootMoment, 0, d_I_d_hubDiameter]])
+                           [d_I_d_rotorBendingMoment, 0, d_I_d_hubDiameter], \
+                           [d_I_d_rotorBendingMoment, 0, d_I_d_hubDiameter], \
+                           [d_I_d_rotorBendingMoment, 0, d_I_d_hubDiameter]])
 
     def provideJ(self):
 
-        input_keys = ['rootMoment', 'rotorDiameter', 'hubDiameter']
+        input_keys = ['rotorBendingMoment', 'rotorDiameter', 'hubDiameter']
         output_keys = ['hubMass', 'cm[0]', 'cm[1]', 'cm[2]', 'I[0]', 'I[1]', 'I[2]']
 
         self.derivatives.set_first_derivative(input_keys, output_keys, self.J)
@@ -131,7 +131,7 @@ class PitchSystem(Component):
 
     # variables
     bladeMass = Float(iotype='in', units='kg', desc='mass of one blade')
-    rootMoment = Float(iotype='in', units='N*m', desc='flapwise bending moment at blade root')
+    rotorBendingMoment = Float(iotype='in', units='N*m', desc='flapwise bending moment at blade root')
     rotorDiameter = Float(iotype='in', units='m', desc='rotor diameter')
     
     # parameters
@@ -151,7 +151,7 @@ class PitchSystem(Component):
         ----------
         bladeMass : float
           The wind turbine individual blade mass [kg]
-        rootMoment : float
+        rotorBendingMoment : float
           maximum flap-wise root moment for the blade (if == 0, then it is set within compute method) [Nm]
         rotorDiameter : float
           The wind turbine rotor diameter [m]
@@ -179,12 +179,12 @@ class PitchSystem(Component):
         pitchmatlstress  = 371000000.0                              # allowable stress of hub material (N / m^2)
 
         # Root moment required as input, could be undone
-        '''if RootMoment == 0.0:
-            RootMoment = (3.06 * pi / 8) * AirDensity * (RatedWindSpeed ** 2) * (Solidity * (RotorDiam ** 3)) / BladeNum
+        '''if rotorBendingMoment == 0.0:
+            rotorBendingMoment = (3.06 * pi / 8) * AirDensity * (RatedWindSpeed ** 2) * (Solidity * (RotorDiam ** 3)) / BladeNum
                                                             # simplified equation for blade root moment (Sunderland model) if one is not provided'''
 
         hubpitchFact      = 1.0                                 # default factor is 1.0 (0.54 for modern designs)
-        self.mass =hubpitchFact * (0.22 * self.bladeMass * self.bladeNumber + 12.6 * self.bladeNumber * self.rootMoment * (pitchmatldensity / pitchmatlstress))
+        self.mass =hubpitchFact * (0.22 * self.bladeMass * self.bladeNumber + 12.6 * self.bladeNumber * self.rotorBendingMoment * (pitchmatldensity / pitchmatlstress))
                                                             # mass of pitch system based on Sunderland model
 
         # calculate mass properties
@@ -208,24 +208,24 @@ class PitchSystem(Component):
 
         # derivatives
         d_pitchMass_d_bladeMass = hubpitchFact * 0.22 * self.bladeNumber
-        d_pitchMass_d_rootMoment = hubpitchFact * 12.6 * self.bladeNumber * pitchmatldensity / pitchmatlstress
+        d_pitchMass_d_rotorBendingMoment = hubpitchFact * 12.6 * self.bladeNumber * pitchmatldensity / pitchmatlstress
         d_cm_d_rotorDiameter = np.array([-0.05, 0.0, 0.025])
         d_I_d_bladeMass = d_pitchMass_d_bladeMass * (self.diameter**2) / 4
-        d_I_d_rootMoment = d_pitchMass_d_rootMoment * (self.diameter**2) / 4
+        d_I_d_rotorBendingMoment = d_pitchMass_d_rotorBendingMoment * (self.diameter**2) / 4
         d_I_d_hubDiameter = self.mass * (2/4) * self.diameter
 
         # Jacobian
-        self.J = np.array([[d_pitchMass_d_bladeMass, d_pitchMass_d_rootMoment, 0, 0], \
+        self.J = np.array([[d_pitchMass_d_bladeMass, d_pitchMass_d_rotorBendingMoment, 0, 0], \
                            [0, 0, d_cm_d_rotorDiameter[0], 0], \
                            [0, 0, d_cm_d_rotorDiameter[1], 0], \
                            [0, 0, d_cm_d_rotorDiameter[2], 0], \
-                           [d_I_d_bladeMass, d_I_d_rootMoment, 0, d_I_d_hubDiameter], \
-                           [d_I_d_bladeMass, d_I_d_rootMoment, 0, d_I_d_hubDiameter], \
-                           [d_I_d_bladeMass, d_I_d_rootMoment, 0, d_I_d_hubDiameter]])
+                           [d_I_d_bladeMass, d_I_d_rotorBendingMoment, 0, d_I_d_hubDiameter], \
+                           [d_I_d_bladeMass, d_I_d_rotorBendingMoment, 0, d_I_d_hubDiameter], \
+                           [d_I_d_bladeMass, d_I_d_rotorBendingMoment, 0, d_I_d_hubDiameter]])
 
     def provideJ(self):
 
-        input_keys = ['bladeMass', 'rootMoment', 'rotorDiameter', 'hubDiameter']
+        input_keys = ['bladeMass', 'rotorBendingMoment', 'rotorDiameter', 'hubDiameter']
         output_keys = ['pitchMass', 'cm[0]', 'cm[1]', 'cm[2]', 'I[0]', 'I[1]', 'I[2]']
 
         self.derivatives.set_first_derivative(input_keys, output_keys, self.J)

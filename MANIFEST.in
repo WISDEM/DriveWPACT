@@ -1,0 +1,3 @@
+graft src/NacelleSE/sphinx_build/html
+recursive-include src/NacelleSE/test *.py
+

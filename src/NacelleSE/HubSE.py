@@ -9,7 +9,7 @@ from openmdao.main.api import Component, Assembly
 from openmdao.main.datatypes.api import Array, Float, Bool, Int
 from math import pi
 
-from hubSE_components import Hub, PitchSystem, Spinner, HubSystemAdder
+from HubSE_components import Hub, PitchSystem, Spinner, HubSystemAdder
 
 class HubBase(Assembly):
 

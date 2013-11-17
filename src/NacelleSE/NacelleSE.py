@@ -9,7 +9,7 @@ from openmdao.main.api import Component, Assembly
 from openmdao.main.datatypes.api import Float, Bool, Int, Str, Array
 from math import pi
 
-from nacelleSE_components import LowSpeedShaft, MainBearing, SecondBearing, Gearbox, HighSpeedSide, Generator, Bedplate, AboveYawMassAdder, YawSystem, NacelleSystemAdder
+from NacelleSE_components import LowSpeedShaft, MainBearing, SecondBearing, Gearbox, HighSpeedSide, Generator, Bedplate, AboveYawMassAdder, YawSystem, NacelleSystemAdder
 
 class NacelleBase(Assembly):
 

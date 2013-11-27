@@ -630,7 +630,7 @@ def example():
     nace.uptowerTransformer=True
     nace.shrinkDiscMass = 1000.0
     nace.carrierMass = 8000.0
-    nace.mb1Type = 'TRB'
+    nace.mb1Type = 'CARB'
     nace.mb2Type = 'SRB'
 
 

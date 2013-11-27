@@ -215,6 +215,7 @@ class LowSpeedShaft_drive4pt(Component):
 
         D_max=1
         D_min=0.2
+        sR = self.shaftRatio
 
 
         L_ms_new = 0.0
@@ -227,7 +228,7 @@ class LowSpeedShaft_drive4pt(Component):
 
         #material properties
         E=2.1e11
-        density=7850.0
+        density=7800.0
         n_safety = 2.5
         Sy = 66000 #psi
 
@@ -263,7 +264,7 @@ class LowSpeedShaft_drive4pt(Component):
 
             #Weight properties
             rotorWeight=self.rotorMass*g                             #rotor weight
-            lssWeight = pi/3.0*(D_max**2 + D_min**2 + D_max*D_min)*L_ms*7800*g/4.0 ##
+            lssWeight = pi/3.0*(D_max**2 + D_min**2 + D_max*D_min)*L_ms*density*g/4.0 ##
             lssMass = lssWeight/g
             gbxWeight = self.gbxMass*g                               #gearbox weight
             carrierWeight = self.carrierMass*g                       #carrier weight
@@ -310,9 +311,7 @@ class LowSpeedShaft_drive4pt(Component):
             #print 'Max Moment kNm:'
             #print MM_max
             #print 'Max moment location m:'
-            #print x_shaft[Index]
-
-            MM_medium=((My_ms[-1-len_pts]**2)+(Mz_ms[-1-len_pts]**2))**0.5/1000.0    
+            #print x_shaft[Index]   
 
             MM_min = ((My_ms[-1]**2+Mz_ms[-1]**2)**0.5/1000.0)
 
@@ -330,7 +329,7 @@ class LowSpeedShaft_drive4pt(Component):
             D_min=(16.0*n_safety/pi/Sy*(4.0*(MM*u_knm_inlb)**2+3.0*(T*u_knm_inlb)**2)**0.5)**(1.0/3.0)*u_in_m
 
             #Estimate ID
-            D_in=0.10*D_max
+            D_in=sR*D_max
             D_max = (D_max**4 + D_in**4)**0.25
             D_min = (D_min**4 + D_in**4)**0.25
             #print'Max shaft OD m:'
@@ -339,7 +338,6 @@ class LowSpeedShaft_drive4pt(Component):
             #print D_min
 
             lssWeight_new=((pi/3)*(D_max**2+D_min**2+D_max*D_min)*(L_ms)*density/4+(-pi/4*(D_in**2)*density*(L_ms)))*g
-            #lssWeight_new = (density*pi/12.0*L_ms*(D_max**2+D_min**2 + D_max*D_min) - density*pi/4.0*D_in**2*L_ms + density*pi/4.0*D_max**2*L_mb)*g
 
             #print 'Old LSS mass kg:' 
             #print lssMass
@@ -386,7 +384,7 @@ class LowSpeedShaft_drive4pt(Component):
         L_mb_0=L_mb                     #main shaft length
         L_ms = L_ms_new
         dL_ms = 0.05
-        dL = 0.25
+        dL = 0.0025
 
         while abs(check_limit_ms)>tol and counter_ms<100:
             counter_ms = counter_ms + 1
@@ -415,7 +413,7 @@ class LowSpeedShaft_drive4pt(Component):
 
                 #Weight
 
-                lssWeight_new=((pi/3)*(D_max**2+D_min**2+D_max*D_min)*(L_mb)*density/4+(-pi/4*(D_in**2)*density*(L_mb)))*g
+                lssWeight_new=((pi/3)*(D_max**2+D_min**2+D_max*D_min)*(L_ms_gb + L_mb)*density/4+(-pi/4*(D_in**2)*density*(L_ms_gb + L_mb)))*g
 
                 #define LSS
                 len_pts=101;
@@ -507,10 +505,7 @@ class LowSpeedShaft_drive4pt(Component):
                 #print 'Med shaft OD m:'
                 #print D_med
 
-                #density=7800
-
                 lssWeight_new = (density*pi/12.0*L_mb*(D_max**2+D_med**2 + D_max*D_med) - density*pi/4.0*D_in**2*L_mb)*g
-                #lssMass_new = lssWeight_new/g
 
                 #print 'Old LSS mass kg:' 
                 #print lssMass
@@ -579,7 +574,7 @@ class LowSpeedShaft_drive4pt(Component):
                 #print 'new shaft length = m:'
                 #print L_mb_new
 
-        lssMass_new=(pi/3)*(D_max**2+D_med**2+D_max*D_med)*(L_mb-0.5)*density/4+ \
+        lssMass_new=(pi/3)*(D_max**2+D_med**2+D_max*D_med)*(L_mb-0.45)*density/4+ \
                          (pi/4)*(D_max**2-D_in**2)*density*0.4+\
                          (pi/4)*(D_med**2-D_in**2)*density*0.5-\
                          (pi/4)*(D_in**2)*density*(L_mb+0.9/2)
@@ -592,8 +587,8 @@ class LowSpeedShaft_drive4pt(Component):
         print ("D_med: {0}").format(D_med)
         self.D_inner=D_in
         self.mass=lssMass_new
-        self.diameter1=D_max
-        self.diameter2=D_min
+        self.diameter1= D_max
+        self.diameter2= D_min
 
         # calculate mass properties
         cm = np.array([0.0,0.0,0.0])
@@ -1301,8 +1296,9 @@ class MainBearing_drive(Component):
             elif self.mb1Type == 'TRB':
                 self.mass = 1061.43 #7550 KN
 
-
-        self.mass *= (8000.0/2700.0) # add housing weight
+        print self.mass
+        self.mass += self.mass*(8000.0/2700.0) # add housing weight
+        print self.mass
         
         # calculate mass properties
         inDiam  = self.mb1Diameter
@@ -1478,7 +1474,9 @@ class SecondBearing_drive(Component):
             elif self.mb2Type == 'TRB':
                 self.mass = 1061.43 #7550 KN
 
-        self.mass *= (8000.0/2700.0) # add housing weight
+        print self.mass
+        self.mass += self.mass*(8000.0/2700.0) # add housing weight
+        print self.mass
 
         # calculate mass properties
         inDiam  = self.mb2Diameter

@@ -75,9 +75,6 @@ class Hub_drive(Component):
         castDensity = 7200.0 # kg/m^3
         self.mass=approxCylNetVol*castDensity
 
-
-
-
         # calculate mass properties
         self.diameter=2*rCyl
         self.thickness=castThickness
@@ -142,6 +139,8 @@ class LowSpeedShaft_drive4pt(Component):
     shrinkDiscMass = Float(iotype='in', units='kg', desc='Mass of the shrink disc')
     shaftAngle = Float(iotype='in', units='deg', desc='Angle of the LSS inclindation with respect to the horizontal')
     shaftRatio = Float(iotype='in', desc='Ratio of inner diameter to outer diameter.  Leave zero for solid LSS')
+    mb1Type = Str(iotype='in',desc='Main bearing type: CARB, TRB or SRB')
+    mb2Type = Str(iotype='in',desc='Second bearing type: CARB, TRB or SRB')
     
     # outputs
     designTorque = Float(iotype='out', units='N*m', desc='lss design torque')
@@ -217,7 +216,6 @@ class LowSpeedShaft_drive4pt(Component):
         D_min=0.2
         sR = self.shaftRatio
 
-
         L_ms_new = 0.0
         L_ms_0=0.5 # main shaft length downwind of main bearing
         L_ms=L_ms_0
@@ -244,13 +242,9 @@ class LowSpeedShaft_drive4pt(Component):
         while abs(check_limit) > tol and counter <100:
             counter = counter+1
             if L_ms_new > 0:
-
                 L_ms=L_ms_new
-
             else:
-
                 L_ms=L_ms_0
-
 
             #Distances
             L_rb = 1.912        #distance from hub center to main bearing
@@ -412,7 +406,6 @@ class LowSpeedShaft_drive4pt(Component):
                 L_cd = L_cu + 0.5
 
                 #Weight
-
                 lssWeight_new=((pi/3)*(D_max**2+D_min**2+D_max*D_min)*(L_ms_gb + L_mb)*density/4+(-pi/4*(D_in**2)*density*(L_ms_gb + L_mb)))*g
 
                 #define LSS
@@ -491,7 +484,6 @@ class LowSpeedShaft_drive4pt(Component):
                 MM=MM_med
                 D_med=(16.0*n_safety/pi/Sy*(4.0*(MM*u_knm_inlb)**2+3.0*(T*u_knm_inlb)**2)**0.5)**(1.0/3.0)*u_in_m
 
-
                 #Estimate ID
                 D_in=0.10*D_max
                 D_max = (D_max**4 + D_in**4)**0.25
@@ -555,40 +547,48 @@ class LowSpeedShaft_drive4pt(Component):
 
                 if check_limit < 0:
                     L_ms__gb_new = L_ms_gb + dL
-
                 else:
                     L_ms__gb_new = L_ms_gb + dL
 
                 #print 'new shaft length m:'
                 #print L_ms_gb_new
 
-
                 check_limit_ms = abs(abs(theta_y[-1]) - TRB_limit/n_safety_brg)
 
                 if check_limit < 0:
                     L_mb_new = L_mb + dL_ms
-
                 else:
                     L_mb_new = L_mb + dL_ms
 
                 #print 'new shaft length = m:'
                 #print L_mb_new
 
+        # Resize shaft for bearing selection
+        def resize_for_bearings(D_max, D_med, mb1type, mb2type):
+            # Internal function to resize shaft for bearings - for Yi to add content (using lookup table etc)           
+            D_max = 1.25
+            D_med = 0.75
+            # D_min ???
+            return [D_max, D_med]
+        
+        [D_max, D_med] = resize_for_bearings(D_max, D_med, self.mb1Type, self.mb2Type)        
+
         lssMass_new=(pi/3)*(D_max**2+D_med**2+D_max*D_med)*(L_mb-0.45)*density/4+ \
                          (pi/4)*(D_max**2-D_in**2)*density*0.4+\
                          (pi/4)*(D_med**2-D_in**2)*density*0.5-\
                          (pi/4)*(D_in**2)*density*(L_mb+0.9/2)
         lssMass_new *= 1.3 # add flange and shrink disk mass
-        print L_mb
         self.length=L_mb_new + 0.45 # TODO: create linear relationship based on power rating
+        print ("L_mb: {0}").format(L_mb)
         print ("length: {0}").format(self.length)
         self.D_outer=D_max
         print ("D_max: {0}").format(D_max)
         print ("D_med: {0}").format(D_med)
+        print ("D_min: {0}").format(D_min)
         self.D_inner=D_in
         self.mass=lssMass_new
         self.diameter1= D_max
-        self.diameter2= D_min
+        self.diameter2= D_med # Yi - double check which diameter to use
 
         # calculate mass properties
         cm = np.array([0.0,0.0,0.0])
@@ -702,13 +702,9 @@ class LowSpeedShaft_drive3pt(Component):
 
         while abs(check_limit) > tol:
             if L_ms_new > 0:
-
                 L_ms=L_ms_new
-
             else:
-
                 L_ms=L_ms_0
-
 
             #Distances
             L_rb = 1.912/2.0    #distance from hub center to main bearing
@@ -718,7 +714,7 @@ class LowSpeedShaft_drive3pt(Component):
             H_gb = 1.0          #distance to gbx center from trunnions in z-dir     
             L_gp = 0.825        #distance from gbx coupling to gbx trunnions
 
-            print L_rb
+            #print L_rb
 
             #Weight properties
             weightRotor=self.rotorMass*g                             #rotor weight
@@ -761,17 +757,17 @@ class LowSpeedShaft_drive3pt(Component):
             MM_max=np.amax((My_ms**2+Mz_ms**2)**0.5/1000.0)
             Index=np.argmax((My_ms**2+Mz_ms**2)**0.5/1000.0)
 
-            print 'Max Moment kNm:'
-            print MM_max
-            print 'Max moment location m:'
-            print x_shaft[Index]
+            #print 'Max Moment kNm:'
+            #print MM_max
+            #print 'Max moment location m:'
+            #print x_shaft[Index]
 
             MM_min = ((My_ms[-1]**2+Mz_ms[-1]**2)**0.5/1000.0)
 
-            print 'Max Moment kNm:'
-            print MM_min
-            print 'Max moment location m:'
-            print x_shaft[-1]
+            #print 'Max Moment kNm:'
+            #print MM_min
+            #print 'Max moment location m:'
+            #print x_shaft[-1]
 
             #Design shaft OD using distortion energy theory
             
@@ -792,19 +788,19 @@ class LowSpeedShaft_drive3pt(Component):
             D_in=self.shaftRatio*D_max
             D_max = D_max+D_in
             D_min = D_min + D_in
-            print'Max shaft OD m:'
-            print D_max
-            print 'Min shaft OD m:'
-            print D_min
+            #print'Max shaft OD m:'
+            #print D_max
+            #print 'Min shaft OD m:'
+            #print D_min
 
             density = 7800.0
             weightLSS_new = (density*pi/12.0*L_ms*(D_max**2+D_min**2 + D_max*D_min) - density*pi/4.0*D_in**2*L_ms + density*pi/4.0*D_max**2*L_rb)*g
             massLSS_new = weightLSS_new/g
 
-            print 'Old LSS mass kg:' 
-            print massLSS
-            print 'New LSS mass kg:'
-            print massLSS_new
+            #print 'Old LSS mass kg:' 
+            #print massLSS
+            #print 'New LSS mass kg:'
+            #print massLSS_new
 
             def deflection(F_r_z,W_r,gamma,M_r_y,f_mb_z,L_rb,W_ms,L_ms,z):
                 return -F_r_z*z**3/6.0 + W_r*cos(radians(gamma))*z**3/6.0 - M_r_y*z**2/2.0 - f_mb_z*(z-L_rb)**3/6.0 + W_ms/(L_ms + L_rb)/24.0*z**4
@@ -837,12 +833,14 @@ class LowSpeedShaft_drive3pt(Component):
             else:
                 L_ms_new = L_ms + dL
 
-            print 'new shaft length m:'
-            print L_ms_new
+            #print 'new shaft length m:'
+            #print L_ms_new
 
         self.length=L_ms_new
         self.D_outer=D_max
+        #print self.D_outer
         self.D_inner=D_in
+        #print self.D_in
         self.mass=massLSS_new
         self.diameter=D_max
 
@@ -933,10 +931,7 @@ class LowSpeedShaft_drive(Component):
 
         super(LowSpeedShaft_drive, self).__init__()
     
-    def execute(self):
-
-           
-        
+    def execute(self):    
 
         def calc_mass(rotorTorque, rotorBendingMoment, rotorMass, rotorDiaemeter, rotorSpeed, shaftAngle, shaftLength, shaftD1, shaftD2, machineRating, shaftRatio):
         
@@ -1077,7 +1072,7 @@ class LowSpeedShaft_drive(Component):
 
 #-------------------------------------------------------------------------------
 
-class MainBearings(Component):
+class MainBearings_drive(Component):
     ''' MainBearings class
           The MainBearings class is used to represent the main bearing components of a wind turbine drivetrain. It contains two subcomponents (main bearing and second bearing) which also inherit from the SubComponent class.
           It contains the general properties for a wind turbine component as well as additional design load and dimentional attributes as listed below.
@@ -1106,7 +1101,6 @@ class MainBearings(Component):
         self.upwindBearing = Bearing()
         self.downwindBearing = Bearing()
 
-
         #compute reaction forces
         #Safety Factors
         gammaAero=1.35
@@ -1125,9 +1119,7 @@ class MainBearings(Component):
         #print "R2: %g" %(R2)
 
         R1=-Fstatic-R2
-        #print "R1: %g" %(R1)
-        
-        
+        #print "R1: %g" %(R1)     
 
         # compute masses, dimensions and cost
 
@@ -1175,24 +1167,111 @@ class MainBearings(Component):
 
 #-------------------------------------------------------------------------------
 
-class MainBearing_drive(Component): 
+class Bearing_drive(Component): 
     ''' MainBearings class          
           The MainBearings class is used to represent the main bearing components of a wind turbine drivetrain. It contains two subcomponents (main bearing and second bearing) which also inherit from the SubComponent class.
           It contains the general properties for a wind turbine component as well as additional design load and dimentional attributes as listed below.
           It contains an update method to determine the mass, mass properties, and dimensions of the component.           
     '''
     # variables
-    mb1Type = Str(iotype='in',desc='Main bearing type: CARB, TRB or SRB')
-    mb1Diameter = Float(iotype='in', units='m', desc='lss outer diameter at main bearing')
-    lssDesignTorque = Float(iotype='in', units='N*m', desc='lss design torque')
-    lowSpeedShaftMass = Float(iotype='in', units='kg', desc='lss mass')
-    rotorSpeed = Float(iotype='in', units='m/s', desc='rotor speed at rated')
-    rotorDiameter = Float(iotype='in', units='m', desc='rotor diameter')
+    bearing_type = Str(iotype='in',desc='Main bearing type: CARB, TRB or SRB')
+    lss_diameter = Float(iotype='in', units='m', desc='lss outer diameter at main bearing')
+    lss_design_torque = Float(iotype='in', units='N*m', desc='lss design torque')
+    rotor_diameter = Float(iotype='in', units='m', desc='rotor diameter')
     
     # returns
     mass = Float(0.0, iotype='out', units='kg', desc='overall component mass')
     cm = Array(np.array([0.0, 0.0, 0.0]), iotype='out', desc='center of mass of the component in [x,y,z] for an arbitrary coordinate system')
     I = Array(np.array([0.0, 0.0, 0.0]), iotype='out', desc=' moments of Inertia for the component [Ixx, Iyy, Izz] around its center of mass')
+    
+    def __init__(self):
+        
+        super(Bearing_drive, self).__init__()
+    
+    def execute(self):
+
+        if self.lss_diameter < 0.3:
+            if self.bearing_type == 'CARB':
+                self.mass = 120 #3250 kN
+            elif self.bearing_type == 'SRB':
+                self.mass = 128.7 #3070 kN
+            elif self.bearing_type == 'TRB':
+                self.mass = 128.48 #2940 KN
+
+        elif self.lss_diameter < 0.4:
+            if self.bearing_type == 'CARB':
+                self.mass = 145 #3650 kN
+            elif self.bearing_type == 'SRB':
+                self.mass = 148.7 #3310 kN
+            elif self.bearing_type == 'TRB':
+                self.mass = 162.55 #3210 KN
+        
+        elif self.lss_diameter < 0.5:
+            if self.bearing_type == 'CARB':
+                self.mass = 225 #4250 kN
+            elif self.bearing_type == 'SRB':
+                self.mass = 220 #4290 kN
+            elif self.bearing_type == 'TRB':
+                self.mass = 220.08 #3460 KN
+
+        elif self.lss_diameter < 0.6:
+            if self.bearing_type == 'CARB':
+                self.mass = 390 #6300 kN
+            elif self.bearing_type == 'SRB':
+                self.mass = 390 #6040 kN
+            elif self.bearing_type == 'TRB':
+                self.mass = 323.6 #5730 KN
+
+        elif self.lss_diameter < 0.7:
+            if self.bearing_type == 'CARB':
+                self.mass = 645 #8800 kN
+            elif self.bearing_type == 'SRB':
+                self.mass = 658.8 #8370 kN
+            elif self.bearing_type == 'TRB':
+                self.mass = 513.79 #8740 KN
+
+        elif self.lss_diameter < 0.8:
+            if self.bearing_type == 'CARB':
+                self.mass = 860 #9150 kN
+            elif self.bearing_type == 'SRB':
+                self.mass = 875 #9780 kN
+            elif self.bearing_type == 'TRB':
+                self.mass = 660.60 #8520 KN
+
+        elif self.lss_diameter < 0.9:
+            if self.bearing_type == 'CARB':
+                self.mass = 1200 #12700 kN
+            elif self.bearing_type == 'SRB':
+                self.mass = 1322 #12200 kN
+            elif self.bearing_type == 'TRB':
+                self.mass = 1361.12 #12600 KN
+
+        elif self.lss_diameter < 1.0:
+            if self.bearing_type == 'CARB':
+                self.mass = 1570 #13400 kN
+            elif self.bearing_type == 'SRB':
+                self.mass = 1541 #14500 kN
+            elif self.bearing_type == 'TRB':
+                self.mass = 1061.43 #7550 KN
+
+        else:
+            if self.bearing_type == 'CARB':
+                self.mass = 2740 #20400 kN
+            elif self.bearing_type == 'SRB':
+                self.mass = 2960 #21200 kN
+            elif self.bearing_type == 'TRB':
+                self.mass = 1061.43 #7550 KN
+
+        print self.mass
+        self.mass += self.mass*(8000.0/2700.0) # add housing weight
+        print self.mass
+
+class MainBearing_drive(Bearing_drive): 
+    ''' MainBearings class          
+          The MainBearings class is used to represent the main bearing components of a wind turbine drivetrain. It contains two subcomponents (main bearing and second bearing) which also inherit from the SubComponent class.
+          It contains the general properties for a wind turbine component as well as additional design load and dimentional attributes as listed below.
+          It contains an update method to determine the mass, mass properties, and dimensions of the component.           
+    '''
     
     def __init__(self):
         ''' Initializes main bearing component 
@@ -1224,88 +1303,14 @@ class MainBearing_drive(Component):
     
     def execute(self):
 
-        if self.mb1Diameter < 0.3:
-            if self.mb1Type == 'CARB':
-                self.mass = 120 #3250 kN
-            elif self.mb1Type == 'SRB':
-                self.mass = 128.7 #3070 kN
-            elif self.mb1Type == 'TRB':
-                self.mass = 128.48 #2940 KN
-
-        elif self.mb1Diameter < 0.4:
-            if self.mb1Type == 'CARB':
-                self.mass = 145 #3650 kN
-            elif self.mb1Type == 'SRB':
-                self.mass = 148.7 #3310 kN
-            elif self.mb1Type == 'TRB':
-                self.mass = 162.55 #3210 KN
-        
-        elif self.mb1Diameter < 0.5:
-            if self.mb1Type == 'CARB':
-                self.mass = 225 #4250 kN
-            elif self.mb1Type == 'SRB':
-                self.mass = 220 #4290 kN
-            elif self.mb1Type == 'TRB':
-                self.mass = 220.08 #3460 KN
-
-        elif self.mb1Diameter < 0.6:
-            if self.mb1Type == 'CARB':
-                self.mass = 390 #6300 kN
-            elif self.mb1Type == 'SRB':
-                self.mass = 390 #6040 kN
-            elif self.mb1Type == 'TRB':
-                self.mass = 323.6 #5730 KN
-
-        elif self.mb1Diameter < 0.7:
-            if self.mb1Type == 'CARB':
-                self.mass = 645 #8800 kN
-            elif self.mb1Type == 'SRB':
-                self.mass = 658.8 #8370 kN
-            elif self.mb1Type == 'TRB':
-                self.mass = 513.79 #8740 KN
-
-        elif self.mb1Diameter < 0.8:
-            if self.mb1Type == 'CARB':
-                self.mass = 860 #9150 kN
-            elif self.mb1Type == 'SRB':
-                self.mass = 875 #9780 kN
-            elif self.mb1Type == 'TRB':
-                self.mass = 660.60 #8520 KN
-
-        elif self.mb1Diameter < 0.9:
-            if self.mb1Type == 'CARB':
-                self.mass = 1200 #12700 kN
-            elif self.mb1Type == 'SRB':
-                self.mass = 1322 #12200 kN
-            elif self.mb1Type == 'TRB':
-                self.mass = 1361.12 #12600 KN
-
-        elif self.mb1Diameter < 1.0:
-            if self.mb1Type == 'CARB':
-                self.mass = 1570 #13400 kN
-            elif self.mb1Type == 'SRB':
-                self.mass = 1541 #14500 kN
-            elif self.mb1Type == 'TRB':
-                self.mass = 1061.43 #7550 KN
-
-        else:
-            if self.mb1Type == 'CARB':
-                self.mass = 2740 #20400 kN
-            elif self.mb1Type == 'SRB':
-                self.mass = 2960 #21200 kN
-            elif self.mb1Type == 'TRB':
-                self.mass = 1061.43 #7550 KN
-
-        print self.mass
-        self.mass += self.mass*(8000.0/2700.0) # add housing weight
-        print self.mass
+        super(MainBearing_drive, self).execute()
         
         # calculate mass properties
-        inDiam  = self.mb1Diameter
+        inDiam  = self.lss_diameter
         depth = (inDiam * 1.5)
 
         cmMB = np.array([0.0,0.0,0.0])
-        cmMB = ([- (0.035 * self.rotorDiameter), 0.0, 0.025 * self.rotorDiameter])
+        cmMB = ([- (0.035 * self.rotor_diameter), 0.0, 0.025 * self.rotor_diameter])
         self.cm = cmMB
        
         b1I0 = (self.mass * inDiam ** 2 ) / 4.0 
@@ -1350,25 +1355,12 @@ class MainBearing_drive(Component):
 
 #-------------------------------------------------------------------------------
 
-class SecondBearing_drive(Component): 
+class SecondBearing_drive(Bearing_drive): 
     ''' MainBearings class          
           The MainBearings class is used to represent the main bearing components of a wind turbine drivetrain. It contains two subcomponents (main bearing and second bearing) which also inherit from the SubComponent class.
           It contains the general properties for a wind turbine component as well as additional design load and dimentional attributes as listed below.
           It contains an update method to determine the mass, mass properties, and dimensions of the component.           
     '''
-    # variables
-    mb2Type = Str(iotype='in',desc='Second bearing type: CARB, TRB or SRB')
-    mb2Diameter = Float(iotype='in', units='m', desc='lss outer diameter at main bearing')
-    lssDesignTorque = Float(iotype='in', units='N*m', desc='lss design torque')
-    lssDiameter = Float(iotype='in', units='m', desc='lss outer diameter')
-    lowSpeedShaftMass = Float(iotype='in', units='kg', desc='lss mass')
-    rotorSpeed = Float(iotype='in', units='m/s', desc='rotor speed at rated')
-    rotorDiameter = Float(iotype='in', units='m', desc='rotor diameter')
-    
-    # returns
-    mass = Float(0.0, iotype='out', units='kg', desc='overall component mass')
-    cm = Array(np.array([0.0, 0.0, 0.0]), iotype='out', desc='center of mass of the component in [x,y,z] for an arbitrary coordinate system')
-    I = Array(np.array([0.0, 0.0, 0.0]), iotype='out', desc=' moments of Inertia for the component [Ixx, Iyy, Izz] around its center of mass')
     
     def __init__(self):
         ''' Initializes second bearing component 
@@ -1399,91 +1391,15 @@ class SecondBearing_drive(Component):
         super(SecondBearing_drive, self).__init__()
     
     def execute(self):
-        print self.mb2Diameter
-        print self.mb2Type
 
-        if self.mb2Diameter < 0.3:
-            if self.mb2Type == 'CARB':
-                self.mass = 120 #3250 kN
-            elif self.mb2Type == 'SRB':
-                self.mass = 128.7 #3070 kN
-            elif self.mb2Type == 'TRB':
-                self.mass = 128.48 #2940 KN
-
-        elif self.mb2Diameter < 0.4:
-            if self.mb2Type == 'CARB':
-                self.mass = 145 #3650 kN
-            elif self.mb2Type == 'SRB':
-                self.mass = 148.7 #3310 kN
-            elif self.mb2Type == 'TRB':
-                self.mass = 162.55 #3210 KN
-        
-        elif self.mb2Diameter < 0.5:
-            if self.mb2Type == 'CARB':
-                self.mass = 225 #4250 kN
-            elif self.mb2Type == 'SRB':
-                self.mass = 220 #4290 kN
-            elif self.mb2Type == 'TRB':
-                self.mass = 220.08 #3460 KN
-
-        elif self.mb2Diameter < 0.6:
-            if self.mb2Type == 'CARB':
-                self.mass = 390 #6300 kN
-            elif self.mb2Type == 'SRB':
-                self.mass = 390 #6040 kN
-            elif self.mb2Type == 'TRB':
-                self.mass = 323.6 #5730 KN
-
-        elif self.mb2Diameter < 0.7:
-            if self.mb2Type == 'CARB':
-                self.mass = 645 #8800 kN
-            elif self.mb2Type == 'SRB':
-                self.mass = 658.8 #8370 kN
-            elif self.mb2Type == 'TRB':
-                self.mass = 513.79 #8740 KN
-
-        elif self.mb2Diameter < 0.8:
-            if self.mb2Type == 'CARB':
-                self.mass = 860 #9150 kN
-            elif self.mb2Type == 'SRB':
-                self.mass = 875 #9780 kN
-            elif self.mb2Type == 'TRB':
-                self.mass = 660.60 #8520 KN
-
-        elif self.mb2Diameter < 0.9:
-            if self.mb2Type == 'CARB':
-                self.mass = 1200 #12700 kN
-            elif self.mb2Type == 'SRB':
-                self.mass = 1322 #12200 kN
-            elif self.mb2Type == 'TRB':
-                self.mass = 1361.12 #12600 KN
-
-        elif self.mb2Diameter < 1.0:
-            if self.mb2Type == 'CARB':
-                self.mass = 1570 #13400 kN
-            elif self.mb2Type == 'SRB':
-                self.mass = 1541 #14500 kN
-            elif self.mb2Type == 'TRB':
-                self.mass = 1061.43 #7550 KN
-
-        else:
-            if self.mb2Type == 'CARB':
-                self.mass = 2740 #20400 kN
-            elif self.mb2Type == 'SRB':
-                self.mass = 2960 #21200 kN
-            elif self.mb2Type == 'TRB':
-                self.mass = 1061.43 #7550 KN
-
-        print self.mass
-        self.mass += self.mass*(8000.0/2700.0) # add housing weight
-        print self.mass
+        super(SecondBearing_drive, self).execute()
 
         # calculate mass properties
-        inDiam  = self.mb2Diameter
+        inDiam  = self.lss_diameter
         depth = (inDiam * 1.5)
 
         cmSB = np.array([0.0,0.0,0.0])
-        cmSB = ([- (0.01 * self.rotorDiameter), 0.0, 0.025 * self.rotorDiameter])
+        cmSB = ([- (0.01 * self.rotor_diameter), 0.0, 0.025 * self.rotor_diameter])
         self.cm = cmSB
 
         b2I0  = (self.mass * inDiam ** 2 ) / 4.0 
@@ -1543,8 +1459,6 @@ class Gearbox_drive(Component):
     rotorDiameter = Float(iotype='in', desc='rotor diameter')
     rotorTorque = Float(iotype='in', units='N*m', desc='rotor torque at rated power')
 
-
-
     #parameters
     #name = Str(iotype='in', desc='gearbox name')
     gearConfiguration = Str(iotype='in', desc='string that represents the configuration of the gearbox (stage number and types)')
@@ -1590,28 +1504,17 @@ class Gearbox_drive(Component):
 
     def execute(self):
 
-#self, name, gbxPower, ratio, gearConfig, Np, rotorSpeed, eff, rotorDiameter, LSSouterDiameter, ratioType='optimal', shType='normal'
-        #self.gbxPower=gbxPower
-        # self.eff=eff
-        # self.rotorSpeed=rotorSpeed
-        # self.gearConfig=gearConfig
-        # #self.ratio=ratio
-        # #self.name=name
-        # self.Np=Np
-        # self.ratioType=ratioType
-        # self.shType=shType
-
         self.stageRatio=np.zeros([3,1])
 
         self.stageTorque = np.zeros([len(self.stageRatio),1]) #filled in when ebxWeightEst is called
         self.stageMass = np.zeros([len(self.stageRatio),1]) #filled in when ebxWeightEst is called
         self.stageType=self.stageTypeCalc(self.gearConfiguration)
-        print self.gearRatio
-        print self.Np
-        print self.ratioType
-        print self.gearConfiguration
+        #print self.gearRatio
+        #print self.Np
+        #print self.ratioType
+        #print self.gearConfiguration
         self.stageRatio=self.stageRatioCalc(self.gearRatio,self.Np,self.ratioType,self.gearConfiguration)
-        print self.stageRatio
+        #print self.stageRatio
 
         m=self.gbxWeightEst(self.gearConfiguration,self.gearRatio,self.Np,self.ratioType,self.shType,self.rotorTorque)
         self.mass = float(m)
@@ -1635,11 +1538,7 @@ class Gearbox_drive(Component):
             tq = self.gbxPower*1000 / self.eff / (self.rotorSpeed * (pi / 30.0))
             return tq
         '''
-
-        #self.torque=rotorTorque()
-
-        
-        
+     
     def stageTypeCalc(self, config):
         temp=[]
         for character in config:
@@ -1648,9 +1547,6 @@ class Gearbox_drive(Component):
                 if character == 'p':
                     temp.append(1)
         return temp
-
-    
-
 
     def stageMassCalc(self, indStageRatio,indNp,indStageType):
 
@@ -1720,8 +1616,8 @@ class Gearbox_drive(Component):
         #Individual stage torques
         torqueTemp=self.rotorTorque
         for s in range(len(self.stageRatio)):
-            print torqueTemp
-            print self.stageRatio[s]
+            #print torqueTemp
+            #print self.stageRatio[s]
             self.stageTorque[s]=torqueTemp/self.stageRatio[s]
             torqueTemp=self.stageTorque[s]
             self.stageMass[s]=Kunit*Ka/Kfact*self.stageTorque[s]*self.stageMassCalc(self.stageRatio[s],self.Np[s],self.stageType[s])
@@ -1729,9 +1625,6 @@ class Gearbox_drive(Component):
         gbxWeight=(sum(self.stageMass))*Kshaft
         
         return gbxWeight
-
-
-
 
     def stageRatioCalc(self, overallRatio,Np,ratioType,config):
         '''
@@ -1780,7 +1673,7 @@ class Gearbox_drive(Component):
                 def constr2(x,overallRatio):
                     return overallRatio-x[0]*x[1]*x[2]
 
-                x=opt.fmin_cobyla(volume, x0,[constr1,constr2],consargs=[overallRatio],rhoend=1e-7)
+                x=opt.fmin_cobyla(volume, x0,[constr1,constr2],consargs=[overallRatio],rhoend=1e-7, iprint = 0)
         
             elif config == 'eep_3':
                 #fixes last stage ratio at 3
@@ -1805,7 +1698,7 @@ class Gearbox_drive(Component):
                 def constr4(x,overallRatio):
                     return 3.0-x[2]
 
-                x=opt.fmin_cobyla(volume, x0,[constr1,constr2,constr3,constr4],consargs=[overallRatio],rhoend=1e-7)
+                x=opt.fmin_cobyla(volume, x0,[constr1,constr2,constr3,constr4],consargs=[overallRatio],rhoend=1e-7,iprint=0)
             
             elif config == 'eep_2':
                 #fixes final stage ratio at 2
@@ -1824,7 +1717,7 @@ class Gearbox_drive(Component):
                 def constr2(x,overallRatio):
                     return overallRatio-x[0]*x[1]*x[2]
 
-                x=opt.fmin_cobyla(volume, x0,[constr1,constr2],consargs=[overallRatio],rhoend=1e-7)
+                x=opt.fmin_cobyla(volume, x0,[constr1,constr2],consargs=[overallRatio],rhoend=1e-7, iprint = 0)
         
             else:
                 x0=[overallRatio**(1.0/3.0),overallRatio**(1.0/3.0),overallRatio**(1.0/3.0)]
@@ -1839,14 +1732,11 @@ class Gearbox_drive(Component):
                 def constr2(x,overallRatio):
                     return overallRatio-x[0]*x[1]*x[2]
 
-                x=opt.fmin_cobyla(volume, x0,[constr1,constr2],consargs=[overallRatio],rhoend=1e-7)
+                x=opt.fmin_cobyla(volume, x0,[constr1,constr2],consargs=[overallRatio],rhoend=1e-7, iprint = 0)
         else:
             x='fail'
-
-                   
+                  
         return x
-
-
         
         
 #---------------------------------------------------------------------------------------------------------------

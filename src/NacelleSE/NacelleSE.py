@@ -274,8 +274,6 @@ class NacelleSE_drive(NacelleBase):
 
 #------------------------------------------------------------------
 
-#------------------------------------------------------------------
-
 class NacelleSE_drive3pt(NacelleBase):
 
     ''' 
@@ -298,8 +296,6 @@ class NacelleSE_drive3pt(NacelleBase):
     shType = Str(iotype='in', desc = 'normal or short shaft length')
     uptowerTransformer = Bool(iotype = 'in', desc = 'Boolean stating if transformer is uptower')
     shrinkDiscMass = Float(iotype='in', units='kg', desc='Mass of the shrink disc')
-
-
 
     
     # potential additional new parameters
@@ -368,8 +364,6 @@ class NacelleSE_drive3pt(NacelleBase):
         self.connect('shaftRatio', 'lowSpeedShaft.shaftRatio')
         self.connect('shrinkDiscMass', 'lowSpeedShaft.shrinkDiscMass')
         self.connect('carrierMass', 'lowSpeedShaft.carrierMass')
-
-
         
         # connect components
         self.connect('lowSpeedShaft.designTorque', ['mainBearing.lssDesignTorque', 'secondBearing.lssDesignTorque'])
@@ -424,7 +418,6 @@ class NacelleSE_drive3pt(NacelleBase):
 
         return detailedMasses'''
 
-
 #------------------------------------------------------------------
 
 class NacelleSE_drive4pt(NacelleBase):
@@ -434,7 +427,7 @@ class NacelleSE_drive4pt(NacelleBase):
           The NacelleSE class is used to represent the nacelle system of a wind turbine.             
     '''
 
-    # parameters
+    # variables
     rotorBendingMoment_x = Float(iotype='in', units='N*m', desc='The bending moment about the x axis')
     rotorBendingMoment_y = Float(iotype='in', units='N*m', desc='The bending moment about the y axis')
     rotorBendingMoment_z = Float(iotype='in', units='N*m', desc='The bending moment about the z axis')
@@ -444,6 +437,8 @@ class NacelleSE_drive4pt(NacelleBase):
     shaftAngle = Float(iotype='in', units='deg', desc='Angle of the LSS inclindation with respect to the horizontal')
     shaftRatio = Float(iotype='in', desc='Ratio of inner diameter to outer diameter.  Leave zero for solid LSS')
     rotorRatedRPM = Float(iotype='in', units='rpm', desc='Speed of rotor at rated power')
+
+    # parameters
     Np = Array(np.array([0.0,0.0,0.0,]), iotype='in', desc='number of planets in each stage')
     ratioType=Str(iotype='in', desc='optimal or empirical stage ratios')
     shType = Str(iotype='in', desc = 'normal or short shaft length')
@@ -452,9 +447,6 @@ class NacelleSE_drive4pt(NacelleBase):
     carrierMass = Float(iotype='in', units='kg', desc='Carrier mass')
     mb1Type = Str(iotype='in',desc='Main bearing type: CARB, TRB or SRB')
     mb2Type = Str(iotype='in',desc='Second bearing type: CARB, TRB or SRB')
-
-
-    # potential additional new parameters
 
     '''        name : str
           Name of the gearbox.
@@ -495,7 +487,7 @@ class NacelleSE_drive4pt(NacelleBase):
         self.driver.workflow.add(['aboveYawMassAdder', 'nacelleSystem', 'lowSpeedShaft', 'mainBearing', 'secondBearing', 'gearbox', 'highSpeedSide', 'generator', 'bedplate', 'yawSystem'])
         
         # connect inputs
-        self.connect('rotorDiameter', ['lowSpeedShaft.rotorDiameter', 'mainBearing.rotorDiameter', 'secondBearing.rotorDiameter', 'gearbox.rotorDiameter', 'highSpeedSide.rotorDiameter', \
+        self.connect('rotorDiameter', ['lowSpeedShaft.rotorDiameter', 'mainBearing.rotor_diameter', 'secondBearing.rotor_diameter', 'gearbox.rotorDiameter', 'highSpeedSide.rotorDiameter', \
                      'generator.rotorDiameter', 'bedplate.rotorDiameter', 'yawSystem.rotorDiameter'])
         self.connect('rotorBendingMoment_x', 'lowSpeedShaft.rotorBendingMoment_x')
         self.connect('rotorBendingMoment_y', 'lowSpeedShaft.rotorBendingMoment_y')
@@ -505,38 +497,32 @@ class NacelleSE_drive4pt(NacelleBase):
         self.connect('rotorForce_z', 'lowSpeedShaft.rotorForce_z')
         self.connect('rotorTorque', ['gearbox.rotorTorque', 'highSpeedSide.rotorTorque'])
         self.connect('rotorMass', 'lowSpeedShaft.rotorMass')
-        self.connect('rotorSpeed', ['mainBearing.rotorSpeed', 'secondBearing.rotorSpeed'])
         self.connect('rotorThrust', 'yawSystem.rotorThrust')
         self.connect('towerTopDiameter', ['bedplate.towerTopDiameter', 'yawSystem.towerTopDiameter'])
         self.connect('machineRating', ['generator.machineRating', 'aboveYawMassAdder.machineRating', 'lowSpeedShaft.machineRating'])
-        #self.connect('drivetrainDesign', ['gearbox.drivetrainDesign', 'generator.drivetrainDesign', 'bedplate.drivetrainDesign'])
-        #self.connect('drivetrainDesign', ['generator.drivetrainDesign', 'bedplate.drivetrainDesign'])
         self.connect('drivetrainDesign', 'generator.drivetrainDesign')
         self.connect('gearRatio', ['gearbox.gearRatio', 'generator.gearRatio', 'highSpeedSide.gearRatio'])
         self.connect('gearConfiguration', 'gearbox.gearConfiguration')
-        #self.connect('bevel', 'gearbox.bevel')
         self.connect('crane', 'aboveYawMassAdder.crane')
         self.connect('shaftAngle', 'lowSpeedShaft.shaftAngle')
         self.connect('shaftRatio', 'lowSpeedShaft.shaftRatio')
         self.connect('shrinkDiscMass', 'lowSpeedShaft.shrinkDiscMass')
         self.connect('carrierMass', 'lowSpeedShaft.carrierMass')
-        self.connect('mb1Type', 'mainBearing.mb1Type')
-        self.connect('mb2Type', 'secondBearing.mb2Type')
+        self.connect('mb1Type', ['mainBearing.bearing_type', 'lowSpeedShaft.mb1Type'])
+        self.connect('mb2Type', ['secondBearing.bearing_type', 'lowSpeedShaft.mb2Type'])
         self.connect('Np', 'gearbox.Np')
         self.connect('ratioType', 'gearbox.ratioType')
         self.connect('shType', 'gearbox.shType')
-
-
         
         # connect components
-        self.connect('lowSpeedShaft.designTorque', ['mainBearing.lssDesignTorque', 'secondBearing.lssDesignTorque'])
-        self.connect('lowSpeedShaft.diameter1', ['mainBearing.mb1Diameter', 'highSpeedSide.lssDiameter'])
-        self.connect('lowSpeedShaft.diameter2', 'secondBearing.mb2Diameter')
+        self.connect('lowSpeedShaft.designTorque', ['mainBearing.lss_design_torque', 'secondBearing.lss_design_torque'])
+        self.connect('lowSpeedShaft.diameter1', ['mainBearing.lss_diameter', 'highSpeedSide.lssDiameter'])
+        self.connect('lowSpeedShaft.diameter2', 'secondBearing.lss_diameter')
         self.connect('lowSpeedShaft.length', 'bedplate.shaftLength')
         self.connect('bedplate.length', 'aboveYawMassAdder.bedplateLength')
         self.connect('bedplate.width', 'aboveYawMassAdder.bedplateWidth')
 
-        self.connect('lowSpeedShaft.mass', ['mainBearing.lowSpeedShaftMass', 'secondBearing.lowSpeedShaftMass', 'aboveYawMassAdder.lowSpeedShaftMass', 'nacelleSystem.lowSpeedShaftMass'])
+        self.connect('lowSpeedShaft.mass', ['aboveYawMassAdder.lowSpeedShaftMass', 'nacelleSystem.lowSpeedShaftMass'])
         self.connect('mainBearing.mass', ['aboveYawMassAdder.mainBearingMass', 'nacelleSystem.mainBearingMass'])
         self.connect('secondBearing.mass', ['aboveYawMassAdder.secondBearingMass', 'nacelleSystem.secondBearingMass'])
         self.connect('gearbox.mass', ['lowSpeedShaft.gbxMass', 'aboveYawMassAdder.gearboxMass', 'nacelleSystem.gearboxMass'])

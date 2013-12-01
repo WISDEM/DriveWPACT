@@ -114,6 +114,14 @@ class Hub_drive(Component):
 
         self.derivatives.set_first_derivative(input_keys, output_keys, self.J)
 
+# Resize shaft for bearing selection
+def resize_for_bearings(D_max, D_med, mb1type, mb2type):
+    # Internal function to resize shaft for bearings - for Yi to add content (using lookup table etc)           
+    D_max = 1.25
+    D_med = 0.75
+    # D_min ???
+    return [D_max, D_med]
+
 #-------------------------------------------------------------------------------
 class LowSpeedShaft_drive4pt(Component):
     ''' LowSpeedShaft class
@@ -562,14 +570,6 @@ class LowSpeedShaft_drive4pt(Component):
 
                 #print 'new shaft length = m:'
                 #print L_mb_new
-
-        # Resize shaft for bearing selection
-        def resize_for_bearings(D_max, D_med, mb1type, mb2type):
-            # Internal function to resize shaft for bearings - for Yi to add content (using lookup table etc)           
-            D_max = 1.25
-            D_med = 0.75
-            # D_min ???
-            return [D_max, D_med]
         
         [D_max, D_med] = resize_for_bearings(D_max, D_med, self.mb1Type, self.mb2Type)        
 

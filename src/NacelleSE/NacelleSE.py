@@ -195,21 +195,20 @@ class NacelleSE_drive(NacelleBase):
         self.connect('rotorDiameter', ['lowSpeedShaft.rotorDiameter', 'mainBearing.rotorDiameter', 'secondBearing.rotorDiameter', 'gearbox.rotorDiameter', 'highSpeedSide.rotorDiameter', \
                      'generator.rotorDiameter', 'bedplate.rotorDiameter', 'yawSystem.rotorDiameter'])
         self.connect('rotorBendingMoment', 'lowSpeedShaft.rotorBendingMoment')
-        #self.connect('rotorTorque', ['lowSpeedShaft.rotorTorque', 'gearbox.rotorTorque', 'highSpeedSide.rotorTorque', 'bedplate.rotorTorque'])
+    
         self.connect('rotorTorque', ['lowSpeedShaft.rotorTorque', 'gearbox.rotorTorque', 'highSpeedSide.rotorTorque'])
-        #self.connect('rotorMass', ['lowSpeedShaft.rotorMass', 'bedplate.rotorMass'])
+    
         self.connect('rotorMass', 'lowSpeedShaft.rotorMass')
         self.connect('rotorSpeed', ['mainBearing.rotorSpeed', 'secondBearing.rotorSpeed'])
-        #self.connect('rotorThrust', ['bedplate.rotorThrust', 'yawSystem.rotorThrust'])
+
         self.connect('rotorThrust', 'yawSystem.rotorThrust')
         self.connect('towerTopDiameter', ['bedplate.towerTopDiameter', 'yawSystem.towerTopDiameter'])
         self.connect('machineRating', ['generator.machineRating', 'aboveYawMassAdder.machineRating', 'lowSpeedShaft.machineRating'])
-        #self.connect('drivetrainDesign', ['gearbox.drivetrainDesign', 'generator.drivetrainDesign', 'bedplate.drivetrainDesign'])
-        #self.connect('drivetrainDesign', ['generator.drivetrainDesign', 'bedplate.drivetrainDesign'])
+      
         self.connect('drivetrainDesign', 'generator.drivetrainDesign')
         self.connect('gearRatio', ['gearbox.gearRatio', 'generator.gearRatio', 'highSpeedSide.gearRatio'])
         self.connect('gearConfiguration', 'gearbox.gearConfiguration')
-        #self.connect('bevel', 'gearbox.bevel')
+
         self.connect('crane', 'aboveYawMassAdder.crane')
         self.connect('shaftAngle', 'lowSpeedShaft.shaftAngle')
         self.connect('shaftLength', ['lowSpeedShaft.shaftLength', 'bedplate.shaftLength'])
@@ -217,8 +216,7 @@ class NacelleSE_drive(NacelleBase):
         self.connect('shaftD2', 'lowSpeedShaft.shaftD2')
         self.connect('shaftRatio', 'lowSpeedShaft.shaftRatio')
         self.connect('rotorRatedRPM', 'lowSpeedShaft.rotorSpeed')
-        #self.connect('ratioType', 'gearbox.ratioType')
-        #self.connect('shType','gearbox.shType')
+        
         
         # connect components
         self.connect('lowSpeedShaft.designTorque', ['mainBearing.lssDesignTorque', 'secondBearing.lssDesignTorque'])
@@ -353,12 +351,9 @@ class NacelleSE_drive3pt(NacelleBase):
         self.connect('rotorThrust', 'yawSystem.rotorThrust')
         self.connect('towerTopDiameter', ['bedplate.towerTopDiameter', 'yawSystem.towerTopDiameter'])
         self.connect('machineRating', ['generator.machineRating', 'aboveYawMassAdder.machineRating', 'lowSpeedShaft.machineRating'])
-        #self.connect('drivetrainDesign', ['gearbox.drivetrainDesign', 'generator.drivetrainDesign', 'bedplate.drivetrainDesign'])
-        #self.connect('drivetrainDesign', ['generator.drivetrainDesign', 'bedplate.drivetrainDesign'])
         self.connect('drivetrainDesign', 'generator.drivetrainDesign')
         self.connect('gearRatio', ['gearbox.gearRatio', 'generator.gearRatio', 'highSpeedSide.gearRatio'])
         self.connect('gearConfiguration', 'gearbox.gearConfiguration')
-        #self.connect('bevel', 'gearbox.bevel')
         self.connect('crane', 'aboveYawMassAdder.crane')
         self.connect('shaftAngle', 'lowSpeedShaft.shaftAngle')
         self.connect('shaftRatio', 'lowSpeedShaft.shaftRatio')
@@ -434,7 +429,7 @@ class NacelleSE_drive4pt(NacelleBase):
     rotorForce_x = Float(iotype='in', units='N', desc='The force along the x axis applied at hub center')
     rotorForce_y = Float(iotype='in', units='N', desc='The force along the y axis applied at hub center')
     rotorForce_z = Float(iotype='in', units='N', desc='The force along the z axis applied at hub center')    
-    shaftAngle = Float(iotype='in', units='deg', desc='Angle of the LSS inclindation with respect to the horizontal')
+    shaftAngle = Float(iotype='in', units='deg', desc='Angle of the LSS inclindation with respect to the horizontal') # Bedplate tilting angle
     shaftRatio = Float(iotype='in', desc='Ratio of inner diameter to outer diameter.  Leave zero for solid LSS')
     rotorRatedRPM = Float(iotype='in', units='rpm', desc='Speed of rotor at rated power')
 
@@ -609,13 +604,12 @@ def example():
     nace.shaftD1 = 0.25
     nace.shaftD2 = 0.75
     nace.shaftRatio = 0.10
-    #nace.gbxPower=1.2*machineRating
     nace.Np = [3,3,1]
     nace.ratioType = 'optimal'
     nace.shType = 'normal'
     nace.uptowerTransformer=True
-    nace.shrinkDiscMass = 1000.0
-    nace.carrierMass = 8000.0
+    nace.shrinkDiscMass = 1000.0 # estimated
+    nace.carrierMass = 8000.0 # estimated
     nace.mb1Type = 'CARB'
     nace.mb2Type = 'SRB'
 

@@ -26,12 +26,12 @@ class Hub_drive(Component):
     # variables
     rotorDiameter = Float(iotype='in', units='m', desc='rotor diameter')
     bladeRootDiam = Float(iotype='in', units='m', desc='blade root diameter')
-
     
     # parameters
     bladeNumber = Int(3, iotype='in', desc='number of turbine blades')
 
     # outputs
+    diameter = Float(0.0, iotype='out', units='m', desc='hub diameter')
     mass = Float(0.0, iotype='out', units='kg', desc='overall component mass')
     cm = Array(np.array([0.0, 0.0, 0.0]), iotype='out', desc='center of mass of the component in [x,y,z] for an arbitrary coordinate system')
     I = Array(np.array([0.0, 0.0, 0.0]), iotype='out', desc=' moments of Inertia for the component [Ixx, Iyy, Izz] around its center of mass')
@@ -59,7 +59,7 @@ class Hub_drive(Component):
           principle moments of inertia for the component (Ixx, iyy, Izz) around its center of mass (relative to tower top center) [kg*m^2, kg*m^2, kg*m^2]   
         '''
 
-        super(Hub, self).__init__()
+        super(Hub_drive, self).__init__()
 
     def execute(self):
 
@@ -68,10 +68,10 @@ class Hub_drive(Component):
         hCyl=rCyl*3
         castThickness = rCyl/10.0
         approxCylVol=2*pi*rCyl*castThickness*hCyl
-        bladeRootVol=pi*(bladeRootDiam/2.0)**2*castThickness
+        bladeRootVol=pi*(self.bladeRootDiam/2.0)**2*castThickness
 
         #assume nacelle flange opening is similar to blade root opening
-        approxCylNetVol = approxCylVol - (1.0 + bladeNumber)*bladeRootVol
+        approxCylNetVol = approxCylVol - (1.0 + self.bladeNumber)*bladeRootVol
         castDensity = 7200.0 # kg/m^3
         self.mass=approxCylNetVol*castDensity
 
@@ -93,7 +93,7 @@ class Hub_drive(Component):
         self.I = (I)
 
         # derivatives
-        d_hubMass_d_rootMoment = 50 * hubgeomFact * hubloadFact * hubcontFact * self.bladeNumber * (hubmatldensity / hubmatlstress)
+'''        d_hubMass_d_rootMoment = 50 * hubgeomFact * hubloadFact * hubcontFact * self.bladeNumber * (hubmatldensity / hubmatlstress)
         d_cm_d_rotorDiameter = np.array([-0.05, 0.0, 0.025])
         d_I_d_rootMoment = 0.4 * d_hubMass_d_rootMoment * ((0.5**5 - (0.05 - 0.055/3.3)**5)/(0.5**3 - (0.05 - 0.055/3.3)**3)) * self.diameter**2
         d_I_d_hubDiameter = 2 * 0.4 * self.mass * ((0.5**5 - (0.05 - 0.055/3.3)**5)/(0.5**3 - (0.05 - 0.055/3.3)**3)) * self.diameter
@@ -112,7 +112,7 @@ class Hub_drive(Component):
         input_keys = ['rootMoment', 'rotorDiameter', 'hubDiameter']
         output_keys = ['hubMass', 'cm[0]', 'cm[1]', 'cm[2]', 'I[0]', 'I[1]', 'I[2]']
 
-        self.derivatives.set_first_derivative(input_keys, output_keys, self.J)
+        self.derivatives.set_first_derivative(input_keys, output_keys, self.J)'''
 
 # Resize shaft for bearing selection
 def resize_for_bearings(D_mb, mbtype):

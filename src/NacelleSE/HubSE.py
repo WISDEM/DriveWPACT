@@ -10,6 +10,7 @@ from openmdao.main.datatypes.api import Array, Float, Bool, Int
 from math import pi
 
 from HubSE_components import Hub, PitchSystem, Spinner, HubSystemAdder
+from DriveSE_components import Hub_drive
 
 class HubBase(Assembly):
 
@@ -29,7 +30,11 @@ class HubSE(HubBase):
     '''
     
     # parameters
-    hubDiameter = Float(0.0, iotype='in', units='m', desc='hub diameter')
+    hubDiameter = Float(0.0, iotype='in', units='m', desc='hub diameter')   
+
+    def __init__(self):
+    	  
+    	  super(HubSE, self).__ini__()
 
     def configure(self):
 
@@ -73,11 +78,15 @@ class HubSE_drive(HubBase):
           The HubSE class is used to represent the hub system of a wind turbine.             
     '''
 
+    def __init__(self):
+    	  
+    	  super(HubSE_drive, self).__init__()
+
     def configure(self):
 
-        '''# select components
+        # select components
         self.add('hubSystem', HubSystemAdder())
-        self.add('hub', Hub())
+        self.add('hub', Hub_drive())
         self.add('pitchSystem', PitchSystem())
         self.add('spinner', Spinner())
         
@@ -86,10 +95,11 @@ class HubSE_drive(HubBase):
         
         # connect inputs
         self.connect('bladeMass', ['pitchSystem.bladeMass'])
-        self.connect('rotorBendingMoment', ['hub.rotorBendingMoment', 'pitchSystem.rotorBendingMoment'])
+        self.connect('rotorBendingMoment', ['pitchSystem.rotorBendingMoment'])
         self.connect('bladeNumber', ['hub.bladeNumber', 'pitchSystem.bladeNumber'])
         self.connect('rotorDiameter', ['hub.rotorDiameter', 'pitchSystem.rotorDiameter', 'spinner.rotorDiameter'])
-        self.connect('hubDiameter', ['hub.hubDiameter', 'pitchSystem.hubDiameter', 'spinner.hubDiameter'])
+        self.connect('hub.diameter', ['pitchSystem.hubDiameter', 'spinner.hubDiameter'])
+        self.connect('bladeRootDiameter', 'hub.bladeRootDiam')
         
         # connect components
         self.connect('hub.mass', 'hubSystem.hubMass')
@@ -105,7 +115,7 @@ class HubSE_drive(HubBase):
         # create passthroughs
         self.create_passthrough('hubSystem.mass')
         self.create_passthrough('hubSystem.cm')
-        self.create_passthrough('hubSystem.I')'''
+        self.create_passthrough('hubSystem.I')
 
 
 #-------------------------------------------------------------------------------
@@ -116,11 +126,11 @@ def example():
 
     # NREL 5 MW turbine
     print "NREL 5 MW turbine test"
-    hub = HubSE()
+    hub = HubSE_drive()
     hub.bladeMass = 17740.0 # kg
     hub.rotorDiameter = 126.0 # m
     hub.bladeNumber  = 3
-    hub.hubDiameter   = 3.0 # m
+    hub.bladeRootDiameter   = 2*126.0/62.0 # m
     AirDensity= 1.225 # kg/(m^3)
     Solidity  = 0.0517 
     RatedWindSpeed = 11.05 # m/s
@@ -206,4 +216,4 @@ if __name__ == "__main__":
 
     example()
     
-    example2()
+    #example2()

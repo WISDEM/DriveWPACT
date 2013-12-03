@@ -580,11 +580,13 @@ def example():
     nace = NacelleSE_drive4pt()
     nace.rotorDiameter = 126.0 # m
     nace.rotorSpeed = 11.05 # m/s
-    nace.rotorTorque = 6.35e6 #4365248.74 # Nm
+    nace.machineRating = 5000.0
+    DrivetrainEfficiency = 0.95
+    nace.rotorTorque =  1.5 * (nace.machineRating * 1000 / DrivetrainEfficiency) / (nace.rotorSpeed * (pi / 30)) # 6.35e6 #4365248.74 # Nm
     nace.rotorThrust = 599610.0 #500930.84 # N
     nace.rotorMass = 0.0 #142585.75 # kg
     nace.rotorRatedRPM = 12.1 #rpm
-    nace.rotorBendingMoment = 14700000.0 #DLC 1.4
+    nace.rotorBendingMoment = -16665000.0 #DLC 1.4
     nace.rotorBendingMoment_x = 3.3e5 #4365248.74
     nace.rotorBendingMoment_y = -16665000.0 #14700000.0
     nace.rotorBendingMoment_z = 2896300.0 #0.0
@@ -601,7 +603,7 @@ def example():
     # NREL 5 MW Drivetrain variables
     nace.drivetrainDesign = 1 # geared 3-stage Gearbox with induction generator machine
     nace.machineRating = 5000.0 # kW
-    nace.gearRatio = 97.0 # 97:1 as listed in the 5 MW reference document
+    nace.gearRatio = 96.76 # 97:1 as listed in the 5 MW reference document
     nace.gearConfiguration = 'eep' # epicyclic-epicyclic-parallel
     #nace.bevel = 0 # no bevel stage
     nace.crane = True # onboard crane present
@@ -835,11 +837,94 @@ def example2():
     # 207727.1
 
 
+def example_80_redesign():
+
+    # test of module for turbine data set
+
+    # NREL 5 MW Rotor Variables with Optimalized Blade Design
+    print '----- NREL 5 MW Turbine with Optimalized Blade Design-----'
+    nace = NacelleSE_drive4pt()
+    nace.rotorDiameter = 126.0 # m
+    nace.rotorSpeed = 11.05 # m/s
+    DrivetrainEfficiency = 0.95
+    nace.machineRating = 5000
+    nace.rotorTorque =  1.5 * (nace.machineRating * 1000 / DrivetrainEfficiency) / (nace.rotorSpeed * (pi / 30)) # 6.35e6 #4365248.74 # Nm
+    #nace.rotorTorque = 6.37e6 #4365248.74 # Nm
+    nace.rotorThrust = 599610.0 #500930.84 # N
+    nace.rotorMass = 0.0 #142585.75 # kg
+    nace.rotorRatedRPM = 12.1 #rpm
+    nace.rotorBendingMoment = 14700000.0 #DLC 1.4
+    nace.rotorBendingMoment_x = 3.0151e5 #4365248.74
+    nace.rotorBendingMoment_y = -14619000 #14700000.0
+    nace.rotorBendingMoment_z = 1885400 #0.0
+    nace.rotorForce_x = 560450 #500930.84
+    nace.rotorForce_y = 165440 #0.0
+    nace.rotorForce_z = -804320 #1e6
+   
+
+    # NREL 5 MW Drivetrain variables
+    nace.drivetrainDesign = 1 # geared 3-stage Gearbox with induction generator machine
+    nace.machineRating = 5000.0 # kW
+    nace.gearRatio = 96.76 # 97:1 as listed in the 5 MW reference document
+    nace.gearConfiguration = 'eep' # epicyclic-epicyclic-parallel
+    #nace.bevel = 0 # no bevel stage
+    nace.crane = True # onboard crane present
+    nace.shaftAngle = 5.0 #deg
+    nace.shaftLength = 3.383 #m
+    nace.shaftD1 = 0.25
+    nace.shaftD2 = 0.75
+    nace.shaftRatio = 0.10
+    nace.Np = [3,3,1]
+    nace.ratioType = 'optimal'
+    nace.shType = 'normal'
+    nace.uptowerTransformer=True
+    nace.shrinkDiscMass = 1000.0 # estimated
+    nace.carrierMass = 8000.0 # estimated
+    nace.mb1Type = 'CARB'
+    nace.mb2Type = 'SRB'
+
+
+    # NREL 5 MW Tower Variables
+    nace.towerTopDiameter = 3.78 # m
+
+    nace.run()
+    
+    print 'Nacelle system model results'
+    print 'Low speed shaft %8.1f kg %6.2f m Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
+          % (nace.lowSpeedShaft.mass , nace.lowSpeedShaft.I[0], nace.lowSpeedShaft.I[1], nace.lowSpeedShaft.I[2], nace.lowSpeedShaft.cm[0], nace.lowSpeedShaft.cm[1], nace.lowSpeedShaft.cm[2])
+    # 31257.3 kg
+    print 'Main bearings   %8.1f kg ' % (nace.mainBearing.mass + nace.secondBearing.mass)
+    # 9731.4 kg
+    print 'Gearbox         %8.1f kg %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
+          % (nace.gearbox.mass, nace.gearbox.I[0], nace.gearbox.I[1], nace.gearbox.I[2], nace.gearbox.cm[0], nace.gearbox.cm[1], nace.gearbox.cm[2] )
+    # 30237.6 kg
+    print '     gearbox stage masses: %8.1f kg  %8.1f kg %8.1f kg' % (nace.gearbox.stageMasses[0], nace.gearbox.stageMasses[1], nace.gearbox.stageMasses[2])
+    print 'High speed shaft & brakes  %8.1f kg %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
+          % (nace.highSpeedSide.mass, nace.highSpeedSide.I[0], nace.highSpeedSide.I[1], nace.highSpeedSide.I[2], nace.highSpeedSide.cm[0], nace.highSpeedSide.cm[1], nace.highSpeedSide.cm[2])
+    # 1492.4 kg
+    print 'Generator       %8.1f kg %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
+          % (nace.generator.mass, nace.generator.I[0], nace.generator.I[1], nace.generator.I[2], nace.generator.cm[0], nace.generator.cm[1], nace.generator.cm[2])
+    # 16699.9 kg
+    print 'Variable speed electronics %8.1f kg' % (nace.aboveYawMassAdder.vspdEtronicsMass)
+    # 0.0 kg
+    print 'Overall mainframe %8.1f kg' % (nace.aboveYawMassAdder.mainframeMass)
+    # 96932.9 kg
+    print '     Bedplate     %8.1f kg %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
+         % (nace.bedplate.mass, nace.bedplate.I[0], nace.bedplate.I[1], nace.bedplate.I[2], nace.bedplate.cm[0], nace.bedplate.cm[1], nace.bedplate.cm[2])
+    print 'electrical connections  %8.1f kg' % (nace.aboveYawMassAdder.econnectionsMass)
+    # 0.0 kg
+    print 'HVAC system     %8.1f kg' % (nace.aboveYawMassAdder.hydrCoolingMass )
+    # 400.0 kg
+    print 'Nacelle cover:   %8.1f kg %6.2f m Height %6.2f m Width %6.2f m Length' % (nace.aboveYawMassAdder.nacelleCovMass , nace.aboveYawMassAdder.height, nace.aboveYawMassAdder.width, nace.aboveYawMassAdder.length)
+    # 9097.4 kg
+    print 'Yaw system      %8.1f kg' % (nace.yawSystem.mass )
+    # 11878.2 kg
+    print 'Overall nacelle:  %8.1f kg .cm %6.2f %6.2f %6.2f I %6.2f %6.2f %6.2f' % (nace.mass, nace.cm[0], nace.cm[1], nace.cm[2], nace.I[0], nace.I[1], nace.I[2]  )
+    # 207727.1
+
 if __name__ == '__main__':
     ''' Main runs through tests of several drivetrain configurations with known component masses and dimensions '''
-    
-    # todo: adjust to use rotor model interface
 
     example()
-    
+    example_80_redesign()
     #example2()

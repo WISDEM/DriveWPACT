@@ -184,8 +184,11 @@ class PitchSystem(Component):
                                                             # simplified equation for blade root moment (Sunderland model) if one is not provided'''
 
         hubpitchFact      = 1.0                                 # default factor is 1.0 (0.54 for modern designs)
-        self.mass =hubpitchFact * (0.22 * self.bladeMass * self.bladeNumber + 12.6 * self.bladeNumber * self.rotorBendingMoment * (pitchmatldensity / pitchmatlstress))
+        #self.mass =hubpitchFact * (0.22 * self.bladeMass * self.bladeNumber + 12.6 * self.bladeNumber * self.rotorBendingMoment * (pitchmatldensity / pitchmatlstress))
                                                             # mass of pitch system based on Sunderland model
+        self.mass =hubpitchFact * (0.22 * self.bladeMass * self.bladeNumber + 12.6 * self.rotorBendingMoment * (pitchmatldensity / pitchmatlstress))
+                                                            # mass of pitch system based on Sunderland model
+
 
         # calculate mass properties
         if self.hubDiameter == 0:

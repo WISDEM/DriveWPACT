@@ -64,9 +64,9 @@ class Hub_drive(Component):
     def execute(self):
 
         #Model hub as a cyclinder with holes for blade root and nacelle flange.
-        rCyl=self.rotorDiameter/62.0
-        hCyl=rCyl*3
-        castThickness = rCyl/10.0
+        rCyl=1.1*(self.bladeRootDiam/2) # TODO: sensitivity to this parameter
+        hCyl=rCyl*2.8 # TODO: sensitivity to this parameter
+        castThickness = rCyl/10.0 # TODO: sensitivity to this parameter
         approxCylVol=2*pi*rCyl*castThickness*hCyl
         bladeRootVol=pi*(self.bladeRootDiam/2.0)**2*castThickness
 
@@ -124,69 +124,69 @@ def resize_for_bearings(D_mb, mbtype):
       FW_mb2=0.5
     '''
 
-    if D_mb < 0.3:
+    if D_mb <= 0.3:
         if mbtype == 'CARB':
               D_mb_a = 0.3 #m
               FW_mb = 0.2
         elif self.bearing_type == 'SRB':
               D_mb_a = 0.3 #m
               FW_mb = 0.2
-    elif D_mb < 0.4:
+    elif D_mb <= 0.4:
       if mbtype == 'CARB':
               D_mb_a = 0.4 #m
               FW_mb = 0.2
       elif mbtype == 'SRB':
               D_mb_a =  0.4 
-              FW_mb =0.2       
-    elif D_mb < 0.5:
+              FW_mb =0.25       
+    elif D_mb <= 0.5:
       if mbtype == 'CARB':
               D_mb_a = 0.5 #
               FW_mb = 0.325
       elif mbtype == 'SRB':
               D_mb_a = 0.5 #
               FW_mb = 0.325                            
-    elif D_mb < 0.6:
+    elif D_mb <= 0.6:
       if mbtype == 'CARB':
               D_mb_a = 0.6 #
               FW_mb = 0.375
       elif mbtype == 'SRB':
               D_mb_a = 0.6 #
               FW_mb = 0.375
-    elif D_mb < 0.75:
+    elif D_mb <= 0.75:
       if mbtype == 'CARB':
               D_mb_a = 0.71 #
               FW_mb = 0.345
       elif mbtype == 'SRB':
-              D_mb_a = 0.71 #
-              FW_mb = 0.345          
-    elif D_mb < 0.8:
+              D_mb_a = 0.75 #
+              FW_mb = 0.44          
+    elif D_mb <= 0.8:
       if mbtype == 'CARB':
               D_mb_a = 0.8 #
               FW_mb = 0.375
       elif mbtype == 'SRB':
               D_mb_a = 0.8 #
-              FW_mb = 0.375
-    elif D_mb < 0.95:
+              FW_mb = 0.475
+    elif D_mb <= 0.95:
       if mbtype == 'CARB':
               D_mb_a = 0.95 #
               FW_mb = 0.3
       elif mbtype == 'SRB':
               D_mb_a = 0.95 #
-              FW_mb = 0.3           
-    elif D_mb < 1.0:
+              FW_mb = 0.525           
+    elif D_mb <= 1.0:
       if mbtype == 'CARB':
-              D_mb_a = 1 #
+              D_mb_a = 1.0 #
               FW_mb = 0.375
       elif mbtype == 'SRB':
               D_mb_a = 1 #
-              FW_mb = 0.375
+              FW_mb = 0.5
     else:
       if mbtype == 'CARB':
-              D_mb_a = 0.95 #
-              FW_mb = 0.3
+              D_mb_a = 1.25 #
+              FW_mb = 0.45
       elif mbtype == 'SRB':
-              D_mb_a = 0.95 #
-              FW_mb = 0.3   
+              D_mb_a = 1.25 #
+              FW_mb = 0.5   
     
     return [D_mb_a, FW_mb]
 
@@ -574,29 +574,23 @@ class LowSpeedShaft_drive4pt(Component):
         [D_max_a,FW_max] = resize_for_bearings(D_max,  self.mb1Type)        
         
         [D_med_a,FW_med] = resize_for_bearings(D_med,  self.mb2Type)   
-        
-        D_max_a = 1.25
-        D_med_a = 0.75
-        FW_max=0.45
-        FW_med=0.5
-    
-    
+            
         lssMass_new=(pi/3)*(D_max_a**2+D_med_a**2+D_max_a*D_med_a)*(L_mb-(FW_max+FW_med)/2)*density/4+ \
                          (pi/4)*(D_max_a**2-D_in**2)*density*FW_max+\
                          (pi/4)*(D_med_a**2-D_in**2)*density*FW_med-\
                          (pi/4)*(D_in**2)*density*(L_mb+(FW_max+FW_med)/2)
         lssMass_new *= 1.3 # add flange and shrink disk mass
         self.length=L_mb_new + (FW_max+FW_med)/2 # TODO: create linear relationship based on power rating
-        print ("L_mb: {0}").format(L_mb)
-        print ("length: {0}").format(self.length)
+        #print ("L_mb: {0}").format(L_mb)
+        print ("LSS length, m: {0}").format(self.length)
         self.D_outer=D_max
-        print ("Upwind MB OD: {0}").format(D_max)
-        print ("Dnwind MB OD: {0}").format(D_med)
+        print ("Upwind MB OD, m: {0}").format(D_max_a)
+        print ("Dnwind MB OD, m: {0}").format(D_med_a)
        # print ("D_min: {0}").format(D_min)
         self.D_inner=D_in
         self.mass=lssMass_new
-        self.diameter1= D_max
-        self.diameter2= D_med 
+        self.diameter1= D_max_a
+        self.diameter2= D_med_a 
 
         # calculate mass properties
         cm = np.array([0.0,0.0,0.0])
@@ -1198,7 +1192,7 @@ class Bearing_drive(Component):
     
     def execute(self):
 
-        if self.lss_diameter < 0.3:
+        if self.lss_diameter <= 0.3:
             if self.bearing_type == 'CARB':
                 self.mass = 120 #3250 kN
             elif self.bearing_type == 'SRB':
@@ -1206,7 +1200,7 @@ class Bearing_drive(Component):
             elif self.bearing_type == 'TRB':
                 self.mass = 128.48 #2940 KN
 
-        elif self.lss_diameter < 0.4:
+        elif self.lss_diameter <= 0.4:
             if self.bearing_type == 'CARB':
                 self.mass = 145 #3650 kN
             elif self.bearing_type == 'SRB':
@@ -1214,7 +1208,7 @@ class Bearing_drive(Component):
             elif self.bearing_type == 'TRB':
                 self.mass = 162.55 #3210 KN
         
-        elif self.lss_diameter < 0.5:
+        elif self.lss_diameter <= 0.5:
             if self.bearing_type == 'CARB':
                 self.mass = 225 #4250 kN
             elif self.bearing_type == 'SRB':
@@ -1222,7 +1216,7 @@ class Bearing_drive(Component):
             elif self.bearing_type == 'TRB':
                 self.mass = 220.08 #3460 KN
 
-        elif self.lss_diameter < 0.6:
+        elif self.lss_diameter <= 0.6:
             if self.bearing_type == 'CARB':
                 self.mass = 390 #6300 kN
             elif self.bearing_type == 'SRB':
@@ -1230,15 +1224,15 @@ class Bearing_drive(Component):
             elif self.bearing_type == 'TRB':
                 self.mass = 323.6 #5730 KN
 
-        elif self.lss_diameter < 0.7:
+        elif self.lss_diameter <= 0.7:  # modified by Y.G. FOR TSS 
             if self.bearing_type == 'CARB':
                 self.mass = 645 #8800 kN
             elif self.bearing_type == 'SRB':
-                self.mass = 658.8 #8370 kN
+                self.mass = 1400 #8370 kN 
             elif self.bearing_type == 'TRB':
                 self.mass = 513.79 #8740 KN
 
-        elif self.lss_diameter < 0.8:
+        elif self.lss_diameter <= 0.8:
             if self.bearing_type == 'CARB':
                 self.mass = 860 #9150 kN
             elif self.bearing_type == 'SRB':
@@ -1246,7 +1240,7 @@ class Bearing_drive(Component):
             elif self.bearing_type == 'TRB':
                 self.mass = 660.60 #8520 KN
 
-        elif self.lss_diameter < 0.9:
+        elif self.lss_diameter <= 0.9:
             if self.bearing_type == 'CARB':
                 self.mass = 1200 #12700 kN
             elif self.bearing_type == 'SRB':
@@ -1254,15 +1248,15 @@ class Bearing_drive(Component):
             elif self.bearing_type == 'TRB':
                 self.mass = 1361.12 #12600 KN
 
-        elif self.lss_diameter < 1.0:
+        elif self.lss_diameter <= 1.0:   # modified by Y.G. FOR TSS 
             if self.bearing_type == 'CARB':
                 self.mass = 1570 #13400 kN
             elif self.bearing_type == 'SRB':
-                self.mass = 1541 #14500 kN
+                self.mass = 1400 #14500 kN
             elif self.bearing_type == 'TRB':
                 self.mass = 1061.43 #7550 KN
 
-        else:
+        else:                              # modified by Y.G. FOR TSS 
             if self.bearing_type == 'CARB':
                 self.mass = 2740 #20400 kN
             elif self.bearing_type == 'SRB':
@@ -1270,9 +1264,9 @@ class Bearing_drive(Component):
             elif self.bearing_type == 'TRB':
                 self.mass = 1061.43 #7550 KN
 
-        print self.mass
+        #print self.mass
         self.mass += self.mass*(8000.0/2700.0) # add housing weight
-        print self.mass
+        print ("MB Mass, kg: {0}").format(self.mass)
 
 class MainBearing_drive(Bearing_drive): 
     ''' MainBearings class          
@@ -1822,7 +1816,7 @@ class Bedplate_drive(Component):
 
         #rear component weights and locations
         transLoc = 3.0*self.genLoc
-        self.transMass = 2.4445*(6000.0) + 1599.0
+        self.transMass = 2.4445*(self.machineRating) + 1599.0
         convLoc = 2.0*self.genLoc
         convMass = 0.3*self.transMass 
 
@@ -1853,7 +1847,7 @@ class Bedplate_drive(Component):
         b0 = h0/2.0
 
         stressTol = 1e6
-        deflTol = 2.5e-3
+        deflTol = 3.5e-3 # todo: model SUPER sensitive to this parameter... modified to achieve agreement with 5 MW turbine for now
 
         rootStress = 250e6
         totalTipDefl = 1.0
@@ -2147,8 +2141,6 @@ class YawSystem_drive(Component):
           else:
             self.numYawMotors = 8.0
 
-
-        
         #assume friction plate surface width is 1/10 the diameter
         #assume friction plate thickness scales with rotor diameter
         frictionPlateVol=pi*self.towerTopDiameter*(self.towerTopDiameter*0.10)*(self.rotorDiameter/1000.0)

@@ -115,12 +115,80 @@ class Hub_drive(Component):
         self.derivatives.set_first_derivative(input_keys, output_keys, self.J)
 
 # Resize shaft for bearing selection
-def resize_for_bearings(D_max, D_med, mb1type, mb2type):
-    # Internal function to resize shaft for bearings - for Yi to add content (using lookup table etc)           
-    D_max = 1.25
-    D_med = 0.75
-    # D_min ???
-    return [D_max, D_med]
+def resize_for_bearings(D_mb, mbtype):
+    # Internal function to resize shaft for bearings - for Yi to add content (using lookup table etc)   
+    # To add bearing load capacity check later        
+    '''D_mb1 = 1.25
+      D_mb2 = 0.75
+      FW_mb1=0.45
+      FW_mb2=0.5
+    '''
+
+    if D_mb < 0.3:
+        if mbtype == 'CARB':
+              D_mb_a = 0.3 #m
+              FW_mb = 0.2
+        elif self.bearing_type == 'SRB':
+              D_mb_a = 0.3 #m
+              FW_mb = 0.2
+    elif D_mb < 0.4:
+      if mbtype == 'CARB':
+              D_mb_a = 0.4 #m
+              FW_mb = 0.2
+      elif mbtype == 'SRB':
+              D_mb_a =  0.4 
+              FW_mb =0.2       
+    elif D_mb < 0.5:
+      if mbtype == 'CARB':
+              D_mb_a = 0.5 #
+              FW_mb = 0.325
+      elif mbtype == 'SRB':
+              D_mb_a = 0.5 #
+              FW_mb = 0.325                            
+    elif D_mb < 0.6:
+      if mbtype == 'CARB':
+              D_mb_a = 0.6 #
+              FW_mb = 0.375
+      elif mbtype == 'SRB':
+              D_mb_a = 0.6 #
+              FW_mb = 0.375
+    elif D_mb < 0.75:
+      if mbtype == 'CARB':
+              D_mb_a = 0.71 #
+              FW_mb = 0.345
+      elif mbtype == 'SRB':
+              D_mb_a = 0.71 #
+              FW_mb = 0.345          
+    elif D_mb < 0.8:
+      if mbtype == 'CARB':
+              D_mb_a = 0.8 #
+              FW_mb = 0.375
+      elif mbtype == 'SRB':
+              D_mb_a = 0.8 #
+              FW_mb = 0.375
+    elif D_mb < 0.95:
+      if mbtype == 'CARB':
+              D_mb_a = 0.95 #
+              FW_mb = 0.3
+      elif mbtype == 'SRB':
+              D_mb_a = 0.95 #
+              FW_mb = 0.3           
+    elif D_mb < 1.0:
+      if mbtype == 'CARB':
+              D_mb_a = 1 #
+              FW_mb = 0.375
+      elif mbtype == 'SRB':
+              D_mb_a = 1 #
+              FW_mb = 0.375
+    else:
+      if mbtype == 'CARB':
+              D_mb_a = 0.95 #
+              FW_mb = 0.3
+      elif mbtype == 'SRB':
+              D_mb_a = 0.95 #
+              FW_mb = 0.3   
+    
+    return [D_mb_a, FW_mb]
 
 #-------------------------------------------------------------------------------
 class LowSpeedShaft_drive4pt(Component):
@@ -144,7 +212,7 @@ class LowSpeedShaft_drive4pt(Component):
     carrierMass = Float(iotype='in', units='kg', desc='Carrier mass')
 
     # parameters
-    shrinkDiscMass = Float(iotype='in', units='kg', desc='Mass of the shrink disc')
+    shrinkDiscMass = Float(iotype='in', units='kg', desc='Mass of the shrink disc')# shrink disk or flange addtional mass
     shaftAngle = Float(iotype='in', units='deg', desc='Angle of the LSS inclindation with respect to the horizontal')
     shaftRatio = Float(iotype='in', desc='Ratio of inner diameter to outer diameter.  Leave zero for solid LSS')
     mb1Type = Str(iotype='in',desc='Main bearing type: CARB, TRB or SRB')
@@ -207,23 +275,13 @@ class LowSpeedShaft_drive4pt(Component):
         M_r_z = self.rotorBendingMoment_z
 
         #input parameters
-        # rotorMass = 110000
-        L_overhung = 1.912 # TODO: make this an input
-        # machineRating = 5000000
-        # gbxMass = 53692
-        # shrinkDiscMass =1000
-        # carrierMass = 8000
-
         g=9.81
         gamma=self.shaftAngle #deg LSS angle wrt horizontal
         PSF=1
 
-        T=M_r_x/1000.0
-
-        D_max=1
-        D_min=0.2
-        sR = self.shaftRatio
-
+        
+                
+        # initialization for iterations    
         L_ms_new = 0.0
         L_ms_0=0.5 # main shaft length downwind of main bearing
         L_ms=L_ms_0
@@ -231,13 +289,30 @@ class LowSpeedShaft_drive4pt(Component):
         check_limit = 1.0
         dL=0.05
         counter = 0
+        N_count=100
+        N_count_2=2
+        len_pts=101
+        D_max=1
+        D_min=0.2
+        sR = self.shaftRatio
 
+        #Distances
+        L_rb = 1.912        #distance from hub center to main bearing   # to add as an input
+        L_bg = 6.11         #distance from hub center to gearbox yokes  # to add as an input
+        L_as = L_ms/2.0     #distance from main bearing to shaft center
+        L_gb = 0.0          #distance to gbx center from trunnions in x-dir # to add as an input
+        H_gb = 1.0          #distance to gbx center from trunnions in z-dir # to add as an input     
+        L_gp = 0.825        #distance from gbx coupling to gbx trunnions
+        L_cu = L_ms + 0.5   #distance from upwind main bearing to upwind carrier bearing 0.5 meter is an estimation # to add as an input
+        L_cd = L_cu + 0.5   #distance from upwind main bearing to downwind carrier bearing 0.5 meter is an estimation # to add as an input
+        
         #material properties
         E=2.1e11
         density=7800.0
-        n_safety = 2.5
+        n_safety = 2.5 # According to AGMA, takes into account the peak load safety factor
         Sy = 66000 #psi
 
+        #unit conversion
         u_knm_inlb = 8850.745454036
         u_in_m = 0.0254000508001
 
@@ -247,7 +322,7 @@ class LowSpeedShaft_drive4pt(Component):
         TRB_limit = 3.0/60.0/180.0*pi
         n_safety_brg = 1.0
 
-        while abs(check_limit) > tol and counter <100:
+        while abs(check_limit) > tol and counter <N_count:
             counter = counter+1
             if L_ms_new > 0:
                 L_ms=L_ms_new
@@ -255,14 +330,9 @@ class LowSpeedShaft_drive4pt(Component):
                 L_ms=L_ms_0
 
             #Distances
-            L_rb = 1.912        #distance from hub center to main bearing
-            L_bg = 6.11         #distance from hub center to gearbox yokes
             L_as = L_ms/2.0     #distance from main bearing to shaft center
-            L_gb = 0.0          #distance to gbx center from trunnions in x-dir
-            H_gb = 1.0          #distance to gbx center from trunnions in z-dir     
-            L_gp = 0.825        #distance from gbx coupling to gbx trunnions
-            L_cu = L_ms + 0.5
-            L_cd = L_cu + 0.5
+            L_cu = L_ms + 0.5   #distance from upwind main bearing to upwind carrier bearing 0.5 meter is an estimation # to add as an input
+            L_cd = L_cu + 0.5   #distance from upwind main bearing to downwind carrier bearing 0.5 meter is an estimation # to add as an input
 
             #Weight properties
             rotorWeight=self.rotorMass*g                             #rotor weight
@@ -273,26 +343,20 @@ class LowSpeedShaft_drive4pt(Component):
             shrinkDiscWeight = self.shrinkDiscMass*g
 
             #define LSS
-            len_pts=101;
             x_ms = np.linspace(L_rb, L_ms+L_rb, len_pts)
             x_rb = np.linspace(0.0, L_rb, len_pts)
             y_gp = np.linspace(0, L_gp, len_pts)
 
-            F_mb_x = -F_r_x - rotorWeight*sin(radians(g))
-            F_mb_y = M_r_z/L_bg - F_r_y*(L_bg + L_rb)/L_bg
+            F_mb_x = -F_r_x - rotorWeight*sin(radians(gamma))
+            F_mb_y = +M_r_z/L_bg - F_r_y*(L_bg + L_rb)/L_bg
             F_mb_z = (-M_r_y + rotorWeight*(cos(radians(gamma))*(L_rb + L_bg)\
-            + sin(radians(gamma))*H_gb) + lssWeight*(L_bg - L_as)\
-            * cos(radians(gamma)) + shrinkDiscWeight*cos(radians(gamma))\
-            *(L_bg - L_ms) - gbxWeight*cos(radians(gamma))*L_gb - F_r_z*cos(radians(gamma))*(L_bg + L_rb))/L_bg
+                       + sin(radians(gamma))*H_gb) + lssWeight*(L_bg - L_as)\
+                       * cos(radians(gamma)) + shrinkDiscWeight*cos(radians(gamma))\
+                       *(L_bg - L_ms) - gbxWeight*cos(radians(gamma))*L_gb - F_r_z*cos(radians(gamma))*(L_bg + L_rb))/L_bg
 
             F_gb_x = -(lssWeight+shrinkDiscWeight+gbxWeight)*sin(radians(gamma))
             F_gb_y = -F_mb_y - F_r_y
             F_gb_z = -F_mb_z + (shrinkDiscWeight+rotorWeight+gbxWeight + lssWeight)*cos(radians(gamma)) - F_r_z
-
-            F_cu_z = (lssWeight + shrinkDiscWeight + gbxWeight)*cos(radians(gamma)) - F_mb_z - F_r_z \
-            - (-M_r_y - F_r_z*cos(radians(gamma))*L_rb + lssWeight*(L_bg - L_as)*cos(radians(gamma)) - carrierWeight*cos(radians(gamma))*L_gb)\
-            / (1 - L_cu/L_cd)
-            F_cd_z = (lssWeight + shrinkDiscWeight + gbxWeight)*cos(radians(gamma)) - F_mb_z - F_r_z - F_cu_z
 
             My_ms = np.zeros(2*len_pts)
             Mz_ms = np.zeros(2*len_pts)
@@ -307,51 +371,30 @@ class LowSpeedShaft_drive4pt(Component):
 
             x_shaft = np.concatenate([x_rb, x_ms])
 
-            MM_max=np.amax((My_ms**2+Mz_ms**2)**0.5/1000.0)
-            Index=np.argmax((My_ms**2+Mz_ms**2)**0.5/1000.0)
+            MM_max=np.amax((My_ms**2+Mz_ms**2)**0.5)
+            Index=np.argmax((My_ms**2+Mz_ms**2)**0.5)
 
-            #print 'Max Moment kNm:'
-            #print MM_max
-            #print 'Max moment location m:'
-            #print x_shaft[Index]   
-
-            MM_min = ((My_ms[-1]**2+Mz_ms[-1]**2)**0.5/1000.0)
-
-            #print 'Max Moment kNm:'
-            #print MM_min
-            #print 'Max moment location m:'
-            #print x_shaft[-1]
-
+            MM_min = ((My_ms[-1]**2+Mz_ms[-1]**2)**0.5)
             #Design shaft OD 
             MM=MM_max
-            D_max=(16.0*n_safety/pi/Sy*(4.0*(MM*u_knm_inlb)**2+3.0*(T*u_knm_inlb)**2)**0.5)**(1.0/3.0)*u_in_m
+            D_max=(16.0*n_safety/pi/Sy*(4.0*(MM*u_knm_inlb/1000)**2+3.0*(M_r_x*u_knm_inlb/1000)**2)**0.5)**(1.0/3.0)*u_in_m
 
             #OD at end
             MM=MM_min
-            D_min=(16.0*n_safety/pi/Sy*(4.0*(MM*u_knm_inlb)**2+3.0*(T*u_knm_inlb)**2)**0.5)**(1.0/3.0)*u_in_m
+            D_min=(16.0*n_safety/pi/Sy*(4.0*(MM*u_knm_inlb/1000)**2+3.0*(M_r_x*u_knm_inlb/1000)**2)**0.5)**(1.0/3.0)*u_in_m
 
             #Estimate ID
             D_in=sR*D_max
             D_max = (D_max**4 + D_in**4)**0.25
             D_min = (D_min**4 + D_in**4)**0.25
-            #print'Max shaft OD m:'
-            #print D_max
-            #print 'Min shaft OD m:'
-            #print D_min
-
+           
             lssWeight_new=((pi/3)*(D_max**2+D_min**2+D_max*D_min)*(L_ms)*density/4+(-pi/4*(D_in**2)*density*(L_ms)))*g
-
-            #print 'Old LSS mass kg:' 
-            #print lssMass
-            #print 'New LSS mass kg:'
-            #print lssMass_new
 
             def deflection(F_r_z,W_r,gamma,M_r_y,f_mb_z,L_rb,W_ms,L_ms,z):
                 return -F_r_z*z**3/6.0 + W_r*cos(radians(gamma))*z**3/6.0 - M_r_y*z**2/2.0 - f_mb_z*(z-L_rb)**3/6.0 + W_ms/(L_ms + L_rb)/24.0*z**4
             
-            z=L_rb+L_ms
-            
-            D1 = deflection(F_r_z,rotorWeight,gamma,M_r_y,F_mb_z,L_rb,lssWeight_new,L_ms,z)
+                     
+            D1 = deflection(F_r_z,rotorWeight,gamma,M_r_y,F_mb_z,L_rb,lssWeight_new,L_ms,L_rb+L_ms)
             D2 = deflection(F_r_z,rotorWeight,gamma,M_r_y,F_mb_z,L_rb,lssWeight_new,L_ms,L_rb)
             C1 = -(D1-D2)/L_ms;
             C2 = D2-C1*(L_rb);
@@ -376,9 +419,7 @@ class LowSpeedShaft_drive4pt(Component):
             else:
                 L_ms_new = L_ms + dL
 
-            #print 'new shaft length m:'
-            #print L_ms_new
-
+         #Initialization
         L_mb=L_ms_new
         counter_ms=0
         check_limit_ms=1.0
@@ -388,7 +429,7 @@ class LowSpeedShaft_drive4pt(Component):
         dL_ms = 0.05
         dL = 0.0025
 
-        while abs(check_limit_ms)>tol and counter_ms<100:
+        while abs(check_limit_ms)>tol and counter_ms<N_count:
             counter_ms = counter_ms + 1
             if L_mb_new > 0:
                 L_mb=L_mb_new
@@ -401,7 +442,7 @@ class LowSpeedShaft_drive4pt(Component):
             L_ms_0=0.5 #mainshaft length
             L_ms = L_ms_0
 
-            while abs(check_limit) > tol and counter <2:
+            while abs(check_limit) > tol and counter <N_count_2:
                 counter = counter+1
                 if L_ms_gb_new>0.0:
                     L_ms_gb = L_ms_gb_new
@@ -417,17 +458,16 @@ class LowSpeedShaft_drive4pt(Component):
                 lssWeight_new=((pi/3)*(D_max**2+D_min**2+D_max*D_min)*(L_ms_gb + L_mb)*density/4+(-pi/4*(D_in**2)*density*(L_ms_gb + L_mb)))*g
 
                 #define LSS
-                len_pts=101;
                 x_ms = np.linspace(L_rb + L_mb, L_ms_gb + L_mb +L_rb, len_pts)
                 x_mb = np.linspace(L_rb, L_mb+L_rb, len_pts)
                 x_rb = np.linspace(0.0, L_rb, len_pts)
                 y_gp = np.linspace(0, L_gp, len_pts)
 
-                F_mb2_x = -F_r_x - rotorWeight*sin(radians(g))
+                F_mb2_x = -F_r_x - rotorWeight*sin(radians(gamma))
                 F_mb2_y = -M_r_z/L_mb + F_r_y*(L_rb)/L_mb
                 F_mb2_z = (M_r_y - rotorWeight*cos(radians(gamma))*L_rb \
-                    -lssWeight*L_as*cos(radians(gamma)) - shrinkDiscWeight*L_ms*cos(radians(gamma)) \
-                    + gbxWeight*cos(radians(gamma))*L_gb + F_r_z*cos(radians(gamma))*L_rb)/L_mb
+                          -lssWeight*L_as*cos(radians(gamma)) - shrinkDiscWeight*L_ms*cos(radians(gamma)) \
+                           + gbxWeight*cos(radians(gamma))*L_gb + F_r_z*cos(radians(gamma))*L_rb)/L_mb
 
                 F_mb1_x = 0.0
                 F_mb1_y = -F_r_y - F_mb2_y
@@ -436,11 +476,6 @@ class LowSpeedShaft_drive4pt(Component):
                 F_gb_x = -(lssWeight+shrinkDiscWeight+gbxWeight)*sin(radians(gamma))
                 F_gb_y = -F_mb_y - F_r_y
                 F_gb_z = -F_mb_z + (shrinkDiscWeight+rotorWeight+gbxWeight + lssWeight)*cos(radians(gamma)) - F_r_z
-
-                F_cu_z = (lssWeight + shrinkDiscWeight + gbxWeight)*cos(radians(gamma)) - F_mb_z - F_r_z \
-                - (-M_r_y - F_r_z*cos(radians(gamma))*L_rb + lssWeight*(L_bg - L_as)*cos(radians(gamma)) - carrierWeight*cos(radians(gamma))*L_gb)\
-                / (1 - L_cu/L_cd)
-                F_cd_z = (lssWeight + shrinkDiscWeight + gbxWeight)*cos(radians(gamma)) - F_mb_z - F_r_z - F_cu_z
 
                 My_ms = np.zeros(3*len_pts)
                 Mz_ms = np.zeros(3*len_pts)
@@ -459,66 +494,37 @@ class LowSpeedShaft_drive4pt(Component):
 
                 x_shaft = np.concatenate([x_rb, x_mb, x_ms])
 
-                MM_max=np.amax((My_ms**2+Mz_ms**2)**0.5/1000.0)
-                Index=np.argmax((My_ms**2+Mz_ms**2)**0.5/1000.0)
+                MM_max=np.amax((My_ms**2+Mz_ms**2)**0.5)
+                Index=np.argmax((My_ms**2+Mz_ms**2)**0.5)
 
-                #print 'Max Moment kNm:'
-                #print MM_max
-                #print 'Max moment location m:'
-                #print x_shaft[Index]
+                MM_min = ((My_ms[-1]**2+Mz_ms[-1]**2)**0.5)
 
-                MM_min = ((My_ms[-1]**2+Mz_ms[-1]**2)**0.5/1000.0)
-
-                #print 'Max Moment kNm:'
-                #print MM_min
-                #print 'Max moment location m:'
-                #print x_shaft[-1]
-
-                MM_med = ((My_ms[-1 - len_pts]**2 + Mz_ms[-1 - len_pts]**2)**0.5/1000)
-
-                #print 'Med Moment kNm:'
-                #print MM_med
-                #print 'Med moment location m:'
-                #print x_shaft[-1 - len_pts]
+                MM_med = ((My_ms[-1 - len_pts]**2 + Mz_ms[-1 - len_pts]**2)**0.5)
 
                 #Design Shaft OD using static loading and distortion energy theory
                 MM=MM_max
-                D_max=(16.0*n_safety/pi/Sy*(4.0*(MM*u_knm_inlb)**2+3.0*(T*u_knm_inlb)**2)**0.5)**(1.0/3.0)*u_in_m
+                D_max=(16.0*n_safety/pi/Sy*(4.0*(MM*u_knm_inlb/1000)**2+3.0*(M_r_x*u_knm_inlb/1000)**2)**0.5)**(1.0/3.0)*u_in_m
 
                 #OD at end
                 MM=MM_min
-                D_min=(16.0*n_safety/pi/Sy*(4.0*(MM*u_knm_inlb)**2+3.0*(T*u_knm_inlb)**2)**0.5)**(1.0/3.0)*u_in_m
+                D_min=(16.0*n_safety/pi/Sy*(4.0*(MM*u_knm_inlb/1000)**2+3.0*(M_r_x*u_knm_inlb/1000)**2)**0.5)**(1.0/3.0)*u_in_m
 
                 MM=MM_med
-                D_med=(16.0*n_safety/pi/Sy*(4.0*(MM*u_knm_inlb)**2+3.0*(T*u_knm_inlb)**2)**0.5)**(1.0/3.0)*u_in_m
+                D_med=(16.0*n_safety/pi/Sy*(4.0*(MM*u_knm_inlb/1000)**2+3.0*(M_r_x*u_knm_inlb/1000)**2)**0.5)**(1.0/3.0)*u_in_m
 
                 #Estimate ID
-                D_in=0.10*D_max
+                D_in=sR*D_max
                 D_max = (D_max**4 + D_in**4)**0.25
                 D_min = (D_min**4 + D_in**4)**0.25
                 D_med = (D_med**4 + D_in**4)**0.25
 
-                #print'Max shaft OD m:'
-                #print D_max
-                #print 'Min shaft OD m:'
-                #print D_min
-                #print 'Med shaft OD m:'
-                #print D_med
-
                 lssWeight_new = (density*pi/12.0*L_mb*(D_max**2+D_med**2 + D_max*D_med) - density*pi/4.0*D_in**2*L_mb)*g
-
-                #print 'Old LSS mass kg:' 
-                #print lssMass
-                #print 'New LSS mass kg:'
-                #print lssMass_new
 
                 #deflection between mb1 and mb2
                 def deflection1(F_r_z,W_r,gamma,M_r_y,f_mb1_z,L_rb,W_ms,L_ms,L_mb,z):
                     return -F_r_z*z**3/6.0 + W_r*cos(radians(gamma))*z**3/6.0 - M_r_y*z**2/2.0 - f_mb1_z*(z-L_rb)**3/6.0 + W_ms/(L_ms + L_mb)/24.0*z**4
                 
-                z=L_rb+L_mb
-
-                D11 = deflection1(F_r_z,rotorWeight,gamma,M_r_y,F_mb1_z,L_rb,lssWeight_new,L_ms,L_mb,z)
+                D11 = deflection1(F_r_z,rotorWeight,gamma,M_r_y,F_mb1_z,L_rb,lssWeight_new,L_ms,L_mb,L_rb+L_mb)
                 D21 = deflection1(F_r_z,rotorWeight,gamma,M_r_y,F_mb1_z,L_rb,lssWeight_new,L_ms,L_mb,L_rb)
                 C11 = -(D11-D21)/L_mb
                 C21 = -D21-C11*(L_rb)
@@ -542,8 +548,8 @@ class LowSpeedShaft_drive4pt(Component):
                 def gx2(F_r_z,W_r,gamma,M_r_y,f_mb1_z,f_mb2_z,L_rb,W_ms,L_ms,L_mb,z):
                     return -F_r_z*z**2/2.0 + W_r*cos(radians(gamma))*z**2/2.0 - M_r_y*z - f_mb1_z*(z - L_rb)**2/2.0 - f_mb2_z*(z - L_rb - L_mb)**2/2.0 + W_ms/(L_ms + L_mb)/6.0*z**3
 
-                D12 = deflection2(F_r_z,rotorWeight,gamma,M_r_y,F_mb1_z,F_mb2_z,L_rb,lssWeight_new,L_ms,L_mb,z)
-                D22 = gx2(F_r_z,rotorWeight,gamma,M_r_y,F_mb1_z,F_mb2_z,L_rb,lssWeight_new,L_ms,L_mb,z)
+                D12 = deflection2(F_r_z,rotorWeight,gamma,M_r_y,F_mb1_z,F_mb2_z,L_rb,lssWeight_new,L_ms,L_mb,L_rb+L_mb)
+                D22 = gx2(F_r_z,rotorWeight,gamma,M_r_y,F_mb1_z,F_mb2_z,L_rb,lssWeight_new,L_ms,L_mb,L_rb+L_mb)
                 C12 = gx1(F_r_z,rotorWeight,gamma,M_r_y,F_mb1_z,L_rb,lssWeight_new,L_ms,L_mb,C11,x_mb[-1])-D22
                 C22 = -D12-C12*(L_rb + L_mb);
 
@@ -558,37 +564,39 @@ class LowSpeedShaft_drive4pt(Component):
                 else:
                     L_ms__gb_new = L_ms_gb + dL
 
-                #print 'new shaft length m:'
-                #print L_ms_gb_new
-
                 check_limit_ms = abs(abs(theta_y[-1]) - TRB_limit/n_safety_brg)
 
-                if check_limit < 0:
+                if check_limit_ms < 0:
                     L_mb_new = L_mb + dL_ms
                 else:
                     L_mb_new = L_mb + dL_ms
 
-                #print 'new shaft length = m:'
-                #print L_mb_new
+        [D_max_a,FW_max] = resize_for_bearings(D_max,  self.mb1Type)        
         
-        [D_max, D_med] = resize_for_bearings(D_max, D_med, self.mb1Type, self.mb2Type)        
-
-        lssMass_new=(pi/3)*(D_max**2+D_med**2+D_max*D_med)*(L_mb-0.45)*density/4+ \
-                         (pi/4)*(D_max**2-D_in**2)*density*0.4+\
-                         (pi/4)*(D_med**2-D_in**2)*density*0.5-\
-                         (pi/4)*(D_in**2)*density*(L_mb+0.9/2)
+        [D_med_a,FW_med] = resize_for_bearings(D_med,  self.mb2Type)   
+        
+        D_max_a = 1.25
+        D_med_a = 0.75
+        FW_max=0.45
+        FW_med=0.5
+    
+    
+        lssMass_new=(pi/3)*(D_max_a**2+D_med_a**2+D_max_a*D_med_a)*(L_mb-(FW_max+FW_med)/2)*density/4+ \
+                         (pi/4)*(D_max_a**2-D_in**2)*density*FW_max+\
+                         (pi/4)*(D_med_a**2-D_in**2)*density*FW_med-\
+                         (pi/4)*(D_in**2)*density*(L_mb+(FW_max+FW_med)/2)
         lssMass_new *= 1.3 # add flange and shrink disk mass
-        self.length=L_mb_new + 0.45 # TODO: create linear relationship based on power rating
+        self.length=L_mb_new + (FW_max+FW_med)/2 # TODO: create linear relationship based on power rating
         print ("L_mb: {0}").format(L_mb)
         print ("length: {0}").format(self.length)
         self.D_outer=D_max
-        print ("D_max: {0}").format(D_max)
-        print ("D_med: {0}").format(D_med)
-        print ("D_min: {0}").format(D_min)
+        print ("Upwind MB OD: {0}").format(D_max)
+        print ("Dnwind MB OD: {0}").format(D_med)
+       # print ("D_min: {0}").format(D_min)
         self.D_inner=D_in
         self.mass=lssMass_new
         self.diameter1= D_max
-        self.diameter2= D_med # Yi - double check which diameter to use
+        self.diameter2= D_med 
 
         # calculate mass properties
         cm = np.array([0.0,0.0,0.0])
@@ -1738,10 +1746,276 @@ class Gearbox_drive(Component):
                   
         return x
         
-        
 #---------------------------------------------------------------------------------------------------------------
 
 class Bedplate_drive(Component):
+    ''' Bedplate class
+          The Bedplate class is used to represent the bedplate of a wind turbine drivetrain.
+          It contains the general properties for a wind turbine component as well as additional design load and dimentional attributes as listed below.
+          It contains an update method to determine the mass, mass properties, and dimensions of the component.
+    '''
+
+    #variables
+    hssLoc = Float(iotype ='in', units = 'm', desc='HSS CM location')
+    hssMass = Float(iotype ='in', units = 'kg', desc='HSS mass')
+    genLoc = Float(iotype ='in', units = 'm', desc='generator CM location')
+    genMass = Float(iotype ='in', units = 'kg', desc='generator mass')
+    lssLoc = Float(iotype ='in', units = 'm', desc='LSS CM location')
+    lssMass = Float(iotype ='in', units = 'kg', desc='LSS mass')
+    mb1Loc = Float(iotype ='in', units = 'm', desc='Upwind main bearing CM location')
+    mb1Mass = Float(iotype ='in', units = 'kg', desc='Upwind main bearing mass')
+    mb2Loc = Float(iotype ='in', units = 'm', desc='Downwind main bearing CM location')
+    mb2Mass = Float(iotype ='in', units = 'kg', desc='Downwind main bearing mass')
+    transMass = Float(iotype ='in', units = 'kg', desc='Transformer mass')
+    towerTopDiameter = Float(iotype ='in', units = 'm', desc='diameter of the top tower section at the yaw gear')
+    shaftLength = Float(iotype = 'in', units = 'm', desc='LSS length')
+    rotorDiameter = Float(iotype = 'in', units = 'm', desc='rotor diameter')
+    machineRating = Float(iotype='in', units='kW', desc='machineRating machine rating of the turbine')
+    rotorMass = Float(iotype='in', units='kg', desc='rotor mass')
+    rotorBendingMoment_y = Float(iotype='in', units='N*m', desc='The bending moment about the y axis')
+    rotorForce_z = Float(iotype='in', units='N', desc='The force along the z axis applied at hub center')
+
+    #parameters
+    #check openmdao syntax for boolean
+    uptowerTransformer = Bool(iotype = 'in', desc = 'Boolean stating if transformer is uptower')
+
+    #outputs
+    mass = Float(0.0, iotype='out', units='kg', desc='overall component mass')
+    cm = Array(np.array([0.0, 0.0, 0.0]), iotype='out', desc='center of mass of the component in [x,y,z] for an arbitrary coordinate system')
+    I = Array(np.array([0.0, 0.0, 0.0]), iotype='out', desc=' moments of Inertia for the component [Ixx, Iyy, Izz] around its center of mass')    
+    length = Float(iotype='out', units='m', desc='length of bedplate')
+
+    width = Float(iotype='out', units='m', desc='width of bedplate')
+
+    def __init__(self):
+        ''' Initializes bedplate component
+
+        Parameters
+        ----------
+        towerTopDiameter : float
+          Diameter of the top tower section at the nacelle flange [m].
+        shaftLength : float
+          Length of the LSS [m]
+        rotorDiameter : float
+          The wind turbine rotor diameter [m].
+        uptowerTransformer : int
+          Determines if the transformer is uptower ('1') or downtower ('0').
+        '''
+
+        #Treat front cast iron main beam in similar manner to hub
+        #Use 1/4 volume of annulus given by:
+        #length is LSS length plus tower radius
+        #diameter is 1.25x tower diameter
+        #guess at initial thickness same as hub
+        #towerTopDiam, shaftLength, rotorDiameter, uptowerTransformer=0
+
+        super(Bedplate_drive,self).__init__()
+
+    def execute(self):
+        #Model bedplate as 2 parallel I-beams with a rear steel frame and a front cast frame
+        #Deflection constraints applied at each bedplate end
+        #Stress constraint checked at root of front and rear bedplate sections
+
+        g = 9.81
+        E = 2.1e11
+        density = 7800
+
+        #rear component weights and locations
+        transLoc = 3.0*self.genLoc
+        self.transMass = 2.4445*(6000.0) + 1599.0
+        convLoc = 2.0*self.genLoc
+        convMass = 0.3*self.transMass 
+
+        rearTotalLength = 0.0
+
+        if transLoc > 0:
+          rearTotalLength = transLoc + 1.0
+        else:
+          rearTotalLength = self.genLoc + 1.0
+
+        #component masses and locations
+        mb1Loc = abs(self.mb1Loc)
+        mb2Loc = abs(self.mb2Loc)
+        lssLoc= abs(self.lssLoc)
+
+        frontTotalLength = mb1Loc + 0.2
+
+        #rotor weights and loads
+        rotorLoc = frontTotalLength
+        rotorFz=abs(self.rotorForce_z)
+        rotorMy=abs(self.rotorBendingMoment_y)
+        rotorLoc=frontTotalLength
+
+        #initial I-beam dimensions
+        tf = 0.01905
+        tw = 0.0127
+        h0 = 0.6096
+        b0 = h0/2.0
+
+        stressTol = 1e6
+        deflTol = 2.5e-3
+
+        rootStress = 250e6
+        totalTipDefl = 1.0
+
+        def midDeflection(totalLength,loadLength,load,E,I):
+          defl = load*loadLength**2.0*(3.0*totalLength - loadLength)/(6.0*E*I)
+          return defl
+
+          #tip deflection for distributed load
+        def distDeflection(totalLength,distWeight,E,I):
+          defl = distWeight*totalLength**4.0/(8.0*E*I)
+          return defl
+
+        counter = 0
+
+        while rootStress - 50e6 >  stressTol or totalTipDefl - 0.0001 >  deflTol:
+          counter += 1
+          bi = (b0-tw)/2.0
+          hi = h0-2.0*tf
+          I = b0*h0**3/12.0 - 2*bi*hi**3/12.0
+          A = b0*h0 - 2.0*bi*hi
+          w=A*density
+          #Tip Deflection for load not at end
+          
+
+          hssTipDefl = midDeflection(rearTotalLength,self.hssLoc,self.hssMass*g/2,E,I)
+          genTipDefl = midDeflection(rearTotalLength,self.genLoc,self.genMass*g/2,E,I)
+          convTipDefl = midDeflection(rearTotalLength,convLoc,convMass*g/2,E,I)
+          transTipDefl = midDeflection(rearTotalLength,transLoc,self.transMass*g/2,E,I)
+          selfTipDefl = distDeflection(rearTotalLength,w*g,E,I)
+
+          totalTipDefl = hssTipDefl + genTipDefl + +convTipDefl + transTipDefl +  selfTipDefl 
+          
+          #root stress
+          totalBendingMoment=(self.hssLoc*self.hssMass + self.genLoc*self.genMass + convLoc*convMass + transLoc*self.transMass + w*rearTotalLength**2/2.0)*g
+          rootStress = totalBendingMoment*h0/2/I
+
+          #mass
+          steelVolume = A*rearTotalLength
+          steelMass = steelVolume*density
+
+          #2 parallel I beams
+          totalSteelMass = 2.0*steelMass
+
+          rearTotalTipDefl=totalTipDefl
+          rearBendingStress=rootStress
+
+          tf += 0.002 
+          tw += 0.002
+          b0 += 0.006
+          h0 += 0.006
+
+          rearCounter = counter
+
+        #front cast section
+
+        E=169e9 #EN-GJS-400-18-LT http://www.claasguss.de/html_e/pdf/THBl2_engl.pdf
+        castDensity = 7100
+
+        tf = 0.01905
+        tw = 0.0127
+        h0 = 0.6096
+        b0 = h0/2.0
+
+
+        rootStress = 250e6
+        totalTipDefl = 1.0
+        counter = 0
+
+        while rootStress - 50e6 >  stressTol or totalTipDefl - 0.0001 >  deflTol:
+          counter += 1
+          bi = (b0-tw)/2.0
+          hi = h0-2.0*tf
+          I = b0*h0**3/12.0 - 2*bi*hi**3/12.0
+          A = b0*h0 - 2.0*bi*hi
+          w=A*castDensity
+          #Tip Deflection for load not at end
+          
+
+          mb1TipDefl = midDeflection(frontTotalLength,mb1Loc,self.mb1Mass*g/2.0,E,I)
+          mb2TipDefl = midDeflection(frontTotalLength,mb2Loc,self.mb2Mass*g/2.0,E,I)
+          lssTipDefl = midDeflection(frontTotalLength,lssLoc,self.lssMass*g/2.0,E,I)
+          rotorTipDefl = midDeflection(frontTotalLength,rotorLoc,self.rotorMass*g/2.0,E,I)
+          rotorFzTipDefl = midDeflection(frontTotalLength,rotorLoc,rotorFz/2.0,E,I)
+          selfTipDefl = distDeflection(frontTotalLength,w*g,E,I)
+          rotorMyTipDefl = rotorMy*frontTotalLength**2/(2.0*E*I)
+
+          totalTipDefl = mb1TipDefl + mb2TipDefl + lssTipDefl  + rotorTipDefl + selfTipDefl +rotorMyTipDefl + rotorFzTipDefl
+
+          #root stress
+          totalBendingMoment=(mb1Loc*self.mb1Mass/2.0 + mb2Loc*self.mb2Mass/2.0 + lssLoc*self.lssMass/2.0 + w*frontTotalLength**2/2.0 + rotorLoc*self.rotorMass)*g + rotorLoc*rotorFz/2.0 +rotorMy/2.0
+          rootStress = totalBendingMoment*h0/2/I
+
+          #mass
+          castVolume = A*frontTotalLength
+          castMass = castVolume*castDensity
+
+          #2 parallel I-beams
+          totalCastMass = 2.0*castMass
+
+
+          frontTotalTipDefl=totalTipDefl
+          frontBendingStress=rootStress
+
+          tf += 0.002 
+          tw += 0.002
+          b0 += 0.006
+          h0 += 0.006
+
+          frontCounter = counter
+
+
+        print 'steel rear bedplate length: '
+        print rearTotalLength
+
+        print 'cast front bedplate length: '
+        print frontTotalLength
+
+        print b0
+        print h0
+
+        print'rear bedplate tip deflection'
+        print rearTotalTipDefl
+
+        print'front bedplate tip deflection'
+        print frontTotalTipDefl
+
+        print 'bending stress [MPa] at root of rear bedplate:'
+        print rearBendingStress/1.0e6
+
+        print 'bending stress [MPa] at root of front bedplate:'
+        print frontBendingStress/1.0e6
+
+        print 'cast front bedplate bedplate mass [kg]:'
+        print totalCastMass
+
+        print 'rear steel bedplate mass [kg]:'
+        print totalSteelMass
+
+        print 'total bedplate mass:'
+        print totalSteelMass+ totalCastMass
+        self.mass = totalCastMass+ totalSteelMass
+        self.length = frontTotalLength + rearTotalLength
+        self.width = b0 + self.towerTopDiameter
+
+        # calculate mass properties
+        cm = np.array([0.0,0.0,0.0])
+        cm[0] = cm[1] = 0.0
+        cm[2] = 0.0122 * self.rotorDiameter                             # half distance from shaft to yaw axis
+        self.cm = cm
+
+        self.depth = (self.length / 2.0)
+
+        I = np.array([0.0, 0.0, 0.0])
+        I[0]  = self.mass * (self.width ** 2 + self.depth ** 2) / 8
+        I[1]  = self.mass * (self.depth ** 2 + self.width ** 2 + (4/3) * self.length ** 2) / 16
+        I[2]  = I[1]
+        self.I = I
+        
+#---------------------------------------------------------------------------------------------------------------
+
+class Bedplate_drive_old(Component):
     ''' Bedplate class
           The Bedplate class is used to represent the bedplate of a wind turbine drivetrain.
           It contains the general properties for a wind turbine component as well as additional design load and dimentional attributes as listed below.

@@ -1164,7 +1164,7 @@ class AboveYawMassAdder(Component):
         # electronic systems, hydraulics and controls 
         self.econnectionsMass = 0.0
 
-        self.vspdEtronicsMass = 0.0
+        self.vspdEtronicsMass = 2.4445*self.machineRating + 1599.0
                
         self.hydrCoolingMass = 0.08 * self.machineRating
  

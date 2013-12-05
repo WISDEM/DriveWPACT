@@ -1572,7 +1572,7 @@ class Gearbox_drive(Component):
         if indNp == 3:
             Kgamma=1.1
         elif indNp == 4:
-            Kgamma=1.25
+            Kgamma=1.1
         elif indNp == 5:
             Kgamma=1.35
 

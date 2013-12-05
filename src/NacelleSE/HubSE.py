@@ -273,10 +273,38 @@ def example2():
     print 'HUB TOTAL     {0:8.1f} kg'.format(hub.mass)
     print 'cm {0:6.2f} {1:6.2f} {2:6.2f}'.format(hub.cm[0], hub.cm[1], hub.cm[2])
     print 'I {0:6.1f} {1:6.1f} {2:6.1f}'.format(hub.I[0], hub.I[1], hub.I[2])
+    
+def example_100m_redesign_ideal():
+    # simple test of module
+    # NREL 5 MW turbine
+    print "NREL 5 MW turbine test"
+    hub = HubSE_drive()
+    hub.bladeMass = 16097.0 # kg
+    hub.rotorDiameter = 126.0 # m
+    hub.bladeNumber  = 3
+    hub.bladeRootDiameter   = 3.405
+    #AirDensity= 1.225 # kg/(m^3)
+    #Solidity  = 0.0517 
+    #RatedWindSpeed = 11.05 # m/s
+    #hub.rotorBendingMoment = (3.06 * pi / 8) * AirDensity * (RatedWindSpeed ** 2) * (Solidity * (hub.rotorDiameter ** 3)) / hub.bladeNumber
+    #print hub.rotorBendingMoment
+    hub.rotorBendingMoment = 14619000 # y-direction
+    #hub.rotorBendingMoment = 21529000.0 #combined x-y for single blade
+    
+    hub.run()
+
+    print "Hub Components"
+    print '  hub         {0:8.1f} kg'.format(hub.hub.mass)  # 31644.47
+    print '  pitch mech  {0:8.1f} kg'.format(hub.pitchSystem.mass) # 17003.98
+    print '  nose cone   {0:8.1f} kg'.format(hub.spinner.mass) # 1810.50
+    print 'Hub system total {0:8.1f} kg'.format(hub.mass) # 50458.95
+    print '    cm {0:6.2f} {1:6.2f} {2:6.2f}'.format(hub.cm[0], hub.cm[1], hub.cm[2])
+    print '    I {0:6.1f} {1:6.1f} {2:6.1f}'.format(hub.I[0], hub.I[1], hub.I[2])
 
 if __name__ == "__main__":
 
     example()
     example_80m_redesign()    
     example_100m_redesign()
+    example_100m_redesign_ideal()
     #example2()

@@ -20,12 +20,12 @@ class Hub(Component):
     '''
 
     # variables
-    rotorBendingMoment = Float(iotype='in', units='N*m', desc='flapwise bending moment at blade root')
-    rotorDiameter = Float(iotype='in', units='m', desc='rotor diameter')
+    rotor_bending_moment = Float(iotype='in', units='N*m', desc='flapwise bending moment at blade root')
+    rotor_diameter = Float(iotype='in', units='m', desc='rotor diameter')
     
     # parameters
-    hubDiameter = Float(0.0, iotype='in', units='m', desc='hub diameter')
-    bladeNumber = Int(3, iotype='in', desc='number of turbine blades')
+    hub_diameter = Float(0.0, iotype='in', units='m', desc='hub diameter')
+    blade_number = Int(3, iotype='in', desc='number of turbine blades')
 
     # outputs
     mass = Float(0.0, iotype='out', units='kg', desc='overall component mass')
@@ -38,13 +38,13 @@ class Hub(Component):
         
         Parameters
         ----------
-        rotorBendingMoment : float
+        rotor_bending_moment : float
           maximum flap-wise root moment for the blade (if == 0, then it is set within compute method) [Nm]
-        rotorDiameter : float
+        rotor_diameter : float
           The wind turbine rotor diameter [m]
-        hubDiameter : float
+        hub_diameter : float
           the specified hub diameter (if == 0, then it is set within compute method) [m]
-        bladeNumber : int
+        blade_number : int
           Number of wind turbine rotor blades
         
         Returns
@@ -69,25 +69,25 @@ class Hub(Component):
         hubmatlstress    = 371000000.0                                # allowable stress of hub material (N / m^2)
 
         # Root moment required as input, could be undone
-        '''if rotorBendingMoment == 0.0:
-            rotorBendingMoment = (3.06 * pi / 8) * AirDensity * (RatedWindSpeed ** 2) * (Solidity * (RotorDiam ** 3)) / BladeNum
+        '''if rotor_bending_moment == 0.0:
+            rotor_bending_moment = (3.06 * pi / 8) * AirDensity * (RatedWindSpeed ** 2) * (Solidity * (RotorDiam ** 3)) / BladeNum
                                                             # simplified equation for blade root moment (Sunderland model) if one is not provided'''
         
-        self.mass =50 * hubgeomFact * hubloadFact * hubcontFact * self.bladeNumber * self.rotorBendingMoment * (hubmatldensity / hubmatlstress)
+        self.mass =50 * hubgeomFact * hubloadFact * hubcontFact * self.blade_number * self.rotor_bending_moment * (hubmatldensity / hubmatlstress)
                                                             # mass of hub based on Sunderland model
                                                             # 31.4 adapted to 50 to fit 5 MW data
 
         # calculate mass properties
-        if self.hubDiameter == 0:
+        if self.hub_diameter == 0:
             self.diameter =(3.30)
         else:
-            self.diameter =(self.hubDiameter)
+            self.diameter =(self.hub_diameter)
         self.thickness = self.diameter * (0.055 / 3.30)         # 0.055 for 1.5 MW outer diameter of 3.3 - using proportional constant
 
         cm = np.array([0.0,0.0,0.0])
-        cm[0]     = - (0.05 * self.rotorDiameter)
+        cm[0]     = - (0.05 * self.rotor_diameter)
         cm[1]     = 0.0
-        cm[2]     = 0.025 * self.rotorDiameter
+        cm[2]     = 0.025 * self.rotor_diameter
         self.cm = (cm)
 
         I = np.array([0.0, 0.0, 0.0])
@@ -98,26 +98,29 @@ class Hub(Component):
         self.I = (I)
 
         # derivatives
-        d_hubMass_d_rotorBendingMoment = 50 * hubgeomFact * hubloadFact * hubcontFact * self.bladeNumber * (hubmatldensity / hubmatlstress)
-        d_cm_d_rotorDiameter = np.array([-0.05, 0.0, 0.025])
-        d_I_d_rotorBendingMoment = 0.4 * d_hubMass_d_rotorBendingMoment * ((0.5**5 - (0.05 - 0.055/3.3)**5)/(0.5**3 - (0.05 - 0.055/3.3)**3)) * self.diameter**2
-        d_I_d_hubDiameter = 2 * 0.4 * self.mass * ((0.5**5 - (0.05 - 0.055/3.3)**5)/(0.5**3 - (0.05 - 0.055/3.3)**3)) * self.diameter
-        
+        self.d_hubMass_d_rotor_bending_moment = 50 * hubgeomFact * hubloadFact * hubcontFact * self.blade_number * (hubmatldensity / hubmatlstress)
+        self.d_cm_d_rotor_diameter = np.array([-0.05, 0.0, 0.025])
+        self.d_I_d_rotor_bending_moment = 0.4 * (self.d_hubMass_d_rotor_bending_moment) * ((self.diameter / 2) ** 5 - (self.diameter / 2 - self.thickness) ** 5) / \
+               ((self.diameter / 2) ** 3 - (self.diameter / 2 - self.thickness) ** 3)
+        self.d_I_d_hub_diameter = 0.4 * self.mass * ((0.5**5 - (0.5 - 0.055/3.3)**5)/(0.5**3 - (0.5 - 0.055/3.3)**3)) * 2 * self.diameter
+    
+    def linearize(self):
+  
         # Jacobian
-        self.J = np.array([[d_hubMass_d_rotorBendingMoment, 0, 0], \
-                           [0, d_cm_d_rotorDiameter[0], 0], \
-                           [0, d_cm_d_rotorDiameter[1], 0], \
-                           [0, d_cm_d_rotorDiameter[2], 0], \
-                           [d_I_d_rotorBendingMoment, 0, d_I_d_hubDiameter], \
-                           [d_I_d_rotorBendingMoment, 0, d_I_d_hubDiameter], \
-                           [d_I_d_rotorBendingMoment, 0, d_I_d_hubDiameter]])
+        self.J = np.array([[self.d_hubMass_d_rotor_bending_moment, 0, 0], \
+                           [0, self.d_cm_d_rotor_diameter[0], 0], \
+                           [0, self.d_cm_d_rotor_diameter[1], 0], \
+                           [0, self.d_cm_d_rotor_diameter[2], 0], \
+                           [self.d_I_d_rotor_bending_moment, 0, self.d_I_d_hub_diameter], \
+                           [self.d_I_d_rotor_bending_moment, 0, self.d_I_d_hub_diameter], \
+                           [self.d_I_d_rotor_bending_moment, 0, self.d_I_d_hub_diameter]])
 
     def provideJ(self):
 
-        input_keys = ['rotorBendingMoment', 'rotorDiameter', 'hubDiameter']
-        output_keys = ['hubMass', 'cm[0]', 'cm[1]', 'cm[2]', 'I[0]', 'I[1]', 'I[2]']
+        inputs = ['rotor_bending_moment', 'rotor_diameter', 'hub_diameter']
+        outputs = ['mass', 'cm', 'I']
 
-        self.derivatives.set_first_derivative(input_keys, output_keys, self.J)
+        return inputs, outputs, self.J
 
 #-------------------------------------------------------------------------------
 
@@ -130,13 +133,13 @@ class PitchSystem(Component):
     '''
 
     # variables
-    bladeMass = Float(iotype='in', units='kg', desc='mass of one blade')
-    rotorBendingMoment = Float(iotype='in', units='N*m', desc='flapwise bending moment at blade root')
-    rotorDiameter = Float(iotype='in', units='m', desc='rotor diameter')
+    blade_mass = Float(iotype='in', units='kg', desc='mass of one blade')
+    rotor_bending_moment = Float(iotype='in', units='N*m', desc='flapwise bending moment at blade root')
+    rotor_diameter = Float(iotype='in', units='m', desc='rotor diameter')
     
     # parameters
-    hubDiameter = Float(0.0, iotype='in', units='m', desc='hub diameter')
-    bladeNumber = Int(3, iotype='in', desc='number of turbine blades')
+    hub_diameter = Float(0.0, iotype='in', units='m', desc='hub diameter')
+    blade_number = Int(3, iotype='in', desc='number of turbine blades')
 
     # outputs
     mass = Float(0.0, iotype='out', units='kg', desc='overall component mass')
@@ -149,15 +152,15 @@ class PitchSystem(Component):
         
         Parameters
         ----------
-        bladeMass : float
+        blade_mass : float
           The wind turbine individual blade mass [kg]
-        rotorBendingMoment : float
+        rotor_bending_moment : float
           maximum flap-wise root moment for the blade (if == 0, then it is set within compute method) [Nm]
-        rotorDiameter : float
+        rotor_diameter : float
           The wind turbine rotor diameter [m]
-        hubDiameter : float
+        hub_diameter : float
           the specified hub diameter (if == 0, then it is set within compute method) [m]
-        bladeNumber : int
+        blade_number : int
           Number of wind turbine rotor blades
 
         Returns
@@ -179,28 +182,28 @@ class PitchSystem(Component):
         pitchmatlstress  = 371000000.0                              # allowable stress of hub material (N / m^2)
 
         # Root moment required as input, could be undone
-        '''if rotorBendingMoment == 0.0:
-            rotorBendingMoment = (3.06 * pi / 8) * AirDensity * (RatedWindSpeed ** 2) * (Solidity * (RotorDiam ** 3)) / BladeNum
+        '''if rotor_bending_moment == 0.0:
+            rotor_bending_moment = (3.06 * pi / 8) * AirDensity * (RatedWindSpeed ** 2) * (Solidity * (RotorDiam ** 3)) / BladeNum
                                                             # simplified equation for blade root moment (Sunderland model) if one is not provided'''
 
         hubpitchFact      = 1.0                                 # default factor is 1.0 (0.54 for modern designs)
-        #self.mass =hubpitchFact * (0.22 * self.bladeMass * self.bladeNumber + 12.6 * self.bladeNumber * self.rotorBendingMoment * (pitchmatldensity / pitchmatlstress))
+        #self.mass =hubpitchFact * (0.22 * self.blade_mass * self.blade_number + 12.6 * self.blade_number * self.rotor_bending_moment * (pitchmatldensity / pitchmatlstress))
                                                             # mass of pitch system based on Sunderland model
-        self.mass =hubpitchFact * (0.22 * self.bladeMass * self.bladeNumber + 12.6 * self.rotorBendingMoment * (pitchmatldensity / pitchmatlstress))
+        self.mass =hubpitchFact * (0.22 * self.blade_mass * self.blade_number + 12.6 * self.rotor_bending_moment * (pitchmatldensity / pitchmatlstress))
                                                             # mass of pitch system based on Sunderland model
 
 
         # calculate mass properties
-        if self.hubDiameter == 0:
+        if self.hub_diameter == 0:
             self.diameter =(3.30)
         else:
-            self.diameter =(self.hubDiameter)
+            self.diameter =(self.hub_diameter)
 
         # calculate mass properties
         cm = np.array([0.0,0.0,0.0])
-        cm[0]     = - (0.05 * self.rotorDiameter)
+        cm[0]     = - (0.05 * self.rotor_diameter)
         cm[1]     = 0.0
-        cm[2]     = 0.025 * self.rotorDiameter
+        cm[2]     = 0.025 * self.rotor_diameter
         self.cm = (cm)
 
         I = np.array([0.0, 0.0, 0.0])
@@ -210,28 +213,31 @@ class PitchSystem(Component):
         self.I = (I)
 
         # derivatives
-        d_pitchMass_d_bladeMass = hubpitchFact * 0.22 * self.bladeNumber
-        d_pitchMass_d_rotorBendingMoment = hubpitchFact * 12.6 * self.bladeNumber * pitchmatldensity / pitchmatlstress
-        d_cm_d_rotorDiameter = np.array([-0.05, 0.0, 0.025])
-        d_I_d_bladeMass = d_pitchMass_d_bladeMass * (self.diameter**2) / 4
-        d_I_d_rotorBendingMoment = d_pitchMass_d_rotorBendingMoment * (self.diameter**2) / 4
-        d_I_d_hubDiameter = self.mass * (2/4) * self.diameter
+        self.d_pitchMass_d_blade_mass = hubpitchFact * 0.22 * self.blade_number
+        self.d_pitchMass_d_rotor_bending_moment = hubpitchFact * 12.6 * pitchmatldensity / pitchmatlstress
+        self.d_cm_d_rotor_diameter = np.array([-0.05, 0.0, 0.025])
+        self.d_I_d_blade_mass = self.d_pitchMass_d_blade_mass * (self.diameter**2) / 4
+        self.d_I_d_rotor_bending_moment = self.d_pitchMass_d_rotor_bending_moment * (self.diameter**2) / 4
+        self.d_I_d_hub_diameter = self.mass * (2./4.) * self.diameter
+
+
+    def linearize(self):
 
         # Jacobian
-        self.J = np.array([[d_pitchMass_d_bladeMass, d_pitchMass_d_rotorBendingMoment, 0, 0], \
-                           [0, 0, d_cm_d_rotorDiameter[0], 0], \
-                           [0, 0, d_cm_d_rotorDiameter[1], 0], \
-                           [0, 0, d_cm_d_rotorDiameter[2], 0], \
-                           [d_I_d_bladeMass, d_I_d_rotorBendingMoment, 0, d_I_d_hubDiameter], \
-                           [d_I_d_bladeMass, d_I_d_rotorBendingMoment, 0, d_I_d_hubDiameter], \
-                           [d_I_d_bladeMass, d_I_d_rotorBendingMoment, 0, d_I_d_hubDiameter]])
+        self.J = np.array([[self.d_pitchMass_d_blade_mass, self.d_pitchMass_d_rotor_bending_moment, 0, 0], \
+                           [0, 0, self.d_cm_d_rotor_diameter[0], 0], \
+                           [0, 0, self.d_cm_d_rotor_diameter[1], 0], \
+                           [0, 0, self.d_cm_d_rotor_diameter[2], 0], \
+                           [self.d_I_d_blade_mass, self.d_I_d_rotor_bending_moment, 0, self.d_I_d_hub_diameter], \
+                           [self.d_I_d_blade_mass, self.d_I_d_rotor_bending_moment, 0, self.d_I_d_hub_diameter], \
+                           [self.d_I_d_blade_mass, self.d_I_d_rotor_bending_moment, 0, self.d_I_d_hub_diameter]])
 
     def provideJ(self):
 
-        input_keys = ['bladeMass', 'rotorBendingMoment', 'rotorDiameter', 'hubDiameter']
-        output_keys = ['pitchMass', 'cm[0]', 'cm[1]', 'cm[2]', 'I[0]', 'I[1]', 'I[2]']
+        inputs = ['blade_mass', 'rotor_bending_moment', 'rotor_diameter', 'hub_diameter']
+        outputs = ['mass', 'cm', 'I']
 
-        self.derivatives.set_first_derivative(input_keys, output_keys, self.J)
+        return inputs, outputs, self.J
 
 #-------------------------------------------------------------------------------      
 
@@ -244,10 +250,10 @@ class Spinner(Component):
     '''
     
     # variables
-    rotorDiameter = Float(iotype='in', units='m', desc='rotor diameter')
+    rotor_diameter = Float(iotype='in', units='m', desc='rotor diameter')
 
     # parameters
-    hubDiameter = Float(0.0, iotype='in', units='m', desc='hub diameter')
+    hub_diameter = Float(0.0, iotype='in', units='m', desc='hub diameter')
 
     # outputs
     mass = Float(0.0, iotype='out', units='kg', desc='overall component mass')
@@ -260,9 +266,9 @@ class Spinner(Component):
         
         Parameters
         ----------
-        rotorDiameter : float
+        rotor_diameter : float
           The wind turbine rotor diameter [m]
-        hubDiameter : float
+        hub_diameter : float
           the specified hub diameter (if == 0, then it is set within compute method) [m]
 
         Returns
@@ -279,19 +285,19 @@ class Spinner(Component):
 
     def execute(self):
 
-        self.mass =18.5 * self.rotorDiameter + (-520.5)   # spinner mass comes from cost and scaling model
+        self.mass =18.5 * self.rotor_diameter + (-520.5)   # spinner mass comes from cost and scaling model
 
         # calculate mass properties
-        if self.hubDiameter == 0:
+        if self.hub_diameter == 0:
             self.diameter =(3.30)
         else:
-            self.diameter =(self.hubDiameter)
+            self.diameter =(self.hub_diameter)
         self.thickness = self.diameter * (0.055 / 3.30)         # 0.055 for 1.5 MW outer diameter of 3.3 - using proportional constant
 
         cm = np.array([0.0,0.0,0.0])
-        cm[0]     = - (0.05 * self.rotorDiameter)
+        cm[0]     = - (0.05 * self.rotor_diameter)
         cm[1]     = 0.0
-        cm[2]     = 0.025 * self.rotorDiameter
+        cm[2]     = 0.025 * self.rotor_diameter
         self.cm = (cm)
 
         I = np.array([0.0, 0.0, 0.0])
@@ -302,26 +308,29 @@ class Spinner(Component):
         self.I = (I)
 
         # derivatives
-        d_spinnerMass_d_rotorDiameter = 18.5
-        d_cm_d_rotorDiameter = np.array([-0.05, 0.0, 0.025])
-        d_I_d_rotorDiameter = 0.4 * d_spinnerMass_d_rotorDiameter * ((0.5**5 - (0.05 - 0.055/3.3)**5)/(0.5**3 - (0.05 - 0.055/3.3)**3)) * self.diameter**2
-        d_I_d_hubDiameter = 2 * 0.4 * self.mass * ((0.5**5 - (0.05 - 0.055/3.3)**5)/(0.5**3 - (0.05 - 0.055/3.3)**3)) * self.diameter
+        self.d_spinnerMass_d_rotor_diameter = 18.5
+        self.d_cm_d_rotor_diameter = np.array([-0.05, 0.0, 0.025])
+        self.d_I_d_rotor_diameter = 0.4 * self.d_spinnerMass_d_rotor_diameter * ((self.diameter / 2) ** 5 - (self.diameter / 2 - self.thickness) ** 5) / \
+               ((self.diameter / 2) ** 3 - (self.diameter / 2 - self.thickness) ** 3)
+        self.d_I_d_hub_diameter = 0.4 * self.mass * ((0.5**5 - (0.5 - 0.055/3.3)**5)/(0.5**3 - (0.5 - 0.055/3.3)**3)) * 2 * self.diameter
+
+    def linearize(self):
 
         # Jacobian
-        self.J = np.array([[d_spinnerMass_d_rotorDiameter, 0], \
-                           [d_cm_d_rotorDiameter[0], 0], \
-                           [d_cm_d_rotorDiameter[1], 0], \
-                           [d_cm_d_rotorDiameter[2], 0], \
-                           [d_I_d_rotorDiameter, d_I_d_hubDiameter], \
-                           [d_I_d_rotorDiameter, d_I_d_hubDiameter], \
-                           [d_I_d_rotorDiameter, d_I_d_hubDiameter]])
+        self.J = np.array([[self.d_spinnerMass_d_rotor_diameter, 0], \
+                           [self.d_cm_d_rotor_diameter[0], 0], \
+                           [self.d_cm_d_rotor_diameter[1], 0], \
+                           [self.d_cm_d_rotor_diameter[2], 0], \
+                           [self.d_I_d_rotor_diameter, self.d_I_d_hub_diameter], \
+                           [self.d_I_d_rotor_diameter, self.d_I_d_hub_diameter], \
+                           [self.d_I_d_rotor_diameter, self.d_I_d_hub_diameter]])
 
     def provideJ(self):
 
-        input_keys = ['rotorDiameter', 'hubDiameter']
-        output_keys = ['spinnerMass', 'cm[0]', 'cm[1]', 'cm[2]', 'I[0]', 'I[1]', 'I[2]']
+        inputs = ['rotor_diameter', 'hub_diameter']
+        outputs = ['mass', 'cm', 'I']
 
-        self.derivatives.set_first_derivative(input_keys, output_keys, self.J)
+        return inputs, outputs, self.J
 
 #-------------------------------------------------------------------------------
 
@@ -414,68 +423,68 @@ class HubSystemAdder(Component):
         self.I = I
 
         # derivatives
-        d_mass_d_hubMass = 1
-        d_mass_d_pitchMass = 1
-        d_mass_d_spinnerMass = 1
+        self.d_mass_d_hubMass = 1
+        self.d_mass_d_pitchMass = 1
+        self.d_mass_d_spinnerMass = 1
 
-        d_cm_d_hubMass = np.array([0.0, 0.0, 0.0])
+        self.d_cm_d_hubMass = np.array([0.0, 0.0, 0.0])
         for i in (range(0,3)):
-            d_cm_d_hubMass[i] = (self.hubCM[i]*self.mass - (self.hubMass * self.hubCM[i] + self.pitchMass * self.pitchCM[i] + \
+            self.d_cm_d_hubMass[i] = (self.hubCM[i]*self.mass - (self.hubMass * self.hubCM[i] + self.pitchMass * self.pitchCM[i] + \
                     self.spinnerMass * self.spinnerCM[i] ))/ ((self.mass)**2)
-        d_cm_d_pitchMass = np.array([0.0, 0.0, 0.0])
+        self.d_cm_d_pitchMass = np.array([0.0, 0.0, 0.0])
         for i in (range(0,3)):
-            d_cm_d_pitchMass[i] = (self.pitchCM[i]*self.mass - (self.hubMass * self.hubCM[i] + self.pitchMass * self.pitchCM[i] + \
+            self.d_cm_d_pitchMass[i] = (self.pitchCM[i]*self.mass - (self.hubMass * self.hubCM[i] + self.pitchMass * self.pitchCM[i] + \
                     self.spinnerMass * self.spinnerCM[i] ))/ ((self.mass)**2)
-        d_cm_d_spinnerMass = np.array([0.0, 0.0, 0.0])
+        self.d_cm_d_spinnerMass = np.array([0.0, 0.0, 0.0])
         for i in (range(0,3)):
-            d_cm_d_spinnerMass[i] = (self.spinnerCM[i]*self.mass - (self.hubMass * self.hubCM[i] + self.pitchMass * self.pitchCM[i] + \
+            self.d_cm_d_spinnerMass[i] = (self.spinnerCM[i]*self.mass - (self.hubMass * self.hubCM[i] + self.pitchMass * self.pitchCM[i] + \
                     self.spinnerMass * self.spinnerCM[i] ))/ ((self.mass)**2)
 
-        d_cm_d_hubCM = self.hubMass / self.mass
-        d_cm_d_pitchCM = self.pitchMass / self.mass
-        d_cm_d_spinnerCM = self.spinnerMass / self.mass
+        self.d_cm_d_hubCM = self.hubMass / self.mass
+        self.d_cm_d_pitchCM = self.pitchMass / self.mass
+        self.d_cm_d_spinnerCM = self.spinnerMass / self.mass
 
-        d_I_d_hubI = 1
-        d_I_d_pitchI = 1
-        d_I_d_spinnerI = 1
+        self.d_I_d_hubI = 1
+        self.d_I_d_pitchI = 1
+        self.d_I_d_spinnerI = 1
         
-        d_I_d_hubMass = np.array([0.0, 0.0, 0.0])
+        self.d_I_d_hubMass = np.array([0.0, 0.0, 0.0])
         for i in (range(0,3)):
-            d_I_d_hubMass[i] = (self.hubCM[i]-self.cm[i])**2 + 2 * self.hubMass * (self.hubCM[i] - self.cm[i]) * d_cm_d_hubCM        
-        d_I_d_pitchMass = np.array([0.0, 0.0, 0.0])
+            self.d_I_d_hubMass[i] = (self.hubCM[i]-self.cm[i])**2 + 2 * self.hubMass * (self.hubCM[i] - self.cm[i]) * self.d_cm_d_hubCM        
+        self.d_I_d_pitchMass = np.array([0.0, 0.0, 0.0])
         for i in (range(0,3)):
-            d_I_d_pitchMass[i] = (self.pitchCM[i]-self.cm[i])**2 + 2 * self.pitchMass * (self.pitchCM[i] - self.cm[i]) * d_cm_d_pitchCM  
-        d_I_d_spinnerMass = np.array([0.0, 0.0, 0.0])
+            self.d_I_d_pitchMass[i] = (self.pitchCM[i]-self.cm[i])**2 + 2 * self.pitchMass * (self.pitchCM[i] - self.cm[i]) * self.d_cm_d_pitchCM  
+        self.d_I_d_spinnerMass = np.array([0.0, 0.0, 0.0])
         for i in (range(0,3)):
-            d_I_d_spinnerMass[i] = (self.spinnerCM[i]-self.cm[i])**2 + 2 * self.spinnerMass * (self.spinnerCM[i] - self.cm[i]) * d_cm_d_spinnerCM
+            self.d_I_d_spinnerMass[i] = (self.spinnerCM[i]-self.cm[i])**2 + 2 * self.spinnerMass * (self.spinnerCM[i] - self.cm[i]) * self.d_cm_d_spinnerCM
 
-        d_I_d_hubCM = np.array([0.0, 0.0, 0.0])
+        self.d_I_d_hubCM = np.array([0.0, 0.0, 0.0])
         for i in range(0,3):
-        	  d_I_d_hubCM[i] = 2 * self.hubMass * (self.hubCM[i] - self.cm[i]) * (1 - d_cm_d_hubCM)
-        d_I_d_pitchCM = np.array([0.0, 0.0, 0.0])
+            self.d_I_d_hubCM[i] = 2 * self.hubMass * (self.hubCM[i] - self.cm[i]) * (1 - self.d_cm_d_hubCM)
+        self.d_I_d_pitchCM = np.array([0.0, 0.0, 0.0])
         for i in range(0,3):
-        	  d_I_d_pitchCM[i] = 2 * self.hubMass * (self.pitchCM[i] - self.cm[i]) * (1 - d_cm_d_pitchCM)
-        d_I_d_spinnerCM = np.array([0.0, 0.0, 0.0])
+            self.d_I_d_pitchCM[i] = 2 * self.hubMass * (self.pitchCM[i] - self.cm[i]) * (1 - self.d_cm_d_pitchCM)
+        self.d_I_d_spinnerCM = np.array([0.0, 0.0, 0.0])
         for i in range(0,3):
-        	  d_I_d_spinnerCM[i] = 2 * self.spinnerMass * (self.spinnerCM[i] - self.cm[i]) * (1 - d_cm_d_spinnerCM)
+            self.d_I_d_spinnerCM[i] = 2 * self.spinnerMass * (self.spinnerCM[i] - self.cm[i]) * (1 - self.d_cm_d_spinnerCM)
+
+    def linearize(self):
 
         # Jacobian
-        self.J = np.array([[d_mass_d_hubMass, d_mass_d_pitchMass, d_mass_d_spinnerMass, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
-                           [d_cm_d_hubMass[0], d_cm_d_pitchMass[0], d_cm_d_spinnerMass[0], d_cm_d_hubCM, 0, 0, d_cm_d_pitchCM, 0, 0, d_cm_d_spinnerCM, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
-                           [d_cm_d_hubMass[1], d_cm_d_pitchMass[1], d_cm_d_spinnerMass[1], 0, d_cm_d_hubCM, 0, 0, d_cm_d_pitchCM, 0, 0, d_cm_d_spinnerCM, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
-                           [d_cm_d_hubMass[2], d_cm_d_pitchMass[2], d_cm_d_spinnerMass[2], 0, 0, d_cm_d_hubCM, 0, 0, d_cm_d_pitchCM, 0, 0, d_cm_d_spinnerCM, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
-                           [d_I_d_hubMass[0], d_I_d_pitchMass[0], d_I_d_spinnerMass[0], d_I_d_hubCM[0], 0, 0, d_I_d_pitchCM[0], 0, 0, d_I_d_spinnerCM[0], 0, 0, d_I_d_hubI, 0, 0, d_I_d_pitchI, 0, 0, d_I_d_spinnerI, 0, 0], \
-                           [d_I_d_hubMass[1], d_I_d_pitchMass[1], d_I_d_spinnerMass[1], 0, d_I_d_hubCM[1], 0, 0, d_I_d_pitchCM[1], 0, 0, d_I_d_spinnerCM[1], 0, 0, d_I_d_hubI, 0, 0, d_I_d_pitchI, 0, 0, d_I_d_spinnerI, 0], \
-                           [d_I_d_hubMass[2], d_I_d_pitchMass[2], d_I_d_spinnerMass[2], 0, 0, d_I_d_hubCM[2], 0, 0, d_I_d_pitchCM[2], 0, 0, d_I_d_spinnerCM[2], 0, 0, d_I_d_hubI, 0, 0, d_I_d_pitchI, 0, 0, d_I_d_spinnerI]])
+        self.J = np.array([[self.d_mass_d_hubMass, self.d_mass_d_pitchMass, self.d_mass_d_spinnerMass, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
+                           [self.d_cm_d_hubMass[0], self.d_cm_d_pitchMass[0], self.d_cm_d_spinnerMass[0], self.d_cm_d_hubCM, 0, 0, self.d_cm_d_pitchCM, 0, 0, self.d_cm_d_spinnerCM, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
+                           [self.d_cm_d_hubMass[1], self.d_cm_d_pitchMass[1], self.d_cm_d_spinnerMass[1], 0, self.d_cm_d_hubCM, 0, 0, self.d_cm_d_pitchCM, 0, 0, self.d_cm_d_spinnerCM, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
+                           [self.d_cm_d_hubMass[2], self.d_cm_d_pitchMass[2], self.d_cm_d_spinnerMass[2], 0, 0, self.d_cm_d_hubCM, 0, 0, self.d_cm_d_pitchCM, 0, 0, self.d_cm_d_spinnerCM, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
+                           [self.d_I_d_hubMass[0], self.d_I_d_pitchMass[0], self.d_I_d_spinnerMass[0], self.d_I_d_hubCM[0], 0, 0, self.d_I_d_pitchCM[0], 0, 0, self.d_I_d_spinnerCM[0], 0, 0, self.d_I_d_hubI, 0, 0, self.d_I_d_pitchI, 0, 0, self.d_I_d_spinnerI, 0, 0], \
+                           [self.d_I_d_hubMass[1], self.d_I_d_pitchMass[1], self.d_I_d_spinnerMass[1], 0, self.d_I_d_hubCM[1], 0, 0, self.d_I_d_pitchCM[1], 0, 0, self.d_I_d_spinnerCM[1], 0, 0, self.d_I_d_hubI, 0, 0, self.d_I_d_pitchI, 0, 0, self.d_I_d_spinnerI, 0], \
+                           [self.d_I_d_hubMass[2], self.d_I_d_pitchMass[2], self.d_I_d_spinnerMass[2], 0, 0, self.d_I_d_hubCM[2], 0, 0, self.d_I_d_pitchCM[2], 0, 0, self.d_I_d_spinnerCM[2], 0, 0, self.d_I_d_hubI, 0, 0, self.d_I_d_pitchI, 0, 0, self.d_I_d_spinnerI]])
 
     def provideJ(self):
 
-        input_keys = ['hubMass', 'pitchMass', 'spinerMass', 'hubCM[0]', 'hubCM[1]', 'hubCM[2]', 'pitchCM[0]', 'pitchCM[1]', 'pitchCM[2]', \
-                      'spinnerCM[0]', 'spinnerCM[1]', 'spinnerCM[2]',  'hubI[0]', 'hubI[1]', 'hubI[2]', 'pitchI[0]', 'pitchI[1]', 'pitchI[2]', \
-                      'spinnerI[0]', 'spinnerI[1]', 'spinnerI[2]']
-        output_keys = ['mass', 'cm[0]', 'cm[1]', 'cm[2]', 'I[0]', 'I[1]', 'I[2]']
+        inputs = ['hubMass', 'pitchMass', 'spinnerMass', 'hubCM', 'pitchCM', 'spinnerCM',  'hubI', 'pitchI', 'spinnerI']
+        outputs = ['mass', 'cm', 'I']
 
-        self.derivatives.set_first_derivative(input_keys, output_keys, self.J)
+        return inputs, outputs, self.J
 
 #--------------------------------------------------------------------------------------------------------
 

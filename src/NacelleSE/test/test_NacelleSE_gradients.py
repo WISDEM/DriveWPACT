@@ -72,28 +72,9 @@ class Test_HubSystemAdder(unittest.TestCase):
         check_gradient_unit_test(self, hub_system,display=False)
 
 
-        '''lss.drivetrain_design = 1 # geared 3-stage Gearbox with induction generator machine
-        lss.machine_rating = 1500 # machine rating [kW]
-        lss.gear_ratio = 87.965
-        lss.gear_configuration = 'epp'
-        lss.bevel = 0
-        lss.crane = True
-
-        airdensity = 1.225 # air density [kg / m^3]
-        MaxTipSpeed = 80. # max tip speed [m/s]
-        lss.rotor_diameter = 70. # rotor diameter [m]
-        lss.rotor_speed = 21.830
-        DrivetrainEfficiency = 0.95
-        lss.rotor_torque = (lss.machine_rating * 1000. / DrivetrainEfficiency) / (lss.rotor_speed * (np.pi / 30.)) 
-            # rotor torque [Nm] calculated from max / rated rotor speed and machine rating
-        lss.rotor_thrust = 324000. 
-        lss.rotor_mass = 28560. # rotor mass [kg]
-
-        lss.tower_top_diameter = 2.7 # tower top diameter [m]'''
-
 # Nacelle Components
 
-'''class Test_LowSpeedShaft(unittest.TestCase):
+class Test_LowSpeedShaft(unittest.TestCase):
 
     def test1(self):
 
@@ -109,9 +90,9 @@ class Test_HubSystemAdder(unittest.TestCase):
             # rotor torque [Nm] calculated from max / rated rotor speed and machine rating
         lss.rotor_mass = 28560. # rotor mass [kg]
 
-        check_gradient_unit_test(self, lss,display=False)'''
+        check_gradient_unit_test(self, lss,display=False)
 
-'''class Test_MainBearing(unittest.TestCase):
+class Test_MainBearing(unittest.TestCase):
 
     def test1(self):
 
@@ -123,7 +104,7 @@ class Test_HubSystemAdder(unittest.TestCase):
         mb.rotor_speed = 21.8
         mb.rotor_diameter = 126.0
 
-        check_gradient_unit_test(self, mb,display=True)
+        check_gradient_unit_test(self, mb,display=False)
 
 class Test_SecondBearing(unittest.TestCase):
 
@@ -131,7 +112,13 @@ class Test_SecondBearing(unittest.TestCase):
 
         sb = SecondBearing()
 
-        check_gradient_unit_test(self, sb,display=True)'''
+        sb.lss_design_torque = 5000000.
+        sb.lss_diameter = 1.5
+        sb.lss_mass = 10000.
+        sb.rotor_speed = 21.8
+        sb.rotor_diameter = 126.0
+
+        check_gradient_unit_test(self, sb,display=False)
 
 class Test_Gearbox(unittest.TestCase):
 
@@ -152,21 +139,39 @@ class Test_Gearbox(unittest.TestCase):
         DrivetrainEfficiency = 0.95
         gbx.rotor_torque = (gbx.machine_rating * 1000. / DrivetrainEfficiency) / (gbx.rotor_speed * (np.pi / 30.)) 
 
-        check_gradient_unit_test(self, gbx,display=True)
+        check_gradient_unit_test(self, gbx,display=False)
 
-'''class Test_HighSpeedSide(unittest.TestCase):
+class Test_HighSpeedSide(unittest.TestCase):
 
     def test1(self):
 
         hss = HighSpeedSide()
 
-        check_gradient_unit_test(self, hss,display=True)
+        hss.gear_ratio = 87.965
+
+        airdensity = 1.225 # air density [kg / m^3]
+        MaxTipSpeed = 80. # max tip speed [m/s]
+        hss.rotor_diameter = 70. # rotor diameter [m]
+        hss.rotor_speed = 21.830
+        DrivetrainEfficiency = 0.95
+        hss.machine_rating = 1500.
+        hss.rotor_torque = (hss.machine_rating * 1000. / DrivetrainEfficiency) / (hss.rotor_speed * (np.pi / 30.)) 
+            # rotor torque [Nm] calculated from max / rated rotor speed and machine rating
+        
+        hss.lss_diameter = 1.5
+
+        check_gradient_unit_test(self, hss,display=False)
 
 class Test_Generator(unittest.TestCase):
 
     def test1(self):
 
         gen = Generator()
+
+        gen.gear_ratio = 87.965
+        gen.rotor_diameter = 70. # rotor diameter [m]
+        gen.machine_rating = 1500.
+        gen.drivetrain_design = 1
 
         check_gradient_unit_test(self, gen,display=True)
 
@@ -176,7 +181,21 @@ class Test_Bedplate(unittest.TestCase):
 
         bpl = Bedplate()
 
-        check_gradient_unit_test(self, bpl,display=True)
+        bpl.drivetrain_design = 1 # geared 3-stage Gearbox with induction generator machine
+
+        airdensity = 1.225 # air density [kg / m^3]
+        MaxTipSpeed = 80. # max tip speed [m/s]
+        bpl.rotor_diameter = 70. # rotor diameter [m]
+        bpl.rotor_speed = 21.830
+        DrivetrainEfficiency = 0.95
+        bpl.machine_rating = 1500.
+        bpl.rotor_torque = (bpl.machine_rating * 1000. / DrivetrainEfficiency) / (bpl.rotor_speed * (np.pi / 30.)) 
+            # rotor torque [Nm] calculated from max / rated rotor speed and machine rating
+        bpl.rotor_thrust = 324000. 
+        bpl.rotor_mass = 28560. # rotor mass [kg]
+        bpl.tower_top_diameter = 2.7 # tower top diameter [m]
+
+        check_gradient_unit_test(self, bpl,display=False)
 
 class Test_AboveYawMassAdder(unittest.TestCase):
 
@@ -184,7 +203,19 @@ class Test_AboveYawMassAdder(unittest.TestCase):
 
         yawadder = AboveYawMassAdder()
 
-        check_gradient_unit_test(self, yawadder,display=True)
+        yawadder.machine_rating = 1500.
+        yawadder.lss_mass = 8000.
+        yawadder.main_bearing_mass = 2000.
+        yawadder.second_bearing_mass = 2000.
+        yawadder.gearbox_mass = 60000.
+        yawadder.hss_mass = 1000.
+        yawadder.generator_mass = 20000.
+        yawadder.bedplate_mass = 80000.
+        yawadder.bedplate_length = 5.
+        yawadder.bedplate_width = 3.
+        yawadder.crane = True
+
+        check_gradient_unit_test(self, yawadder,display=False)
 
 class Test_YawSystem(unittest.TestCase):
 
@@ -192,13 +223,43 @@ class Test_YawSystem(unittest.TestCase):
 
         yaw = YawSystem()
 
-        check_gradient_unit_test(self, yaw,display=True)
+        yaw.rotor_diameter = 70. # rotor diameter [m]
+        yaw.rotor_thrust = 324000. 
+        yaw.tower_top_diameter = 2.7 # tower top diameter [m]
+        yaw.above_yaw_mass = 240000.
 
-class Test_NacelleSystemMassAdder(unittest.TestCase):
+        check_gradient_unit_test(self, yaw,display=False)
+
+'''class Test_NacelleSystemAdder(unittest.TestCase):
 
     def test1(self):
 
-        nac = NacelleSystemMassAdder
+        nac = NacelleSystemAdder()
+
+        nac.above_yaw_mass = 5000.
+        nac.yawMass = 5000.
+        nac.lss_mass = 5000.
+        nac.main_bearing_mass = 5000.
+        nac.second_bearing_mass = 5000.
+        nac.gearbox_mass = 5000.
+        nac.hss_mass = 5000.
+        nac.generator_mass = 5000.
+        nac.bedplate_mass = 5000.
+        nac.mainframe_mass = 5000.
+        nac.lss_cm = np.array([1.0, 1.0, 1.0])
+        nac.main_bearing_cm = np.array([1.0, 1.0, 1.0])
+        nac.second_bearing_cm = np.array([1.0, 1.0, 1.0])
+        nac.gearbox_cm = np.array([1.0, 1.0, 1.0])
+        nac.hss_cm = np.array([1.0, 1.0, 1.0])
+        nac.generator_cm = np.array([1.0, 1.0, 1.0])
+        nac.bedplate_cm = np.array([1.0, 1.0, 1.0])
+        nac.lss_I = np.array([1.0, 1.0, 1.0])
+        nac.main_bearing_I = np.array([1.0, 1.0, 1.0])
+        nac.second_bearing_I = np.array([1.0, 1.0, 1.0])
+        nac.gearbox_I = np.array([1.0, 1.0, 1.0])
+        nac.hss_I = np.array([1.0, 1.0, 1.0])
+        nac.generator_I = np.array([1.0, 1.0, 1.0])
+        nac.bedplate_I = np.array([1.0, 1.0, 1.0])
 
         check_gradient_unit_test(self, nac,display=True)'''
 

@@ -256,20 +256,18 @@ class MainBearing(Component):
 
         # derivatives
         if design1DL < ratingDL :
-            self.d_mass_d_lss_diameter = 2.77 * 1000.0 * (massFact * (26.13 * (10. ** (-6))) * ((self.lss_diameter * 1000.0) ** 1.77)) + \
-                                   2.64 * 1000.0 * (massFact * (67.44 * (10. ** (-6))) * ((self.lss_diameter * 1000.0) ** 1.64))
+            d_bmass_d_lss_diameter = (massFact * (26.13 * (10. ** (-6))) * ((self.lss_diameter * 1000.0) ** 1.77)) * 2.77 * 1000.0
+            d_hmass_d_lss_diameter = (massFact * (67.44 * (10. ** (-6))) * ((self.lss_diameter * 1000.0) ** 1.64)) * 2.64 * 1000.0
+            self.d_mass_d_lss_diameter = d_bmass_d_lss_diameter + d_hmass_d_lss_diameter
         else :
-            self.d_mass_d_lss_diameter = 2.77 * 1000.0 * (1.7 * massFact * (26.13 * (10. ** (-6))) * ((self.lss_diameter * 1000.0) ** 1.77)) + \
-                                   2.64 * 1000.0 * (1.5 * massFact * (67.44 * (10. ** (-6))) * ((self.lss_diameter * 1000.0) ** 1.64))
+            d_bmass_d_lss_diameter = (1.7 * massFact * (26.13 * (10. ** (-6))) * ((self.lss_diameter * 1000.0) ** 1.77)) * 2.77 * 1000.0
+            d_hmass_d_lss_diameter = (1.5 * massFact * (67.44 * (10. ** (-6))) * ((self.lss_diameter * 1000.0) ** 1.64)) * 2.64 * 1000.0
+            self.d_mass_d_lss_diameter = d_bmass_d_lss_diameter + d_hmass_d_lss_diameter
         
         self.d_cm_d_rotor_diameter = np.array([-0.035, 0.0, 0.025])
         self.d_I_d_lss_diameter = np.array([0.0, 0.0, 0.0])
-        if design1DL < ratingDL :
-            self.d_I_d_lss_diameter[0] = 2.77 * 1000.0 * (massFact * (26.13 * (10. ** (-6.))) * ((self.lss_diameter * 1000.0) ** 1.77)) * ((inDiam**2.)/4.) + self.mass * (2/4.) * inDiam + \
-                                   2.64 * 1000.0 * (massFact * (67.44 * (10. ** (-6.))) * ((self.lss_diameter * 1000.0) ** 1.64)) * ((depth**2.)/4.) + self.mass * (2/4.) * 1.5 * depth
-        else :
-            self.d_I_d_lss_diameter[0] = 2.77 * 1000.0 * (1.7 * massFact * (26.13 * (10. ** (-6.))) * ((self.lss_diameter * 1000.0) ** 1.77)) * ((inDiam**2.)/4.) + self.mass * (2/4.) * inDiam + \
-                                      2.64 * 1000.0 * (1.5 * massFact * (67.44 * (10. ** (-6.))) * ((self.lss_diameter * 1000.0) ** 1.64)) * ((depth**2.)/4.) + self.mass * (2/4.) * 1.5 * depth
+        self.d_I_d_lss_diameter[0] = d_bmass_d_lss_diameter * inDiam ** 2 / 4. + b1mass * (2. * inDiam) / 4. + \
+                                     d_hmass_d_lss_diameter * depth ** 2 / 4. + h1mass * (2. * depth) / 4. * 1.5
         self.d_I_d_lss_diameter[1] = (1/2.) * self.d_I_d_lss_diameter[0]
         self.d_I_d_lss_diameter[2] = (1/2.) * self.d_I_d_lss_diameter[0]
 
@@ -376,22 +374,20 @@ class SecondBearing(Component):
 
         # derivatives
         if design2DL < ratingDL :
-            self.d_mass_d_lss_diameter = 2.77 * 1000.0 * (massFact * (26.13 * (10 ** (-6))) * ((self.lss_diameter * 1000.0) ** 1.77)) + \
-                                   2.64 * 1000.0 * (massFact * (67.44 * (10 ** (-6))) * ((self.lss_diameter * 1000.0) ** 1.64))
+            d_bmass_d_lss_diameter = (massFact * (26.13 * (10. ** (-6))) * ((self.lss_diameter * 1000.0) ** 1.77)) * 2.77 * 1000.0
+            d_hmass_d_lss_diameter = (massFact * (67.44 * (10. ** (-6))) * ((self.lss_diameter * 1000.0) ** 1.64)) * 2.64 * 1000.0
+            self.d_mass_d_lss_diameter = d_bmass_d_lss_diameter + d_hmass_d_lss_diameter
         else :
-            self.d_mass_d_lss_diameter = 2.77 * 1000.0 * (1.7 * massFact * (26.13 * (10 ** (-6))) * ((self.lss_diameter * 1000.0) ** 1.77)) + \
-                                   2.64 * 1000.0 * (1.5 * massFact * (67.44 * (10 ** (-6))) * ((self.lss_diameter * 1000.0) ** 1.64))
+            d_bmass_d_lss_diameter = (1.7 * massFact * (26.13 * (10. ** (-6))) * ((self.lss_diameter * 1000.0) ** 1.77)) * 2.77 * 1000.0
+            d_hmass_d_lss_diameter = (1.5 * massFact * (67.44 * (10. ** (-6))) * ((self.lss_diameter * 1000.0) ** 1.64)) * 2.64 * 1000.0
+            self.d_mass_d_lss_diameter = d_bmass_d_lss_diameter + d_hmass_d_lss_diameter
         
         self.d_cm_d_rotor_diameter = np.array([-0.01, 0.0, 0.025])
         self.d_I_d_lss_diameter = np.array([0.0, 0.0, 0.0])
-        if design2DL < ratingDL :
-            self.d_I_d_lss_diameter[0] = 2.77 * 1000.0 * (massFact * (26.13 * (10 ** (-6))) * ((self.lss_diameter * 1000.0) ** 1.77)) * ((inDiam**2)/4) + self.mass * (2/4) * inDiam + \
-                                   2.64 * 1000.0 * (massFact * (67.44 * (10 ** (-6))) * ((self.lss_diameter * 1000.0) ** 1.64)) * ((depth**2)/4) + self.mass * (2/4) * 1.5 * depth
-        else :
-            self.d_I_d_lss_diameter[0] = 2.77 * 1000.0 * (1.7 * massFact * (26.13 * (10 ** (-6))) * ((self.lss_diameter * 1000.0) ** 1.77)) * ((inDiam**2)/4) + self.mass * (2/4) * inDiam + \
-                                      2.64 * 1000.0 * (1.5 * massFact * (67.44 * (10 ** (-6))) * ((self.lss_diameter * 1000.0) ** 1.64)) * ((depth**2)/4) + self.mass * (2/4) * 1.5 * depth
-        self.d_I_d_lss_diameter[1] = (1/2) * self.d_I_d_lss_diameter[0]
-        self.d_I_d_lss_diameter[2] = (1/2) * self.d_I_d_lss_diameter[0]                             
+        self.d_I_d_lss_diameter[0] = d_bmass_d_lss_diameter * inDiam ** 2 / 4. + b2mass * (2. * inDiam) / 4. + \
+                                     d_hmass_d_lss_diameter * depth ** 2 / 4. + h2mass * (2. * depth) / 4. * 1.5
+        self.d_I_d_lss_diameter[1] = (1/2.) * self.d_I_d_lss_diameter[0]
+        self.d_I_d_lss_diameter[2] = (1/2.) * self.d_I_d_lss_diameter[0]                          
 
     def linearize(self):
         
@@ -483,8 +479,8 @@ class Gearbox(Component):
         height = (0.015 * self.rotor_diameter)
         diameter = (0.75 * height)
 
-        I0 = self.mass * (diameter ** 2 ) / 8 + (self.mass / 2) * (height ** 2) / 8
-        I1 = self.mass * (0.5 * (diameter ** 2) + (2 / 3) * (length ** 2) + 0.25 * (height ** 2)) / 8
+        I0 = self.mass * (diameter ** 2 ) / 8. + (self.mass / 2.) * (height ** 2) / 8.
+        I1 = self.mass * (0.5 * (diameter ** 2) + (2 / 3.) * (length ** 2) + 0.25 * (height ** 2)) / 8.
         I2 = I1
         self.I = np.array([I0, I1, I2])
         
@@ -498,19 +494,19 @@ class Gearbox(Component):
         self.d_cm_d_rotor_diameter = np.array([0.0, 0.0, 0.025])
 
         self.d_I_d_rotor_diameter = np.array([0.0, 0.0, 0.0])
-        self.d_I_d_rotor_diameter[0] = (1/8) * self.mass * (2 * diameter * (0.75 * 0.015) + 0.5 * (2 * height * 0.015))
-        self.d_I_d_rotor_diameter[1] = (1/8) * self.mass * ((0.5 * (2 * diameter) * (0.75 * 0.015)) + \
-                                 (2/3) * (2 * length) * 0.012 + 0.25 * (2 * height) * 0.015)
+        self.d_I_d_rotor_diameter[0] = (1/8.) * self.mass * (2 * diameter * (0.75 * 0.015) + 0.5 * (2 * height * 0.015))
+        self.d_I_d_rotor_diameter[1] = (1/8.) * self.mass * ((0.5 * (2 * diameter) * (0.75 * 0.015)) + \
+                                 (2/3.) * (2 * length) * 0.012 + 0.25 * (2 * height) * 0.015)
         self.d_I_d_rotor_diameter[2] = self.d_I_d_rotor_diameter[1]
 
         self.d_I_d_rotor_torque = np.array([0.0, 0.0, 0.0])
-        self.d_I_d_rotor_torque[0] = self.d_mass_d_rotor_torque * (diameter ** 2 ) / 8 + (self.mass / 2) * (height ** 2) / 8
-        self.d_I_d_rotor_torque[1] = self.d_mass_d_rotor_torque * (0.5 * (diameter ** 2) + (2 / 3) * (length ** 2) + 0.25 * (height ** 2)) / 8
+        self.d_I_d_rotor_torque[0] = self.d_mass_d_rotor_torque * ((diameter ** 2 ) / 8.  + 1 / 2. * (height ** 2) / 8.) 
+        self.d_I_d_rotor_torque[1] = self.d_mass_d_rotor_torque * ((0.5 * (diameter ** 2) + (2 / 3.) * (length ** 2) + 0.25 * (height ** 2)) / 8.)
         self.d_I_d_rotor_torque[2] = self.d_I_d_rotor_torque[1]
 
         self.d_I_d_gear_ratio = np.array([0.0, 0.0, 0.0])
-        self.d_I_d_gear_ratio[0] = self.d_mass_d_gear_ratio * (diameter ** 2 ) / 8 + (self.mass / 2) * (height ** 2) / 8
-        self.d_I_d_gear_ratio[1] = self.d_mass_d_gear_ratio * (0.5 * (diameter ** 2) + (2 / 3) * (length ** 2) + 0.25 * (height ** 2)) / 8
+        self.d_I_d_gear_ratio[0] = self.d_mass_d_gear_ratio * ((diameter ** 2 ) / 8. + (1 / 2.) * (height ** 2) / 8.)
+        self.d_I_d_gear_ratio[1] = self.d_mass_d_gear_ratio * ((0.5 * (diameter ** 2) + (2 / 3.) * (length ** 2) + 0.25 * (height ** 2)) / 8.)
         self.d_I_d_gear_ratio[2] = self.d_I_d_gear_ratio[1]        
 
     def linearize(self):
@@ -529,7 +525,7 @@ class Gearbox(Component):
 
 
     def calc_mass(self, x):
-    	
+      
         # inputs
         [rotor_diameter, rotor_torque, gear_ratio] = x
 
@@ -737,11 +733,11 @@ class HighSpeedSide(Component):
 
         diameter = (1.5 * self.lss_diameter)                     # based on WindPACT relationships for full HSS / mechanical brake assembly
         length = (0.025)
-        matlDensity = 7850 # material density kg/m^3
+        matlDensity = 7850. # material density kg/m^3
 
         I = np.array([0.0, 0.0, 0.0])
-        I[0]    = 0.25 * length * 3.14159 * matlDensity * (diameter ** 2) * (self.gear_ratio**2) * (diameter ** 2) / 8
-        I[1]    = self.mass * ((3/4) * (diameter ** 2) + (length ** 2)) / 12
+        I[0]    = 0.25 * length * 3.14159 * matlDensity * (diameter ** 2) * (self.gear_ratio**2) * (diameter ** 2) / 8.
+        I[1]    = self.mass * ((3/4.) * (diameter ** 2) + (length ** 2)) / 12.
         I[2]    = I[1]      
         self.I = I
 
@@ -752,23 +748,23 @@ class HighSpeedSide(Component):
         self.d_cm_d_rotor_diameter = np.array([0.5 * 0.0125, 0.0, 0.025])
         
         self.d_I_d_lss_diameter = np.array([0.0, 0.0, 0.0])
-        self.d_I_d_lss_diameter[0] = 4 * 1.5 * (0.25 * length * 3.14159 * matlDensity * (self.gear_ratio**2) * (diameter ** 3) / 8)
-        self.d_I_d_lss_diameter[1] = 2 * 1.5 * (self.mass * ((3/4) * (diameter) + (length ** 2)) / 12)
+        self.d_I_d_lss_diameter[0] = 4. * 1.5 * (0.25 * length * 3.14159 * matlDensity * (self.gear_ratio**2) * (diameter ** 3) / 8.)
+        self.d_I_d_lss_diameter[1] = 2. * 1.5 * (self.mass * ((3/4.) * diameter / 12.))
         self.d_I_d_lss_diameter[2] = self.d_I_d_lss_diameter[1]
         
         self.d_I_d_gear_ratio = np.array([0.0, 0.0, 0.0])
-        self.d_I_d_gear_ratio[0] = 2 * (0.25 * length * 3.14159 * matlDensity * (diameter ** 2) * (self.gear_ratio) * (diameter ** 2) / 8)
-        self.d_I_d_gear_ratio[1] = self.d_mass_d_gear_ratio * ((3/4) * (diameter ** 2) + (length ** 2)) / 12
+        self.d_I_d_gear_ratio[0] = 2. * (0.25 * length * 3.14159 * matlDensity * (diameter ** 2) * (self.gear_ratio) * (diameter ** 2) / 8.)
+        self.d_I_d_gear_ratio[1] = self.d_mass_d_gear_ratio * ((3/4.) * (diameter ** 2) + (length ** 2)) / 12.
         self.d_I_d_gear_ratio[2] = self.d_I_d_gear_ratio[1]
         
         self.d_I_d_rotor_torque = np.array([0.0, 0.0, 0.0])
-        self.d_I_d_rotor_torque[1] = self.d_mass_d_rotor_torque * ((3/4) * (diameter ** 2) + (length ** 2)) / 12
+        self.d_I_d_rotor_torque[1] = self.d_mass_d_rotor_torque * ((3/4.) * (diameter ** 2) + (length ** 2)) / 12.
         self.d_I_d_rotor_torque[2] = self.d_I_d_rotor_torque[1]        
 
     def linearize(self):
 
         # Jacobian
-        self.J = np.array([[0, self.d_mass_d_rotor_torque, self.d_mass_d_gear_ratio, 0], \
+        self.J = np.array([[0, 0, self.d_mass_d_rotor_torque, self.d_mass_d_gear_ratio], \
                            [self.d_cm_d_rotor_diameter[0], 0, 0, 0], \
                            [self.d_cm_d_rotor_diameter[1], 0, 0, 0], \
                            [self.d_cm_d_rotor_diameter[2], 0, 0, 0], \
@@ -858,9 +854,9 @@ class Generator(Component):
         width = (0.5 * depth)
 
         I = np.array([0.0, 0.0, 0.0])
-        I[0]   = ((4.86 * (10 ** (-5))) * (self.rotor_diameter ** 5.333)) + (((2/3) * self.mass) * (depth ** 2 + width ** 2) / 8)
-        I[1]   = (I[0] / 2) / (self.gear_ratio ** 2) + ((1/3) * self.mass * (length ** 2) / 12) + (((2 / 3) * self.mass) * \
-                   (depth ** 2 + width ** 2 + (4/3) * (length ** 2)) / 16 )
+        I[0]   = ((4.86 * (10. ** (-5))) * (self.rotor_diameter ** 5.333)) + (((2./3.) * self.mass) * (depth ** 2 + width ** 2) / 8.)
+        I[1]   = (I[0] / 2.) / (self.gear_ratio ** 2) + ((1./3.) * self.mass * (length ** 2) / 12.) + (((2. / 3.) * self.mass) * \
+                   (depth ** 2. + width ** 2. + (4./3.) * (length ** 2.)) / 16. )
         I[2]   = I[1]                           
         self.I = I
 
@@ -878,20 +874,23 @@ class Generator(Component):
         self.d_cm_d_rotor_diameter = np.array([0.0125, 0.0, 0.025])
         
         self.d_I_d_rotor_diameter = np.array([0.0, 0.0, 0.0])
-        self.d_I_d_rotor_diameter[0] = 5.333*(4.86*(10**-5))*(self.rotor_diameter**4.333) + \
-                                (1/8) * (2/3) * self.d_mass_d_rotor_diameter * (depth ** 2 + width ** 2) + (1/8) * (2/3) * self.mass * (2*depth*0.015 + 2*width*0.5*0.15)
-        self.d_I_d_rotor_diameter[1] = (1/(2*self.gear_ratio**2))*(self.d_I_d_rotor_diameter[0]) + \
-                                 self.d_mass_d_rotor_diameter * ((1/3) * (length ** 2) / 12) + (((2 / 3)) * (depth ** 2 + width ** 2 + (4/3) * (length ** 2)) / 16 ) + \
-                                 self.mass * ((1/3) * (1/12) * (2 * length * 1.6 * 0.015) + (2/3) * (1/16) * (2*depth*0.015 + 2*width*0.5*0.15 + (4/3)*2*length*1.6*0.015))
+        self.d_I_d_rotor_diameter[0] = ((4.86*(10.**(-5)))*(self.rotor_diameter**4.333)) * 5.333 + \
+                                (1./8.) * (2./3.) * self.d_mass_d_rotor_diameter * (depth ** 2 + width ** 2) + \
+                                (1./8.) * (2./3.) * self.mass * (2.*depth*0.015 + 2.*width*0.5*0.15)
+        self.d_I_d_rotor_diameter[1] = (1/(2.*self.gear_ratio**2.))*(self.d_I_d_rotor_diameter[0]) + \
+                                 self.d_mass_d_rotor_diameter * (((1./3.) * (length ** 2.) / 12.) + ((2 / 3.) * (depth ** 2. + width ** 2. + (4./3.) * (length ** 2.)) / 16. )) + \
+                                 self.mass * ((1./3.) * (1./12.) * (2. * length * 1.6 * 0.015) + (2./3.) * (1./16.) * (2.*depth*0.015 + 2.*width*0.5*0.15 + (4./3.)*2.*length*1.6*0.015))
         self.d_I_d_rotor_diameter[2] = self.d_I_d_rotor_diameter[1]
 
         self.d_I_d_machine_rating = np.array([0.0, 0.0, 0.0])
-        self.d_I_d_machine_rating[0] = (1/8) * (2/3) * self.d_mass_d_machine_rating * (2*depth*0.15 + 2*width*0.5*0.15)
-        self.d_I_d_machine_rating[1] = (1/(2*self.gear_ratio**2))*self.d_I_d_machine_rating[0]
+        self.d_I_d_machine_rating[0] = (1./8.) * (2./3.) * self.d_mass_d_machine_rating * (depth ** 2 + width ** 2)
+        self.d_I_d_machine_rating[1] = (1/(2.*self.gear_ratio**2))*self.d_I_d_machine_rating[0] + \
+                                       ((1/3.) * self.d_mass_d_machine_rating * (length ** 2) / 12.) + \
+                                       (((2 / 3.) * self.d_mass_d_machine_rating) * (depth ** 2 + width ** 2 + (4/3.) * (length ** 2)) / 16. )
         self.d_I_d_machine_rating[2] = self.d_I_d_machine_rating[1]
         
         self.d_I_d_gear_ratio = np.array([0.0, 0.0, 0.0])
-        self.d_I_d_gear_ratio[1] = (1/2) * self.I[0] * (-1/(self.gear_ratio**3))
+        self.d_I_d_gear_ratio[1] = (1/2.) * self.I[0] * (-2.) * (self.gear_ratio**(-3))
         self.d_I_d_gear_ratio[2] = self.d_I_d_gear_ratio[1]
 
     def linearize(self):
@@ -900,10 +899,10 @@ class Generator(Component):
         self.J = np.array([[self.d_mass_d_rotor_diameter, self.d_mass_d_machine_rating, 0], \
                            [self.d_cm_d_rotor_diameter[0], 0, 0], \
                            [self.d_cm_d_rotor_diameter[1], 0, 0], \
-                           [self.d_cm_d_rotor_diameter[2]], \
-                           [0, self.d_I_d_rotor_diameter[0], self.d_I_d_machine_rating[0], self.d_I_d_gear_ratio[0]], \
-                           [0, self.d_I_d_rotor_diameter[1], self.d_I_d_machine_rating[1], self.d_I_d_gear_ratio[1]], \
-                           [0, self.d_I_d_rotor_diameter[2], self.d_I_d_machine_rating[2], self.d_I_d_gear_ratio[2]]])
+                           [self.d_cm_d_rotor_diameter[2], 0, 0], \
+                           [self.d_I_d_rotor_diameter[0], self.d_I_d_machine_rating[0], self.d_I_d_gear_ratio[0]], \
+                           [self.d_I_d_rotor_diameter[1], self.d_I_d_machine_rating[1], self.d_I_d_gear_ratio[1]], \
+                           [self.d_I_d_rotor_diameter[2], self.d_I_d_machine_rating[2], self.d_I_d_gear_ratio[2]]])
 
     def provideJ(self):
 
@@ -1019,8 +1018,8 @@ class Bedplate(Component):
         depth = (self.length / 2.0)
 
         I = np.array([0.0, 0.0, 0.0])
-        I[0]  = self.mass * (self.width ** 2 + depth ** 2) / 8
-        I[1]  = self.mass * (depth ** 2 + self.width ** 2 + (4/3) * self.length ** 2) / 16
+        I[0]  = self.mass * (self.width ** 2 + depth ** 2) / 8.
+        I[1]  = self.mass * (depth ** 2 + self.width ** 2 + (4/3.) * self.length ** 2) / 16.
         I[2]  = I[1]                          
         self.I = I
 
@@ -1038,28 +1037,28 @@ class Bedplate(Component):
         self.d_cm_d_rotor_diameter = np.array([0.0, 0.0, 0.0122])
 
         self.d_I_d_rotor_diameter = np.array([0.0, 0.0, 0.0])        
-        self.d_I_d_rotor_diameter[0] = (1/8) * (self.d_mass_d_rotor_diameter)*(self.width**2 + depth**2) + (1/8) * self.mass * (2*self.width*self.d_width_d_rotor_diameter + 2*depth*d_depth_d_rotor_diameter)
-        self.d_I_d_rotor_diameter[1] = (1/8) * (self.d_mass_d_rotor_diameter)*(self.width**2 + depth**2 + (4/3) * self.length**2) + (1/8) * self.mass * (2*self.width*self.d_width_d_rotor_diameter + 2*depth*d_depth_d_rotor_diameter + (4/3)*2*self.length*self.d_length_d_rotor_diameter)
+        self.d_I_d_rotor_diameter[0] = (1/8.) * (self.d_mass_d_rotor_diameter)*(self.width**2 + depth**2) + (1/8.) * self.mass * (2.*self.width*self.d_width_d_rotor_diameter + 2.*depth*self.d_depth_d_rotor_diameter)
+        self.d_I_d_rotor_diameter[1] = (1/16.) * (self.d_mass_d_rotor_diameter)*(self.width**2 + depth**2 + (4/3.) * self.length**2) + (1/16.) * self.mass * (2.*self.width*self.d_width_d_rotor_diameter + 2.*depth*self.d_depth_d_rotor_diameter + (4/3.)*2.*self.length*self.d_length_d_rotor_diameter)
         self.d_I_d_rotor_diameter[2] = self.d_I_d_rotor_diameter[1]
 
         self.d_I_d_rotor_thrust = np.array([0.0, 0.0, 0.0])        
-        self.d_I_d_rotor_thrust[0] = (1/8) * (self.d_mass_d_rotor_thrust)*(self.width**2 + depth**2)
-        self.d_I_d_rotor_thrust[1] = (1/8) * (self.d_mass_d_rotor_thrust)*(self.width**2 + depth**2 + (4/3) * self.length**2)
+        self.d_I_d_rotor_thrust[0] = (1/8.) * (self.d_mass_d_rotor_thrust)*(self.width**2 + depth**2)
+        self.d_I_d_rotor_thrust[1] = (1/16.) * (self.d_mass_d_rotor_thrust)*(self.width**2 + depth**2 + (4/3.) * self.length**2)
         self.d_I_d_rotor_thrust[2] = self.d_I_d_rotor_thrust[1]
 
         self.d_I_d_rotor_torque = np.array([0.0, 0.0, 0.0])        
-        self.d_I_d_rotor_torque[0] = (1/8) * (self.d_mass_d_rotor_torque)*(self.width**2 + depth**2)
-        self.d_I_d_rotor_torque[1] = (1/8) * (self.d_mass_d_rotor_torque)*(self.width**2 + depth**2 + (4/3) * self.length**2)
+        self.d_I_d_rotor_torque[0] = (1/8.) * (self.d_mass_d_rotor_torque)*(self.width**2 + depth**2)
+        self.d_I_d_rotor_torque[1] = (1/16.) * (self.d_mass_d_rotor_torque)*(self.width**2 + depth**2 + (4/3.) * self.length**2)
         self.d_I_d_rotor_torque[2] = self.d_I_d_rotor_torque[1]       
         
         self.d_I_d_rotor_mass = np.array([0.0, 0.0, 0.0])        
-        self.d_I_d_rotor_mass[0] = (1/8) * (self.d_mass_d_rotor_mass)*(self.width**2 + depth**2)
-        self.d_I_d_rotor_mass[1] = (1/8) * (self.d_mass_d_rotor_mass)*(self.width**2 + depth**2 + (4/3) * self.length**2)
+        self.d_I_d_rotor_mass[0] = (1/8.) * (self.d_mass_d_rotor_mass)*(self.width**2 + depth**2)
+        self.d_I_d_rotor_mass[1] = (1/16.) * (self.d_mass_d_rotor_mass)*(self.width**2 + depth**2 + (4/3.) * self.length**2)
         self.d_I_d_rotor_mass[2] = self.d_I_d_rotor_mass[1] 
         
         self.d_I_d_tower_top_diameter = np.array([0.0, 0.0, 0.0])        
-        self.d_I_d_tower_top_diameter[0] = (1/8) * (self.d_mass_d_tower_top_diameter)*(self.width**2 + depth**2)
-        self.d_I_d_tower_top_diameter[1] = (1/8) * (self.d_mass_d_tower_top_diameter)*(self.width**2 + depth**2 + (4/3) * self.length**2)
+        self.d_I_d_tower_top_diameter[0] = (1/8.) * (self.d_mass_d_tower_top_diameter)*(self.width**2 + depth**2)
+        self.d_I_d_tower_top_diameter[1] = (1/16.) * (self.d_mass_d_tower_top_diameter)*(self.width**2 + depth**2 + (4/3.) * self.length**2)
         self.d_I_d_tower_top_diameter[2] = self.d_I_d_tower_top_diameter[1]
 
     def linearize(self):
@@ -1121,55 +1120,55 @@ class AboveYawMassAdder(Component):
         
         Parameters
         ----------
-		    machine_rating : float
-		      machine rating [kW]
-		    lss_mass : float
-		      low speed shaft component mass [kg]
-		    main_bearing_mass : float
-		      main bearing component mass [kg]
-		    second_bearing_mass : float
-		      second bearing component mass [kg]
-		    gearbox_mass : float
-		      gearbox component mass [kg]
-		    hss_mass : float
-		      high speed side component mass [kg]
-		    generator_mass : float
-		      generator component mass [kg]
-		    bedplate_mass : float
-		      bedplate component mass [kg]
-		    bedplate_length : float
-		      bedplate component length [m]
-		    bedplate_width : float
-		      bedplate component width [m]
-		    crane : boolean
-		      flag for presence of crane
-		
-		    Returns
-		    -------    
-		    electrical_mass : float
-		      electrical connections component mass [kg]
-		    vs_electronics_mass : float
-		      variable speed electrics mass [kg]    
-		    hvac_mass : float
-		      HVAC component mass [kg]
-		    controls_mass : float
-		      controls component mass [kg]
-		    platforms_mass : float
-		      nacelle platforms component mass [kg]
-		    crane_mass : float
-		      crane component mass [kg]
-		    mainframe_mass : float
-		      mainframe component mass [kg]               
-		    cover_mass : float
-		      nacelle cover component mass [kg]
-		    above_yaw_mass : float
-		      total mass above yaw system [kg]
-		    length : float
-		      nacelle component length [m]
-		    width : float
-		      nacelle component width [m]
-		    height : float
-		      nacelle component height [m]     
+        machine_rating : float
+          machine rating [kW]
+        lss_mass : float
+          low speed shaft component mass [kg]
+        main_bearing_mass : float
+          main bearing component mass [kg]
+        second_bearing_mass : float
+          second bearing component mass [kg]
+        gearbox_mass : float
+          gearbox component mass [kg]
+        hss_mass : float
+          high speed side component mass [kg]
+        generator_mass : float
+          generator component mass [kg]
+        bedplate_mass : float
+          bedplate component mass [kg]
+        bedplate_length : float
+          bedplate component length [m]
+        bedplate_width : float
+          bedplate component width [m]
+        crane : boolean
+          flag for presence of crane
+    
+        Returns
+        -------    
+        electrical_mass : float
+          electrical connections component mass [kg]
+        vs_electronics_mass : float
+          variable speed electrics mass [kg]    
+        hvac_mass : float
+          HVAC component mass [kg]
+        controls_mass : float
+          controls component mass [kg]
+        platforms_mass : float
+          nacelle platforms component mass [kg]
+        crane_mass : float
+          crane component mass [kg]
+        mainframe_mass : float
+          mainframe component mass [kg]               
+        cover_mass : float
+          nacelle cover component mass [kg]
+        above_yaw_mass : float
+          total mass above yaw system [kg]
+        length : float
+          nacelle component length [m]
+        width : float
+          nacelle component width [m]
+        height : float
+          nacelle component height [m]     
         '''
     
         super(AboveYawMassAdder, self).__init__()
@@ -1216,12 +1215,13 @@ class AboveYawMassAdder(Component):
         
         # derivatives
         self.d_hvac_mass_d_machine_rating = 0.08
+        self.d_vs_mass_d_machine_rating = 2.4445
         self.d_platforms_mass_d_bedplate_mass = 0.125
-        self.d_mainframe_mass_d_bedplate_mass = 1.0 + d_platforms_mass_d_bedplate_mass
+        self.d_mainframe_mass_d_bedplate_mass = 1.0 + self.d_platforms_mass_d_bedplate_mass
         self.d_cover_mass_d_bedplate_length = (84.1 / 2) * (2*2) * self.bedplate_length
-        self.d_above_yaw_mass_d_bedplate_mass = d_mainframe_mass_d_bedplate_mass
-        self.d_above_yaw_mass_d_bedplate_length = d_cover_mass_d_bedplate_length
-        self.d_above_yaw_mass_d_machine_rating = d_hvac_mass_d_machine_rating
+        self.d_above_yaw_mass_d_bedplate_mass = self.d_mainframe_mass_d_bedplate_mass
+        self.d_above_yaw_mass_d_bedplate_length = self.d_cover_mass_d_bedplate_length
+        self.d_above_yaw_mass_d_machine_rating = self.d_hvac_mass_d_machine_rating + self.d_vs_mass_d_machine_rating
         self.d_length_d_bedplate_length = 1.0
         self.d_width_d_bedplate_width = 1.0
         self.d_height_d_bedplate_length = (2.0/3.0)
@@ -1230,6 +1230,7 @@ class AboveYawMassAdder(Component):
 
         # Jacobian
         self.J = np.array([[self.d_hvac_mass_d_machine_rating, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
+                          [self.d_vs_mass_d_machine_rating, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
                           [0, 0, 0, 0, 0, 0, 0, self.d_platforms_mass_d_bedplate_mass, 0, 0], \
                           [0, 0, 0, 0, 0, 0, 0, self.d_mainframe_mass_d_bedplate_mass, 0, 0], \
                           [0, 0, 0, 0, 0, 0, 0, 0, self.d_cover_mass_d_bedplate_length, 0], \
@@ -1241,7 +1242,7 @@ class AboveYawMassAdder(Component):
     def provideJ(self):
 
         inputs = ['machine_rating','lss_mass', 'main_bearing_mass', 'second_bearing_mass', 'gearbox_mass', 'hss_mass', 'generator_mass', 'bedplate_mass', 'bedplate_length', 'bedplate_width']
-        outputs = ['hvac_mass', 'platforms_mass', 'mainframe_mass', 'cover_mass', 'above_yaw_mass', 'length', 'width', 'height']
+        outputs = ['hvac_mass', 'vs_electronics_mass', 'platforms_mass', 'mainframe_mass', 'cover_mass', 'above_yaw_mass', 'length', 'width', 'height']
 
         return inputs, outputs, self.J
 
@@ -1310,8 +1311,8 @@ class YawSystem(Component):
         # derivatives
         self.d_mass_d_rotor_diameter = yawfactor * 0.4 * self.above_yaw_mass
         self.d_mass_d_rotor_thrust = yawfactor * 0.975 * self.tower_top_diameter
-        self.d_mass_d_tower_top_diameter = yawfactor * 0.4 * self.rotor_diameter
-        self.d_mass_d_above_yaw_mass = yawfactor * 0.975 * self.rotor_thrust
+        self.d_mass_d_tower_top_diameter = yawfactor * 0.975 * self.rotor_thrust
+        self.d_mass_d_above_yaw_mass = yawfactor * 0.4 * self.rotor_diameter
 
     def linearize(self):
 
@@ -1369,54 +1370,54 @@ class NacelleSystemAdder(Component): # changed name to nacelle - need to rename,
         
         Parameters
         ----------
-		    above_yaw_mass : float
-		      total mass above yaw system [kg]
-		    yawMass : float
-		      mass of yaw component [kg]
-		    lss_mass : float
-		      low speed shaft component mass [kg]
-		    main_bearing_mass : float
-		      main bearing component mass [kg]
-		    second_bearing_mass : float
-		      second bearing component mass [kg]
-		    gearbox_mass : float
-		      gearbox component mass [kg]
-		    hss_mass : float
-		      high speed side component mass [kg]
-		    generator_mass : float
-		      generator component mass [kg]
-		    bedplate_mass : float
-		      bedplate component mass [kg]
-		    mainframe_mass : float
-		      mainframe component mass [kg]    
-		    lss_cm : array of float
-		      low speed shaft component cm [m, m, m]
-		    main_bearing_cm : array of float
-		      main bearing component cm [m, m, m]
-		    second_bearing_cm : array of float
-		      second bearing component cm [m, m, m]
-		    gearbox_cm : array of float
-		      gearbox component cm [m, m, m]
-		    hss_cm : array of float
-		      high speed side component cm [m, m, m]
-		    generator_cm : array of float
-		      generator component cm [m, m, m]
-		    bedplate_cm : array of float
-		      bedplate component cm [m, m, m]
-		    lss_I : array of float
-		      low speed shaft component mass moments of inertia for principle axis
-		    main_bearing_I : array of float
-		      main bearing component mass moments of inertia for principle axis
-		    second_bearing_I : array of float
-		      second bearing component mass moments of inertia for principle axis
-		    gearbox_I : array of float
-		      gearbox component mass moments of inertia for principle axis
-		    hss_I : array of float
-		      high speed side component mass moments of inertia for principle axis
-		    generator_I : array of float
-		      generator component mass moments of inertia for principle axis
-		    bedplate_I : array of float
-		      bedplate component mass moments of inertia for principle axis
+        above_yaw_mass : float
+          total mass above yaw system [kg]
+        yawMass : float
+          mass of yaw component [kg]
+        lss_mass : float
+          low speed shaft component mass [kg]
+        main_bearing_mass : float
+          main bearing component mass [kg]
+        second_bearing_mass : float
+          second bearing component mass [kg]
+        gearbox_mass : float
+          gearbox component mass [kg]
+        hss_mass : float
+          high speed side component mass [kg]
+        generator_mass : float
+          generator component mass [kg]
+        bedplate_mass : float
+          bedplate component mass [kg]
+        mainframe_mass : float
+          mainframe component mass [kg]    
+        lss_cm : array of float
+          low speed shaft component cm [m, m, m]
+        main_bearing_cm : array of float
+          main bearing component cm [m, m, m]
+        second_bearing_cm : array of float
+          second bearing component cm [m, m, m]
+        gearbox_cm : array of float
+          gearbox component cm [m, m, m]
+        hss_cm : array of float
+          high speed side component cm [m, m, m]
+        generator_cm : array of float
+          generator component cm [m, m, m]
+        bedplate_cm : array of float
+          bedplate component cm [m, m, m]
+        lss_I : array of float
+          low speed shaft component mass moments of inertia for principle axis
+        main_bearing_I : array of float
+          main bearing component mass moments of inertia for principle axis
+        second_bearing_I : array of float
+          second bearing component mass moments of inertia for principle axis
+        gearbox_I : array of float
+          gearbox component mass moments of inertia for principle axis
+        hss_I : array of float
+          high speed side component mass moments of inertia for principle axis
+        generator_I : array of float
+          generator component mass moments of inertia for principle axis
+        bedplate_I : array of float
+          bedplate component mass moments of inertia for principle axis
   
         Returns
         -------
@@ -1545,25 +1546,25 @@ class NacelleSystemAdder(Component): # changed name to nacelle - need to rename,
 
         self.d_I_d_lss_cm = np.array([0.0, 0.0, 0.0])
         for i in range(0,3):
-        	  self.d_I_d_lss_cm[i] = 2 * self.lss_mass * (self.lss_cm[i] - self.cm[i]) * (1 - self.d_cm_d_lss_cm)
+            self.d_I_d_lss_cm[i] = 2 * self.lss_mass * (self.lss_cm[i] - self.cm[i]) * (1 - self.d_cm_d_lss_cm)
         self.d_I_d_main_bearing_cm = np.array([0.0, 0.0, 0.0])
         for i in range(0,3):
-        	  self.d_I_d_main_bearing_cm[i] = 2 * self.main_bearing_mass * (self.main_bearing_cm[i] - self.cm[i]) * (1 - self.d_cm_d_main_bearing_cm)
+            self.d_I_d_main_bearing_cm[i] = 2 * self.main_bearing_mass * (self.main_bearing_cm[i] - self.cm[i]) * (1 - self.d_cm_d_main_bearing_cm)
         self.d_I_d_second_bearing_cm = np.array([0.0, 0.0, 0.0])
         for i in range(0,3):
-        	  self.d_I_d_second_bearing_cm[i] = 2 * self.second_bearing_mass * (self.second_bearing_cm[i] - self.cm[i]) * (1 - self.d_cm_d_second_bearing_cm)
+            self.d_I_d_second_bearing_cm[i] = 2 * self.second_bearing_mass * (self.second_bearing_cm[i] - self.cm[i]) * (1 - self.d_cm_d_second_bearing_cm)
         self.d_I_d_gearbox_cm = np.array([0.0, 0.0, 0.0])
         for i in range(0,3):
-        	  self.d_I_d_gearbox_cm[i] = 2 * self.gearbox_mass * (self.gearbox_cm[i] - self.cm[i]) * (1 - self.d_cm_d_gearbox_cm)
+            self.d_I_d_gearbox_cm[i] = 2 * self.gearbox_mass * (self.gearbox_cm[i] - self.cm[i]) * (1 - self.d_cm_d_gearbox_cm)
         self.d_I_d_hss_cm = np.array([0.0, 0.0, 0.0])
         for i in range(0,3):
-        	  self.d_I_d_hss_cm[i] = 2 * self.hss_mass * (self.hss_cm[i] - self.cm[i]) * (1 - self.d_cm_d_hss_cm)
+            self.d_I_d_hss_cm[i] = 2 * self.hss_mass * (self.hss_cm[i] - self.cm[i]) * (1 - self.d_cm_d_hss_cm)
         self.d_I_d_generator_cm = np.array([0.0, 0.0, 0.0])
         for i in range(0,3):
-        	  self.d_I_d_generator_cm[i] = 2 * self.generator_mass * (self.generator_cm[i] - self.cm[i]) * (1 - self.d_cm_d_generator_cm)
+            self.d_I_d_generator_cm[i] = 2 * self.generator_mass * (self.generator_cm[i] - self.cm[i]) * (1 - self.d_cm_d_generator_cm)
         self.d_I_d_mainframeCM = np.array([0.0, 0.0, 0.0])
         for i in range(0,3):
-        	  self.d_I_d_mainframeCM[i] = 2 * self.mainframe_mass * (self.bedplate_cm[i] - self.cm[i]) * (1 - self.d_cm_d_mainframeCM)
+            self.d_I_d_mainframeCM[i] = 2 * self.mainframe_mass * (self.bedplate_cm[i] - self.cm[i]) * (1 - self.d_cm_d_mainframeCM)
 
     def linearize(self):
 
@@ -1593,12 +1594,8 @@ class NacelleSystemAdder(Component): # changed name to nacelle - need to rename,
     def provideJ(self):
 
         inputs = ['above_yaw_mass', 'yawMass', 'lss_mass', 'main_bearing_mass', 'second_bearing_mass', 'gearbox_mass', 'hss_mass', 'generator_mass', 'mainframe_mass', \
-                      'lss_cm[0]', 'main_bearing_cm[0]', 'second_bearing_cm[0]', 'gearbox_cm[0]', 'hss_cm[0]', 'generator_cm[0]', 'bedplate_cm[0]', \
-                      'lss_cm[1]', 'main_bearing_cm[1]', 'second_bearing_cm[1]', 'gearbox_cm[1]', 'hss_cm[1]', 'generator_cm[1]', 'bedplate_cm[1]', \
-                      'lss_cm[2]', 'main_bearing_cm[2]', 'second_bearing_cm[2]', 'gearbox_cm[2]', 'hss_cm[2]', 'generator_cm[2]', 'bedplate_cm[2]', \
-                      'lss_I[0]', 'main_bearing_I[0]', 'second_bearing_I[0]', 'gearbox_I[0]', 'hss_I[0]', 'generator_I[0]', 'bedplate_I[0]', \
-                      'lss_I[1]', 'main_bearing_I[1]', 'second_bearing_I[1]', 'gearbox_I[1]', 'hss_I[1]', 'generator_I[1]', 'bedplate_I[1]', \
-                      'lss_I[2]', 'main_bearing_I[2]', 'second_bearing_I[2]', 'gearbox_I[2]', 'hss_I[2]', 'generator_I[2]', 'bedplate_I[2]']
+                      'lss_cm', 'main_bearing_cm', 'second_bearing_cm', 'gearbox_cm', 'hss_cm', 'generator_cm', 'bedplate_cm', \
+                      'lss_I', 'main_bearing_I', 'second_bearing_I', 'gearbox_I', 'hss_I', 'generator_I', 'bedplate_I']
         outputs = ['mass', 'cm', 'I']
 
         return inputs, outputs, self.J

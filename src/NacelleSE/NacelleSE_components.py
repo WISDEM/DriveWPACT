@@ -126,27 +126,27 @@ class LowSpeedShaft(Component):
         self.d_diameter_d_rotor_mass = ((1/6.) * ((32./pi) * hollow * SOsafety)**(1/3.)) * (((self.design_torque/yieldst)**2. + \
                                            (bendMom/endurst)**2.)**(-5/6.)) * (2. * bendMom / (endurst**2.)) * (mmtArm * self.d_bending_d_rotor_mass)
 
-        self.d_lssMass_d_rotor_diameter = massFact * (pi/4) * (1-ioratio**2) * steeldens * (self.diameter**2) * self.d_length_d_rotor_diameter + \
+        self.d_lss_mass_d_rotor_diameter = massFact * (pi/4) * (1-ioratio**2) * steeldens * (self.diameter**2) * self.d_length_d_rotor_diameter + \
                                     2. * massFact * (pi/4) * (1-ioratio**2) * steeldens * self.length * self.diameter * self.d_diameter_d_rotor_diameter
-        self.d_lssMass_d_rotor_torque = 2. * massFact * (pi/4) * (1-ioratio**2) * steeldens * self.length * self.diameter * self.d_diameter_d_rotor_torque    
-        self.d_lssMass_d_rotor_mass =  2. * massFact * (pi/4) * (1-ioratio**2) * steeldens * self.length * self.diameter * self.d_diameter_d_rotor_mass
+        self.d_lss_mass_d_rotor_torque = 2. * massFact * (pi/4) * (1-ioratio**2) * steeldens * self.length * self.diameter * self.d_diameter_d_rotor_torque    
+        self.d_lss_mass_d_rotor_mass =  2. * massFact * (pi/4) * (1-ioratio**2) * steeldens * self.length * self.diameter * self.d_diameter_d_rotor_mass
                                   
         self.d_cm_d_rotor_diameter = np.array([-(0.035 - 0.01), 0.0, 0.025])
 
         self.d_I_d_rotor_diameter = np.array([0.0, 0.0, 0.0])
-        self.d_I_d_rotor_diameter[0] = (1/8.) * (1+ ioratio**2.) * self.d_lssMass_d_rotor_diameter * (self.diameter**2.) + (1/8.) * (1+ioratio**2.) * self.mass * 2. * self.diameter * self.d_diameter_d_rotor_diameter
+        self.d_I_d_rotor_diameter[0] = (1/8.) * (1+ ioratio**2.) * self.d_lss_mass_d_rotor_diameter * (self.diameter**2.) + (1/8.) * (1+ioratio**2.) * self.mass * 2. * self.diameter * self.d_diameter_d_rotor_diameter
         self.d_I_d_rotor_diameter[1] = (1./2.) * self.d_I_d_rotor_diameter[0] + (1./16.) * (4./3.) * 2. * self.length * self.d_length_d_rotor_diameter * self.mass + \
-                                       (1./16.) * (4./3.) * (self.length**2.) * self.d_lssMass_d_rotor_diameter
+                                       (1./16.) * (4./3.) * (self.length**2.) * self.d_lss_mass_d_rotor_diameter
         self.d_I_d_rotor_diameter[2] = self.d_I_d_rotor_diameter[1]
 
         self.d_I_d_rotor_torque = np.array([0.0, 0.0, 0.0])
-        self.d_I_d_rotor_torque[0] = (1/8.) * (1+ ioratio**2.) * self.d_lssMass_d_rotor_torque * (self.diameter**2.) + (1/8.) * (1+ioratio**2.) * self.mass * 2. * self.diameter * self.d_diameter_d_rotor_torque
-        self.d_I_d_rotor_torque[1] = (1/2.) * self.d_I_d_rotor_torque[0] + (1./16.) * (4./3.) * (self.length**2.) * self.d_lssMass_d_rotor_torque
+        self.d_I_d_rotor_torque[0] = (1/8.) * (1+ ioratio**2.) * self.d_lss_mass_d_rotor_torque * (self.diameter**2.) + (1/8.) * (1+ioratio**2.) * self.mass * 2. * self.diameter * self.d_diameter_d_rotor_torque
+        self.d_I_d_rotor_torque[1] = (1/2.) * self.d_I_d_rotor_torque[0] + (1./16.) * (4./3.) * (self.length**2.) * self.d_lss_mass_d_rotor_torque
         self.d_I_d_rotor_torque[2] = self.d_I_d_rotor_torque[1]
 
         self.d_I_d_rotor_mass = np.array([0.0, 0.0, 0.0])
-        self.d_I_d_rotor_mass[0] = (1/8.) * (1+ ioratio**2.) * self.d_lssMass_d_rotor_mass * (self.diameter**2.) + (1/8.) * (1+ioratio**2.) * self.mass * 2. * self.diameter * self.d_diameter_d_rotor_mass
-        self.d_I_d_rotor_mass[1] = (1/2.) * self.d_I_d_rotor_mass[0] + (1./16.) * (4./3.) * (self.length**2.) * self.d_lssMass_d_rotor_mass
+        self.d_I_d_rotor_mass[0] = (1/8.) * (1+ ioratio**2.) * self.d_lss_mass_d_rotor_mass * (self.diameter**2.) + (1/8.) * (1+ioratio**2.) * self.mass * 2. * self.diameter * self.d_diameter_d_rotor_mass
+        self.d_I_d_rotor_mass[1] = (1/2.) * self.d_I_d_rotor_mass[0] + (1./16.) * (4./3.) * (self.length**2.) * self.d_lss_mass_d_rotor_mass
         self.d_I_d_rotor_mass[2] = self.d_I_d_rotor_mass[1]
 
     def linearize(self):        
@@ -154,7 +154,7 @@ class LowSpeedShaft(Component):
         self.J = np.array([[self.d_length_d_rotor_diameter, 0, 0], \
                            [0, self.d_torque_d_rotor_torque, 0], \
                            [0, 0, self.d_bending_d_rotor_mass], \
-                           [self.d_lssMass_d_rotor_diameter, self.d_lssMass_d_rotor_torque, self.d_lssMass_d_rotor_mass], \
+                           [self.d_lss_mass_d_rotor_diameter, self.d_lss_mass_d_rotor_torque, self.d_lss_mass_d_rotor_mass], \
                            [self.d_cm_d_rotor_diameter[0], 0, 0], \
                            [self.d_cm_d_rotor_diameter[1], 0, 0], \
                            [self.d_cm_d_rotor_diameter[2], 0, 0], \

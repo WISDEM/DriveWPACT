@@ -24,11 +24,11 @@ class Hub_drive(Component):
     '''
 
     # variables
-    rotorDiameter = Float(iotype='in', units='m', desc='rotor diameter')
-    bladeRootDiam = Float(iotype='in', units='m', desc='blade root diameter')
+    rotor_diameter = Float(iotype='in', units='m', desc='rotor diameter')
+    blade_root_diameter = Float(iotype='in', units='m', desc='blade root diameter')
     
     # parameters
-    bladeNumber = Int(3, iotype='in', desc='number of turbine blades')
+    blade_number = Int(3, iotype='in', desc='number of turbine blades')
 
     # outputs
     diameter = Float(0.0, iotype='out', units='m', desc='hub diameter')
@@ -42,11 +42,11 @@ class Hub_drive(Component):
         
         Parameters
         ----------
-        rotorDiameter : float
+        rotor_diameter : float
           The wind turbine rotor diameter [m]
-        bladeRootDiam : float
+        blade_root_diameter : float
           The diameter of the blade root [m]
-        bladeNumber : int
+        blade_number : int
           Number of wind turbine rotor blades
         
         Returns
@@ -64,14 +64,14 @@ class Hub_drive(Component):
     def execute(self):
 
         #Model hub as a cyclinder with holes for blade root and nacelle flange.
-        rCyl=1.1*(self.bladeRootDiam/2) # TODO: sensitivity to this parameter
+        rCyl=1.1*(self.blade_root_diameter/2) # TODO: sensitivity to this parameter
         hCyl=rCyl*2.8 # TODO: sensitivity to this parameter
         castThickness = rCyl/10.0 # TODO: sensitivity to this parameter
         approxCylVol=2*pi*rCyl*castThickness*hCyl
-        bladeRootVol=pi*(self.bladeRootDiam/2.0)**2*castThickness
+        bladeRootVol=pi*(self.blade_root_diameter/2.0)**2*castThickness
 
         #assume nacelle flange opening is similar to blade root opening
-        approxCylNetVol = approxCylVol - (1.0 + self.bladeNumber)*bladeRootVol
+        approxCylNetVol = approxCylVol - (1.0 + self.blade_number)*bladeRootVol
         castDensity = 7200.0 # kg/m^3
         self.mass=approxCylNetVol*castDensity
 
@@ -80,9 +80,9 @@ class Hub_drive(Component):
         self.thickness=castThickness
                     
         cm = np.array([0.0,0.0,0.0])
-        cm[0]     = - (0.05 * self.rotorDiameter)
+        cm[0]     = - (0.05 * self.rotor_diameter)
         cm[1]     = 0.0
-        cm[2]     = 0.025 * self.rotorDiameter
+        cm[2]     = 0.025 * self.rotor_diameter
         self.cm = (cm)
 
         I = np.array([0.0, 0.0, 0.0])
@@ -93,23 +93,23 @@ class Hub_drive(Component):
         self.I = (I)
 
         # derivatives
-'''        d_hubMass_d_rootMoment = 50 * hubgeomFact * hubloadFact * hubcontFact * self.bladeNumber * (hubmatldensity / hubmatlstress)
-        d_cm_d_rotorDiameter = np.array([-0.05, 0.0, 0.025])
+'''        d_hubMass_d_rootMoment = 50 * hubgeomFact * hubloadFact * hubcontFact * self.blade_number * (hubmatldensity / hubmatlstress)
+        d_cm_d_rotor_diameter = np.array([-0.05, 0.0, 0.025])
         d_I_d_rootMoment = 0.4 * d_hubMass_d_rootMoment * ((0.5**5 - (0.05 - 0.055/3.3)**5)/(0.5**3 - (0.05 - 0.055/3.3)**3)) * self.diameter**2
         d_I_d_hubDiameter = 2 * 0.4 * self.mass * ((0.5**5 - (0.05 - 0.055/3.3)**5)/(0.5**3 - (0.05 - 0.055/3.3)**3)) * self.diameter
         
         # Jacobian
         self.J = np.array([[d_hubMass_d_rootMoment, 0, 0], \
-                           [0, d_cm_d_rotorDiameter[0], 0], \
-                           [0, d_cm_d_rotorDiameter[1], 0], \
-                           [0, d_cm_d_rotorDiameter[2], 0], \
+                           [0, d_cm_d_rotor_diameter[0], 0], \
+                           [0, d_cm_d_rotor_diameter[1], 0], \
+                           [0, d_cm_d_rotor_diameter[2], 0], \
                            [d_I_d_rootMoment, 0, d_I_d_hubDiameter], \
                            [d_I_d_rootMoment, 0, d_I_d_hubDiameter], \
                            [d_I_d_rootMoment, 0, d_I_d_hubDiameter]])
 
     def provideJ(self):
 
-        input_keys = ['rootMoment', 'rotorDiameter', 'hubDiameter']
+        input_keys = ['rootMoment', 'rotor_diameter', 'hubDiameter']
         output_keys = ['hubMass', 'cm[0]', 'cm[1]', 'cm[2]', 'I[0]', 'I[1]', 'I[2]']
 
         self.derivatives.set_first_derivative(input_keys, output_keys, self.J)'''
@@ -199,28 +199,28 @@ class LowSpeedShaft_drive4pt(Component):
     '''
 
     # variables
-    rotorBendingMoment_x = Float(iotype='in', units='N*m', desc='The bending moment about the x axis')
-    rotorBendingMoment_y = Float(iotype='in', units='N*m', desc='The bending moment about the y axis')
-    rotorBendingMoment_z = Float(iotype='in', units='N*m', desc='The bending moment about the z axis')
-    rotorForce_x = Float(iotype='in', units='N', desc='The force along the x axis applied at hub center')
-    rotorForce_y = Float(iotype='in', units='N', desc='The force along the y axis applied at hub center')
-    rotorForce_z = Float(iotype='in', units='N', desc='The force along the z axis applied at hub center')
-    rotorMass = Float(iotype='in', units='kg', desc='rotor mass')
-    rotorDiameter = Float(iotype='in', units='m', desc='rotor diameter')
-    machineRating = Float(iotype='in', units='kW', desc='machineRating machine rating of the turbine')
-    gbxMass = Float(iotype='in', units='kg', desc='Gearbox mass')
-    carrierMass = Float(iotype='in', units='kg', desc='Carrier mass')
+    rotor_bending_moment_x = Float(iotype='in', units='N*m', desc='The bending moment about the x axis')
+    rotor_bending_moment_y = Float(iotype='in', units='N*m', desc='The bending moment about the y axis')
+    rotor_bending_moment_z = Float(iotype='in', units='N*m', desc='The bending moment about the z axis')
+    rotor_force_x = Float(iotype='in', units='N', desc='The force along the x axis applied at hub center')
+    rotor_force_y = Float(iotype='in', units='N', desc='The force along the y axis applied at hub center')
+    rotor_force_z = Float(iotype='in', units='N', desc='The force along the z axis applied at hub center')
+    rotor_mass = Float(iotype='in', units='kg', desc='rotor mass')
+    rotor_diameter = Float(iotype='in', units='m', desc='rotor diameter')
+    machine_rating = Float(iotype='in', units='kW', desc='machine_rating machine rating of the turbine')
+    gearbox_mass = Float(iotype='in', units='kg', desc='Gearbox mass')
+    carrier_mass = Float(iotype='in', units='kg', desc='Carrier mass')
 
     # parameters
-    shrinkDiscMass = Float(iotype='in', units='kg', desc='Mass of the shrink disc')# shrink disk or flange addtional mass
-    shaftAngle = Float(iotype='in', units='deg', desc='Angle of the LSS inclindation with respect to the horizontal')
-    shaftRatio = Float(iotype='in', desc='Ratio of inner diameter to outer diameter.  Leave zero for solid LSS')
+    shrink_disc_mass = Float(iotype='in', units='kg', desc='Mass of the shrink disc')# shrink disk or flange addtional mass
+    shaft_angle = Float(iotype='in', units='deg', desc='Angle of the LSS inclindation with respect to the horizontal')
+    shaft_ratio = Float(iotype='in', desc='Ratio of inner diameter to outer diameter.  Leave zero for solid LSS')
     mb1Type = Str(iotype='in',desc='Main bearing type: CARB, TRB or SRB')
     mb2Type = Str(iotype='in',desc='Second bearing type: CARB, TRB or SRB')
     
     # outputs
-    designTorque = Float(iotype='out', units='N*m', desc='lss design torque')
-    designBendingLoad = Float(iotype='out', units='N', desc='lss design bending load')
+    design_torque = Float(iotype='out', units='N*m', desc='lss design torque')
+    design_bending_load = Float(iotype='out', units='N', desc='lss design bending load')
     length = Float(iotype='out', units='m', desc='lss length')
     diameter1 = Float(iotype='out', units='m', desc='lss outer diameter at main bearing')
     diameter2 = Float(iotype='out', units='m', desc='lss outer diameter at second bearing')
@@ -234,23 +234,23 @@ class LowSpeedShaft_drive4pt(Component):
 
         Parameters
         ----------
-        rotorTorque : float
+        rotor_torque : float
           The torque load due to aerodynamic forces on the rotor [N*m]
-        rotorBendingMoment : float
+        rotor_bending_moment : float
           The bending moment from uneven aerodynamic loads [N*m]
-        rotorMass : float
+        rotor_mass : float
           The rotor mass [kg]
-        rotorDiameter : float
+        rotor_diameter : float
           The wind turbine rotor diameter [m]
-        rotorSpeed : float
+        rotor_speed : float
           The speed of the rotor at rated power [rpm]
-        shaftAngle : float
+        shaft_angle : float
           Angle of the LSS inclindation with respect to the horizontal [deg]
-        shaftLength : float
+        shaft_length : float
           Length of the LSS [m]
-        machineRating : float
-          machineRating power rating for the turbine [W]
-        shaftRatio : float
+        machine_rating : float
+          machine_rating power rating for the turbine [W]
+        shaft_ratio : float
           Ratio of inner diameter to outer diameter.  Leave zero for solid LSS. 
 
         Returns
@@ -267,16 +267,16 @@ class LowSpeedShaft_drive4pt(Component):
     
     def execute(self):
         #Hub Forces
-        F_r_x = self.rotorForce_x            #External F_x
-        F_r_y = self.rotorForce_y                 #External F_y
-        F_r_z = self.rotorForce_z                  #External F_z
-        M_r_x = self.rotorBendingMoment_x
-        M_r_y = self.rotorBendingMoment_y
-        M_r_z = self.rotorBendingMoment_z
+        F_r_x = self.rotor_force_x            #External F_x
+        F_r_y = self.rotor_force_y                 #External F_y
+        F_r_z = self.rotor_force_z                  #External F_z
+        M_r_x = self.rotor_bending_moment_x
+        M_r_y = self.rotor_bending_moment_y
+        M_r_z = self.rotor_bending_moment_z
 
         #input parameters
         g=9.81
-        gamma=self.shaftAngle #deg LSS angle wrt horizontal
+        gamma=self.shaft_angle #deg LSS angle wrt horizontal
         PSF=1
 
         
@@ -294,7 +294,7 @@ class LowSpeedShaft_drive4pt(Component):
         len_pts=101
         D_max=1
         D_min=0.2
-        sR = self.shaftRatio
+        sR = self.shaft_ratio
 
         #Distances
         L_rb = 1.912        #distance from hub center to main bearing   # to add as an input
@@ -335,12 +335,12 @@ class LowSpeedShaft_drive4pt(Component):
             L_cd = L_cu + 0.5   #distance from upwind main bearing to downwind carrier bearing 0.5 meter is an estimation # to add as an input
 
             #Weight properties
-            rotorWeight=self.rotorMass*g                             #rotor weight
+            rotorWeight=self.rotor_mass*g                             #rotor weight
             lssWeight = pi/3.0*(D_max**2 + D_min**2 + D_max*D_min)*L_ms*density*g/4.0 ##
-            lssMass = lssWeight/g
-            gbxWeight = self.gbxMass*g                               #gearbox weight
-            carrierWeight = self.carrierMass*g                       #carrier weight
-            shrinkDiscWeight = self.shrinkDiscMass*g
+            lss_mass = lssWeight/g
+            gbxWeight = self.gearbox_mass*g                               #gearbox weight
+            carrierWeight = self.carrier_mass*g                       #carrier weight
+            shrinkDiscWeight = self.shrink_disc_mass*g
 
             #define LSS
             x_ms = np.linspace(L_rb, L_ms+L_rb, len_pts)
@@ -575,11 +575,11 @@ class LowSpeedShaft_drive4pt(Component):
         
         [D_med_a,FW_med] = resize_for_bearings(D_med,  self.mb2Type)   
             
-        lssMass_new=(pi/3)*(D_max_a**2+D_med_a**2+D_max_a*D_med_a)*(L_mb-(FW_max+FW_med)/2)*density/4+ \
+        lss_mass_new=(pi/3)*(D_max_a**2+D_med_a**2+D_max_a*D_med_a)*(L_mb-(FW_max+FW_med)/2)*density/4+ \
                          (pi/4)*(D_max_a**2-D_in**2)*density*FW_max+\
                          (pi/4)*(D_med_a**2-D_in**2)*density*FW_med-\
                          (pi/4)*(D_in**2)*density*(L_mb+(FW_max+FW_med)/2)
-        lssMass_new *= 1.3 # add flange and shrink disk mass
+        lss_mass_new *= 1.3 # add flange and shrink disk mass
         self.length=L_mb_new + (FW_max+FW_med)/2 # TODO: create linear relationship based on power rating
         #print ("L_mb: {0}").format(L_mb)
         print ("LSS length, m: {0}").format(self.length)
@@ -588,15 +588,15 @@ class LowSpeedShaft_drive4pt(Component):
         print ("Dnwind MB OD, m: {0}").format(D_med_a)
        # print ("D_min: {0}").format(D_min)
         self.D_inner=D_in
-        self.mass=lssMass_new
+        self.mass=lss_mass_new
         self.diameter1= D_max_a
         self.diameter2= D_med_a 
 
         # calculate mass properties
         cm = np.array([0.0,0.0,0.0])
-        cm[0] = - (0.035 - 0.01) * self.rotorDiameter            # cm based on WindPACT work - halfway between locations of two main bearings
+        cm[0] = - (0.035 - 0.01) * self.rotor_diameter            # cm based on WindPACT work - halfway between locations of two main bearings
         cm[1] = 0.0
-        cm[2] = 0.025 * self.rotorDiameter
+        cm[2] = 0.025 * self.rotor_diameter
         self.cm = cm
 
         I = np.array([0.0, 0.0, 0.0])
@@ -614,26 +614,26 @@ class LowSpeedShaft_drive3pt(Component):
     '''
 
     # variables
-    rotorBendingMoment_x = Float(iotype='in', units='N*m', desc='The bending moment about the x axis')
-    rotorBendingMoment_y = Float(iotype='in', units='N*m', desc='The bending moment about the y axis')
-    rotorBendingMoment_z = Float(iotype='in', units='N*m', desc='The bending moment about the z axis')
-    rotorForce_x = Float(iotype='in', units='N', desc='The force along the x axis applied at hub center')
-    rotorForce_y = Float(iotype='in', units='N', desc='The force along the y axis applied at hub center')
-    rotorForce_z = Float(iotype='in', units='N', desc='The force along the z axis applied at hub center')
-    rotorMass = Float(iotype='in', units='kg', desc='rotor mass')
-    rotorDiameter = Float(iotype='in', units='m', desc='rotor diameter')
-    machineRating = Float(iotype='in', units='kW', desc='machineRating machine rating of the turbine')
-    gbxMass = Float(iotype='in', units='kg', desc='Gearbox mass')
-    carrierMass = Float(iotype='in', units='kg', desc='Carrier mass')
+    rotor_bending_moment_x = Float(iotype='in', units='N*m', desc='The bending moment about the x axis')
+    rotor_bending_moment_y = Float(iotype='in', units='N*m', desc='The bending moment about the y axis')
+    rotor_bending_moment_z = Float(iotype='in', units='N*m', desc='The bending moment about the z axis')
+    rotor_force_x = Float(iotype='in', units='N', desc='The force along the x axis applied at hub center')
+    rotor_force_y = Float(iotype='in', units='N', desc='The force along the y axis applied at hub center')
+    rotor_force_z = Float(iotype='in', units='N', desc='The force along the z axis applied at hub center')
+    rotor_mass = Float(iotype='in', units='kg', desc='rotor mass')
+    rotor_diameter = Float(iotype='in', units='m', desc='rotor diameter')
+    machine_rating = Float(iotype='in', units='kW', desc='machine_rating machine rating of the turbine')
+    gearbox_mass = Float(iotype='in', units='kg', desc='Gearbox mass')
+    carrier_mass = Float(iotype='in', units='kg', desc='Carrier mass')
 
     # parameters
-    shrinkDiscMass = Float(iotype='in', units='kg', desc='Mass of the shrink disc')
-    shaftAngle = Float(iotype='in', units='deg', desc='Angle of the LSS inclindation with respect to the horizontal')
-    shaftRatio = Float(iotype='in', desc='Ratio of inner diameter to outer diameter.  Leave zero for solid LSS')
+    shrink_disc_mass = Float(iotype='in', units='kg', desc='Mass of the shrink disc')
+    shaft_angle = Float(iotype='in', units='deg', desc='Angle of the LSS inclindation with respect to the horizontal')
+    shaft_ratio = Float(iotype='in', desc='Ratio of inner diameter to outer diameter.  Leave zero for solid LSS')
     
     # outputs
-    designTorque = Float(iotype='out', units='N*m', desc='lss design torque')
-    designBendingLoad = Float(iotype='out', units='N', desc='lss design bending load')
+    design_torque = Float(iotype='out', units='N*m', desc='lss design torque')
+    design_bending_load = Float(iotype='out', units='N', desc='lss design bending load')
     length = Float(iotype='out', units='m', desc='lss length')
     diameter = Float(iotype='out', units='m', desc='lss outer diameter')
     mass = Float(0.0, iotype='out', units='kg', desc='overall component mass')
@@ -646,23 +646,23 @@ class LowSpeedShaft_drive3pt(Component):
 
         Parameters
         ----------
-        rotorTorque : float
+        rotor_torque : float
           The torque load due to aerodynamic forces on the rotor [N*m]
-        rotorBendingMoment : float
+        rotor_bending_moment : float
           The bending moment from uneven aerodynamic loads [N*m]
-        rotorMass : float
+        rotor_mass : float
           The rotor mass [kg]
-        rotorDiameter : float
+        rotor_diameter : float
           The wind turbine rotor diameter [m]
-        rotorSpeed : float
+        rotor_speed : float
           The speed of the rotor at rated power [rpm]
-        shaftAngle : float
+        shaft_angle : float
           Angle of the LSS inclindation with respect to the horizontal [deg]
-        shaftLength : float
+        shaft_length : float
           Length of the LSS [m]
-        machineRating : float
-          machineRating power rating for the turbine [W]
-        shaftRatio : float
+        machine_rating : float
+          machine_rating power rating for the turbine [W]
+        shaft_ratio : float
           Ratio of inner diameter to outer diameter.  Leave zero for solid LSS. 
 
         Returns
@@ -679,14 +679,14 @@ class LowSpeedShaft_drive3pt(Component):
     
     def execute(self):
         #Hub Forces
-        F_r_x = self.rotorForce_x            #External F_x
-        F_r_y = self.rotorForce_y                 #External F_y
-        F_r_z = self.rotorForce_z                  #External F_z
-        M_r_x = self.rotorBendingMoment_x
-        M_r_y = self.rotorBendingMoment_y
-        M_r_z = self.rotorBendingMoment_z
+        F_r_x = self.rotor_force_x            #External F_x
+        F_r_y = self.rotor_force_y                 #External F_y
+        F_r_z = self.rotor_force_z                  #External F_z
+        M_r_x = self.rotor_bending_moment_x
+        M_r_y = self.rotor_bending_moment_y
+        M_r_z = self.rotor_bending_moment_z
         g = 9.81 #m/s
-        gamma = self.shaftAngle #deg LSS angle wrt horizontal
+        gamma = self.shaft_angle #deg LSS angle wrt horizontal
 
         L_ms_new = 0.0
         L_ms_0=1.732 # main shaft length downwind of main bearing
@@ -719,11 +719,11 @@ class LowSpeedShaft_drive3pt(Component):
             #print L_rb
 
             #Weight properties
-            weightRotor=self.rotorMass*g                             #rotor weight
+            weightRotor=self.rotor_mass*g                             #rotor weight
             massLSS = pi/4*(0.5**2 - 0.075**2)*L_ms*7800
             weightLSS = massLSS*g       #LSS weight
-            weightShrinkDisc = self.shrinkDiscMass*g                #shrink disc weight
-            weightGbx = self.gbxMass*g                              #gearbox weight
+            weightShrinkDisc = self.shrink_disc_mass*g                #shrink disc weight
+            weightGbx = self.gearbox_mass*g                              #gearbox weight
 
             len_pts=101;
             x_ms = np.linspace(L_rb, L_ms+L_rb, len_pts)
@@ -747,7 +747,7 @@ class LowSpeedShaft_drive3pt(Component):
             Mz_ms = np.zeros(2*len_pts)
 
             for k in range(len_pts):
-                My_ms[k] = -M_r_y + self.rotorMass*cos(radians(gamma))*x_rb[k] + 0.5*weightLSS/L_ms*x_rb[k]**2
+                My_ms[k] = -M_r_y + self.rotor_mass*cos(radians(gamma))*x_rb[k] + 0.5*weightLSS/L_ms*x_rb[k]**2
                 Mz_ms[k] = -M_r_z
 
             for j in range(len_pts):
@@ -787,7 +787,7 @@ class LowSpeedShaft_drive3pt(Component):
             D_min=(16.0*n_safety/pi/Sy*(4.0*(MM*u_knm_inlb)**2+3.0*(T*u_knm_inlb)**2)**0.5)**(1.0/3.0)*u_in_m
 
             #Estimate ID
-            D_in=self.shaftRatio*D_max
+            D_in=self.shaft_ratio*D_max
             D_max = D_max+D_in
             D_min = D_min + D_in
             #print'Max shaft OD m:'
@@ -848,9 +848,9 @@ class LowSpeedShaft_drive3pt(Component):
 
         # calculate mass properties
         cm = np.array([0.0,0.0,0.0])
-        cm[0] = - (0.035 - 0.01) * self.rotorDiameter            # cm based on WindPACT work - halfway between locations of two main bearings
+        cm[0] = - (0.035 - 0.01) * self.rotor_diameter            # cm based on WindPACT work - halfway between locations of two main bearings
         cm[1] = 0.0
-        cm[2] = 0.025 * self.rotorDiameter
+        cm[2] = 0.025 * self.rotor_diameter
         self.cm = cm
 
         I = np.array([0.0, 0.0, 0.0])
@@ -869,23 +869,23 @@ class LowSpeedShaft_drive(Component):
     '''
 
     # variables
-    rotorTorque = Float(iotype='in', units='N*m', desc='The torque load due to aerodynamic forces on the rotor')
-    rotorBendingMoment = Float(iotype='in', units='N*m', desc='The bending moment from uneven aerodynamic loads')
-    rotorMass = Float(iotype='in', units='kg', desc='rotor mass')
-    rotorDiameter = Float(iotype='in', units='m', desc='rotor diameter')
-    rotorSpeed = Float(iotype='in', units='rpm', desc='rotor speed at rated power')
-    machineRating = Float(iotype='in', units='kW', desc='machineRating machine rating of the turbine')
+    rotor_torque = Float(iotype='in', units='N*m', desc='The torque load due to aerodynamic forces on the rotor')
+    rotor_bending_moment = Float(iotype='in', units='N*m', desc='The bending moment from uneven aerodynamic loads')
+    rotor_mass = Float(iotype='in', units='kg', desc='rotor mass')
+    rotor_diameter = Float(iotype='in', units='m', desc='rotor diameter')
+    rotor_speed = Float(iotype='in', units='rpm', desc='rotor speed at rated power')
+    machine_rating = Float(iotype='in', units='kW', desc='machine_rating machine rating of the turbine')
 
     # parameters
-    shaftAngle = Float(iotype='in', units='deg', desc='Angle of the LSS inclindation with respect to the horizontal')
-    shaftLength = Float(iotype='in', units='m', desc='length of low speed shaft')
+    shaft_angle = Float(iotype='in', units='deg', desc='Angle of the LSS inclindation with respect to the horizontal')
+    shaft_length = Float(iotype='in', units='m', desc='length of low speed shaft')
     shaftD1 = Float(iotype='in', units='m', desc='Fraction of LSS distance from gearbox to downwind main bearing')
     shaftD2 = Float(iotype='in', units='m', desc='raction of LSS distance from gearbox to upwind main bearing')
-    shaftRatio = Float(iotype='in', desc='Ratio of inner diameter to outer diameter.  Leave zero for solid LSS')
+    shaft_ratio = Float(iotype='in', desc='Ratio of inner diameter to outer diameter.  Leave zero for solid LSS')
     
     # outputs
-    designTorque = Float(iotype='out', units='N*m', desc='lss design torque')
-    designBendingLoad = Float(iotype='out', units='N', desc='lss design bending load')
+    design_torque = Float(iotype='out', units='N*m', desc='lss design torque')
+    design_bending_load = Float(iotype='out', units='N', desc='lss design bending load')
     length = Float(iotype='out', units='m', desc='lss length')
     diameter = Float(iotype='out', units='m', desc='lss outer diameter')
     mass = Float(0.0, iotype='out', units='kg', desc='overall component mass')
@@ -898,27 +898,27 @@ class LowSpeedShaft_drive(Component):
 
         Parameters
         ----------
-        rotorTorque : float
+        rotor_torque : float
           The torque load due to aerodynamic forces on the rotor [N*m]
-        rotorBendingMoment : float
+        rotor_bending_moment : float
           The bending moment from uneven aerodynamic loads [N*m]
-        rotorMass : float
+        rotor_mass : float
           The rotor mass [kg]
-        rotorDiameter : float
+        rotor_diameter : float
           The wind turbine rotor diameter [m]
-        rotorSpeed : float
+        rotor_speed : float
           The speed of the rotor at rated power [rpm]
-        shaftAngle : float
+        shaft_angle : float
           Angle of the LSS inclindation with respect to the horizontal [deg]
-        shaftLength : float
+        shaft_length : float
           Length of the LSS [m]
         shaftD1 : float
           Fraction of LSS distance from gearbox to downwind main bearing
         shaftD2 : float
           Fraction of LSS distance from gearbox to upwind main bearing
-        machineRating : float
-          machineRating power rating for the turbine [W]
-        shaftRatio : float
+        machine_rating : float
+          machine_rating power rating for the turbine [W]
+        shaft_ratio : float
           Ratio of inner diameter to outer diameter.  Leave zero for solid LSS. 
 
         Returns
@@ -935,7 +935,7 @@ class LowSpeedShaft_drive(Component):
     
     def execute(self):    
 
-        def calc_mass(rotorTorque, rotorBendingMoment, rotorMass, rotorDiaemeter, rotorSpeed, shaftAngle, shaftLength, shaftD1, shaftD2, machineRating, shaftRatio):
+        def calc_mass(rotor_torque, rotor_bending_moment, rotor_mass, rotorDiaemeter, rotor_speed, shaft_angle, shaft_length, shaftD1, shaftD2, machine_rating, shaft_ratio):
         
                 # Second moment of area for hollow shaft
             def Imoment(d_o,d_i):
@@ -958,26 +958,26 @@ class LowSpeedShaft_drive(Component):
                 return tau
             
             #Find the necessary outer diameter given a diameter ratio and max stress
-            def outerDiameterStrength(shaftRatio,maxFactoredStress):
-                D_outer=(16.0/(pi*(1.0-shaftRatio**4.0)*maxFactoredStress)*(factoredTotalRotorMoment+sqrt(factoredTotalRotorMoment**2.0+factoredrotorTorque**2.0)))**(1.0/3.0)
+            def outerDiameterStrength(shaft_ratio,maxFactoredStress):
+                D_outer=(16.0/(pi*(1.0-shaft_ratio**4.0)*maxFactoredStress)*(factoredTotalRotorMoment+sqrt(factoredTotalRotorMoment**2.0+factoredrotor_torque**2.0)))**(1.0/3.0)
                 return D_outer
 
-            #[rotorTorque, rotorBendingMoment, rotorMass, rotorDiaemeter, rotorSpeed, shaftAngle, shaftLength, shaftD1, shaftD2, machineRating, shaftRatio] = x
+            #[rotor_torque, rotor_bending_moment, rotor_mass, rotorDiaemeter, rotor_speed, shaft_angle, shaft_length, shaftD1, shaftD2, machine_rating, shaft_ratio] = x
 
             #torque check
-            if rotorTorque == 0:
-                omega=rotorSpeed/60*(2*pi)      #rotational speed in rad/s at rated power
+            if rotor_torque == 0:
+                omega=rotor_speed/60*(2*pi)      #rotational speed in rad/s at rated power
                 eta=0.944                 #drivetrain efficiency
-                rotorTorque=machineRating/(omega*eta)         #torque
+                rotor_torque=machine_rating/(omega*eta)         #torque
 
-            #self.length=shaftLength
+            #self.length=shaft_length
                 
             # compute masses, dimensions and cost
             #static overhanging rotor moment (need to adjust for CM of rotor not just distance to end of LSS)
-            L2=shaftLength*shaftD2                   #main bearing to end of mainshaft
-            alpha=shaftAngle*pi/180.0           #shaft angle
+            L2=shaft_length*shaftD2                   #main bearing to end of mainshaft
+            alpha=shaft_angle*pi/180.0           #shaft angle
             L2=L2*cos(alpha)                  #horizontal distance from main bearing to hub center of mass
-            staticRotorMoment=rotorMass*L2*9.81      #static bending moment from rotor
+            staticRotorMoment=rotor_mass*L2*9.81      #static bending moment from rotor
           
             #assuming 38CrMo4 / AISI 4140 from http://www.efunda.com/materials/alloys/alloy_steels/show_alloy.cfm?id=aisi_4140&prop=all&page_title=aisi%204140
             yieldStrength=417.0*10.0**6.0 #Pa
@@ -990,11 +990,11 @@ class LowSpeedShaft_drive(Component):
             gammaMaterial=1.25 #most conservative
             
             maxFactoredStress=yieldStrength/gammaMaterial
-            factoredrotorTorque=rotorTorque*gammaAero
-            factoredTotalRotorMoment=rotorBendingMoment*gammaAero-staticRotorMoment*gammaFavorable
+            factoredrotor_torque=rotor_torque*gammaAero
+            factoredTotalRotorMoment=rotor_bending_moment*gammaAero-staticRotorMoment*gammaFavorable
 
-            self.D_outer=outerDiameterStrength(self.shaftRatio,maxFactoredStress)
-            self.D_inner=shaftRatio*self.D_outer
+            self.D_outer=outerDiameterStrength(self.shaft_ratio,maxFactoredStress)
+            self.D_inner=shaft_ratio*self.D_outer
 
             #print "LSS outer diameter is %f m, inner diameter is %f m" %(self.D_outer, self.D_inner)
             
@@ -1002,30 +1002,30 @@ class LowSpeedShaft_drive(Component):
             I=Imoment(self.D_outer,self.D_inner)
             
             sigmaX=bendingStress(factoredTotalRotorMoment, self.D_outer/2.0, I)
-            tau=shearStress(rotorTorque, self.D_outer/2.0, J)
+            tau=shearStress(rotor_torque, self.D_outer/2.0, J)
             
             #print "Max unfactored normal bending stress is %g MPa" % (sigmaX/1.0e6)
             #print "Max unfactored shear stress is %g MPa" % (tau/1.0e6)
             
-            volumeLSS=((self.D_outer/2.0)**2.0-(self.D_inner/2.0)**2.0)*pi*shaftLength
+            volumeLSS=((self.D_outer/2.0)**2.0-(self.D_inner/2.0)**2.0)*pi*shaft_length
             mass=volumeLSS*steelDensity
             
             return mass
         
-        self.mass = calc_mass(self.rotorTorque, self.rotorBendingMoment, self.rotorMass, self.rotorDiameter, self.rotorSpeed, \
-                                    self.shaftAngle, self.shaftLength, self.shaftD1, self.shaftD2, self.machineRating, self.shaftRatio)
+        self.mass = calc_mass(self.rotor_torque, self.rotor_bending_moment, self.rotor_mass, self.rotor_diameter, self.rotor_speed, \
+                                    self.shaft_angle, self.shaft_length, self.shaftD1, self.shaftD2, self.machine_rating, self.shaft_ratio)
         
 
-        self.designTorque = self.rotorTorque
-        self.designBendingLoad = self.rotorBendingMoment
-        self.length = self.shaftLength
+        self.design_torque = self.rotor_torque
+        self.design_bending_load = self.rotor_bending_moment
+        self.length = self.shaft_length
         self.diameter = self.D_outer
 
         # calculate mass properties
         cm = np.array([0.0,0.0,0.0])
-        cm[0] = - (0.035 - 0.01) * self.rotorDiameter            # cm based on WindPACT work - halfway between locations of two main bearings
+        cm[0] = - (0.035 - 0.01) * self.rotor_diameter            # cm based on WindPACT work - halfway between locations of two main bearings
         cm[1] = 0.0
-        cm[2] = 0.025 * self.rotorDiameter
+        cm[2] = 0.025 * self.rotor_diameter
         self.cm = cm
 
         I = np.array([0.0, 0.0, 0.0])
@@ -1035,39 +1035,39 @@ class LowSpeedShaft_drive(Component):
         self.I = I
 
         '''# derivatives
-        x = algopy.UTPM.init_jacobian([self.rotorTorque, self.rotorBendingMoment, self.rotorMass, self.rotorDiameter, self.rotorSpeed, self.machineRating])  
+        x = algopy.UTPM.init_jacobian([self.rotor_torque, self.rotor_bending_moment, self.rotor_mass, self.rotor_diameter, self.rotor_speed, self.machine_rating])  
 
         d_mass = algopy.UTPM.extract_jacobian(self.calc_mass(x))
-        d_mass_d_rotorTorque = d_mass[0]
-        d_mass_d_rotorBendingMoment = d_mass[1]
-        d_mass_d_rotorMass = d_mass[2]   
-        d_mass_d_rotorDiameter = d_mass[3]
-        d_mass_d_rotorSpeed = d_mass[4]
-        d_mass_d_machineRating = d_mass[5] 
+        d_mass_d_rotor_torque = d_mass[0]
+        d_mass_d_rotor_bending_moment = d_mass[1]
+        d_mass_d_rotor_mass = d_mass[2]   
+        d_mass_d_rotor_diameter = d_mass[3]
+        d_mass_d_rotor_speed = d_mass[4]
+        d_mass_d_machine_rating = d_mass[5] 
 
-        d_cm_d_rotorDiameter = np.array([- (0.035 - 0.01), 0.0, 0.025])'''
+        d_cm_d_rotor_diameter = np.array([- (0.035 - 0.01), 0.0, 0.025])'''
 
         #TODO: d_I_d_x
-        '''d_I_d_rotorDiameter = np.array([0.0, 0.0, 0.0])
-        d_I_d_rotorDiameter[0] = (1/8) * (1+ ioratio**2) * d_lssMass_d_rotorDiameter * (self.diameter**2) + (1/8) * (1+ioratio**2) * self.mass * 2 * self.diameter * d_diameter_d_rotorDiameter
-        d_I_d_rotorDiameter[1] = (1/2) * d_I_d_rotorDiameter[0] + (1/16) * (4/3) * 2 * self.length * d_length_d_rotorDiameter
-        d_I_d_rotorDiameter[2] = d_I_d_rotorDiameter[1]
+        '''d_I_d_rotor_diameter = np.array([0.0, 0.0, 0.0])
+        d_I_d_rotor_diameter[0] = (1/8) * (1+ ioratio**2) * d_lss_mass_d_rotor_diameter * (self.diameter**2) + (1/8) * (1+ioratio**2) * self.mass * 2 * self.diameter * d_diameter_d_rotor_diameter
+        d_I_d_rotor_diameter[1] = (1/2) * d_I_d_rotor_diameter[0] + (1/16) * (4/3) * 2 * self.length * d_length_d_rotor_diameter
+        d_I_d_rotor_diameter[2] = d_I_d_rotor_diameter[1]
 
-        d_I_d_rotorTorque = np.array([0.0, 0.0, 0.0])
-        d_I_d_rotorTorque[0] = (1/8) * (1+ ioratio**2) * d_lssMass_d_rotorTorque * (self.diameter**2) + (1/8) * (1+ioratio**2) * self.mass * 2 * self.diameter * d_diameter_d_rotorTorque
-        d_I_d_rotorTorque[1] = (1/2) * d_I_d_rotorTorque[0]
-        d_I_d_rotorTorque[2] = d_I_d_rotorTorque[1]
+        d_I_d_rotor_torque = np.array([0.0, 0.0, 0.0])
+        d_I_d_rotor_torque[0] = (1/8) * (1+ ioratio**2) * d_lss_mass_d_rotor_torque * (self.diameter**2) + (1/8) * (1+ioratio**2) * self.mass * 2 * self.diameter * d_diameter_d_rotor_torque
+        d_I_d_rotor_torque[1] = (1/2) * d_I_d_rotor_torque[0]
+        d_I_d_rotor_torque[2] = d_I_d_rotor_torque[1]
 
-        d_I_d_rotorMass = np.array([0.0, 0.0, 0.0])
-        d_I_d_rotorMass[0] = (1/8) * (1+ ioratio**2) * d_lssMass_d_rotorMass * (self.diameter**2) + (1/8) * (1+ioratio**2) * self.mass * 2 * self.diameter * d_diameter_d_rotorMass
-        d_I_d_rotorMass[1] = (1/2) * d_I_d_rotorMass[0]
-        d_I_d_rotorMass[2] = d_I_d_rotorMass[1] '''
+        d_I_d_rotor_mass = np.array([0.0, 0.0, 0.0])
+        d_I_d_rotor_mass[0] = (1/8) * (1+ ioratio**2) * d_lss_mass_d_rotor_mass * (self.diameter**2) + (1/8) * (1+ioratio**2) * self.mass * 2 * self.diameter * d_diameter_d_rotor_mass
+        d_I_d_rotor_mass[1] = (1/2) * d_I_d_rotor_mass[0]
+        d_I_d_rotor_mass[2] = d_I_d_rotor_mass[1] '''
 
     def provideJ(self):
 
         #TODO: provideJ update
-        '''input_keys = ['rotorDiameter', 'rotorTorque', 'rotorMass']
-        output_keys = ['length', 'designTorque', 'designBendingLoad', 'mass', 'cm[0]', 'cm[1]', 'cm[2]', 'I[0]', 'I[1]', 'I[2]']
+        '''input_keys = ['rotor_diameter', 'rotor_torque', 'rotor_mass']
+        output_keys = ['length', 'design_torque', 'design_bending_load', 'mass', 'cm[0]', 'cm[1]', 'cm[2]', 'I[0]', 'I[1]', 'I[2]']
 
         self.derivatives.set_first_derivative(input_keys, output_keys, self.J)'''
 
@@ -1081,7 +1081,7 @@ class MainBearings_drive(Component):
           It contains an update method to determine the mass, mass properties, and dimensions of the component.
     '''
 
-    def __init__(self, shaftD1, shaftD2, shaftLength, rotorMass, rotorBendingMoment, D_outer):
+    def __init__(self, shaftD1, shaftD2, shaft_length, rotor_mass, rotor_bending_moment, D_outer):
         ''' Initializes main bearings component
 
         Parameters
@@ -1090,11 +1090,11 @@ class MainBearings_drive(Component):
           Fraction of LSS length from gearbox to downwind main bearing.
         shaftD2 : float
           Fraction of LSS length from gearbox to upwind main bearing.
-        shaftLength : float
+        shaft_length : float
           Length of the LSS [m].
-        rotorMass : float
+        rotor_mass : float
           Mass of the rotor [kg].
-        rotorBendingMoment : float
+        rotor_bending_moment : float
           Aerodynamic bending moment [N*m].
         D_outer : float
           Outer diameter of the LSS [m].
@@ -1111,11 +1111,11 @@ class MainBearings_drive(Component):
         gammaMaterial=1.25 #most conservative
         
         #Bearing 1 is closest to gearbox, Bearing 2 is closest to rotor
-        L2=shaftLength*shaftD2
-        L1=shaftLength*shaftD1
+        L2=shaft_length*shaftD2
+        L1=shaft_length*shaftD1
 
-        Fstatic=rotorMass*9.81*gammaFavorable #N
-        Mrotor=rotorBendingMoment*gammaAero #Nm
+        Fstatic=rotor_mass*9.81*gammaFavorable #N
+        Mrotor=rotor_bending_moment*gammaAero #Nm
 
         R2=(-Mrotor+Fstatic*shaftD1)/(shaftD2-shaftD1)
         #print "R2: %g" %(R2)
@@ -1135,11 +1135,11 @@ class MainBearings_drive(Component):
         # self.depth = (inDiam * 1.5)
 
         # cmMB = np.array([0.0,0.0,0.0])
-        # cmMB = ([- (0.035 * rotorDiameter), 0.0, 0.025 * rotorDiameter])
+        # cmMB = ([- (0.035 * rotor_diameter), 0.0, 0.025 * rotor_diameter])
         # self.mainBearing.cm = cmMB
 
         # cmSB = np.array([0.0,0.0,0.0])
-        # cmSB = ([- (0.01 * rotorDiameter), 0.0, 0.025 * rotorDiameter])
+        # cmSB = ([- (0.01 * rotor_diameter), 0.0, 0.025 * rotor_diameter])
         # self.secondBearing.cm = cmSB
 
         # cm = np.array([0.0,0.0,0.0])
@@ -1286,9 +1286,9 @@ class MainBearing_drive(Bearing_drive):
           Low speed shaft diameter [m]
         lowSpeedShaftMass : float
           Low speed shaft mass [kg]
-        rotorSpeed : float
+        rotor_speed : float
           Speed of the rotor at rated power [rpm]
-        rotorDiameter : float
+        rotor_diameter : float
           The wind turbine rotor diameter [m]
 
         Returns
@@ -1326,7 +1326,7 @@ class MainBearing_drive(Bearing_drive):
     #         d_mass_d_lssDiameter = 2.77 * 1000.0 * (1.7 * massFact * (26.13 * (10 ** (-6))) * ((self.lssDiameter * 1000.0) ** 1.77)) + \
     #                                2.64 * 1000.0 * (1.5 * massFact * (67.44 * (10 ** (-6))) * ((self.lssDiameter * 1000.0) ** 1.64))
         
-    #     d_cm_d_rotorDiameter = np.array([-0.035, 0.0, 0.025])
+    #     d_cm_d_rotor_diameter = np.array([-0.035, 0.0, 0.025])
     #     d_I_d_lssDiameter = np.array([0.0, 0.0, 0.0])
     #     if design1DL < ratingDL :
     #         d_I_d_lssDiameter[0] = 2.77 * 1000.0 * (massFact * (26.13 * (10 ** (-6))) * ((self.lssDiameter * 1000.0) ** 1.77)) * ((inDiam**2)/4) + self.mass * (2/4) * inDiam + \
@@ -1341,16 +1341,16 @@ class MainBearing_drive(Bearing_drive):
         
     #     # Jacobian
     #     self.J = np.array([[d_mass_d_lssDiameter, 0], \
-    #                        [0, d_cm_d_rotorDiameter[0]], \
-    #                        [0, d_cm_d_rotorDiameter[1]], \
-    #                        [0, d_cm_d_rotorDiameter[2]], \
+    #                        [0, d_cm_d_rotor_diameter[0]], \
+    #                        [0, d_cm_d_rotor_diameter[1]], \
+    #                        [0, d_cm_d_rotor_diameter[2]], \
     #                        [d_I_d_lssDiameter[0], 0], \
     #                        [d_I_d_lssDiameter[1], 0], \
     #                        [d_I_d_lssDiameter[2], 0]])
 
     # def provideJ(self):
 
-    #     input_keys = ['lssDiameter', 'rotorDiameter']
+    #     input_keys = ['lssDiameter', 'rotor_diameter']
     #     output_keys = ['mass', 'cm[0]', 'cm[1]', 'cm[2]', 'I[0]', 'I[1]', 'I[2]']
 
     #     self.derivatives.set_first_derivative(input_keys, output_keys, self.J)
@@ -1375,9 +1375,9 @@ class SecondBearing_drive(Bearing_drive):
           Low speed shaft diameter [m]
         lowSpeedShaftMass : float
           Low speed shaft mass [kg]
-        rotorSpeed : float
+        rotor_speed : float
           Speed of the rotor at rated power [rpm]
-        rotorDiameter : float
+        rotor_diameter : float
           The wind turbine rotor diameter [m]
 
         Returns
@@ -1415,7 +1415,7 @@ class SecondBearing_drive(Bearing_drive):
 #     #         d_mass_d_lssDiameter = 2.77 * 1000.0 * (1.7 * massFact * (26.13 * (10 ** (-6))) * ((self.lssDiameter * 1000.0) ** 1.77)) + \
 #     #                                2.64 * 1000.0 * (1.5 * massFact * (67.44 * (10 ** (-6))) * ((self.lssDiameter * 1000.0) ** 1.64))
         
-#     #     d_cm_d_rotorDiameter = np.array([-0.01, 0.0, 0.025])
+#     #     d_cm_d_rotor_diameter = np.array([-0.01, 0.0, 0.025])
 #     #     d_I_d_lssDiameter = np.array([0.0, 0.0, 0.0])
 #     #     if design2DL < ratingDL :
 #     #         d_I_d_lssDiameter[0] = 2.77 * 1000.0 * (massFact * (26.13 * (10 ** (-6))) * ((self.lssDiameter * 1000.0) ** 1.77)) * ((inDiam**2)/4) + self.mass * (2/4) * inDiam + \
@@ -1428,16 +1428,16 @@ class SecondBearing_drive(Bearing_drive):
         
 #     #     # Jacobian
 #     #     self.J = np.array([[d_mass_d_lssDiameter, 0], \
-#     #                        [0, d_cm_d_rotorDiameter[0]], \
-#     #                        [0, d_cm_d_rotorDiameter[1]], \
-#     #                        [0, d_cm_d_rotorDiameter[2]], \
+#     #                        [0, d_cm_d_rotor_diameter[0]], \
+#     #                        [0, d_cm_d_rotor_diameter[1]], \
+#     #                        [0, d_cm_d_rotor_diameter[2]], \
 #     #                        [d_I_d_lssDiameter[0], 0], \
 #     #                        [d_I_d_lssDiameter[1], 0], \
 #     #                        [d_I_d_lssDiameter[2], 0]])
 
 #     # def provideJ(self):
 
-#     #     input_keys = ['lssDiameter', 'rotorDiameter']
+#     #     input_keys = ['lssDiameter', 'rotor_diameter']
 #     #     output_keys = ['mass', 'cm[0]', 'cm[1]', 'cm[2]', 'I[0]', 'I[1]', 'I[2]']
 
 #     #     self.derivatives.set_first_derivative(input_keys, output_keys, self.J)
@@ -1454,22 +1454,22 @@ class Gearbox_drive(Component):
 
     #variables
     #gbxPower = Float(iotype='in', units='kW', desc='gearbox rated power')
-    gearRatio = Float(iotype='in', desc='overall gearbox speedup ratio')
+    gear_ratio = Float(iotype='in', desc='overall gearbox speedup ratio')
     #check on how to define array input in openmdao
     Np = Array(np.array([0.0,0.0,0.0,]), iotype='in', desc='number of planets in each stage')
-    rotorSpeed = Float(iotype='in', desc='rotor rpm at rated power')
-    rotorDiameter = Float(iotype='in', desc='rotor diameter')
-    rotorTorque = Float(iotype='in', units='N*m', desc='rotor torque at rated power')
+    rotor_speed = Float(iotype='in', desc='rotor rpm at rated power')
+    rotor_diameter = Float(iotype='in', desc='rotor diameter')
+    rotor_torque = Float(iotype='in', units='N*m', desc='rotor torque at rated power')
 
     #parameters
     #name = Str(iotype='in', desc='gearbox name')
-    gearConfiguration = Str(iotype='in', desc='string that represents the configuration of the gearbox (stage number and types)')
+    gear_configuration = Str(iotype='in', desc='string that represents the configuration of the gearbox (stage number and types)')
     #eff = Float(iotype='in', desc='drivetrain efficiency')
-    ratioType = Str(iotype='in', desc='optimal or empirical stage ratios')
-    shType = Str(iotype='in', desc = 'normal or short shaft length')
+    ratio_type = Str(iotype='in', desc='optimal or empirical stage ratios')
+    shaft_type = Str(iotype='in', desc = 'normal or short shaft length')
 
     # outputs
-    stageMasses = Array(np.array([0.0, 0.0, 0.0, 0.0]), iotype='out', units='kg', desc='individual gearbox stage masses')
+    stage_masses = Array(np.array([0.0, 0.0, 0.0, 0.0]), iotype='out', units='kg', desc='individual gearbox stage masses')
     mass = Float(0.0, iotype='out', units='kg', desc='overall component mass')
     cm = Array(np.array([0.0, 0.0, 0.0]), iotype='out', desc='center of mass of the component in [x,y,z] for an arbitrary coordinate system')
     I = Array(np.array([0.0, 0.0, 0.0]), iotype='out', desc=' moments of Inertia for the component [Ixx, Iyy, Izz] around its center of mass')    
@@ -1485,21 +1485,21 @@ class Gearbox_drive(Component):
           Name of the gearbox.
         power : float
           Rated power of the gearbox [kW].
-        gearRatio : float
+        gear_ratio : float
           Overall gearbox speedup ratio.
-        gearConfiguration : str
+        gear_configuration : str
           String describing configuration of each gear stage.  Use 'e' for epicyclic and 'p' for parallel, for example 'eep' would be epicyclic-epicyclic-parallel.  'eep_3' and 'eep_2 are also options that fix the final stage ratio at 3 or 2 respectively.
         Np : array
           Array describing the number of planets in each stage.  For example if gearConfig is 'eep' Np could be [3 3 1].
-        rotorSpeed : float
+        rotor_speed : float
           Rotational speed of the LSS at rated power [rpm].
         eff : float
           Mechanical efficiency of the gearbox.
-        ratioType : str
+        ratio_type : str
           Describes how individual stage ratios will be calculated.  Can be 'empirical' which uses the Sunderland model, or 'optimal' which finds the stage ratios that minimize overall mass.
-        shType : str
+        shaft_type : str
           Describes the shaft type and applies a corresponding application factor.  Can be 'normal' or 'short'.
-        rotorTorque : float
+        rotor_torque : float
           rotor torque.
         '''
         super(Gearbox_drive,self).__init__()
@@ -1510,25 +1510,25 @@ class Gearbox_drive(Component):
 
         self.stageTorque = np.zeros([len(self.stageRatio),1]) #filled in when ebxWeightEst is called
         self.stageMass = np.zeros([len(self.stageRatio),1]) #filled in when ebxWeightEst is called
-        self.stageType=self.stageTypeCalc(self.gearConfiguration)
-        #print self.gearRatio
+        self.stageType=self.stageTypeCalc(self.gear_configuration)
+        #print self.gear_ratio
         #print self.Np
-        #print self.ratioType
-        #print self.gearConfiguration
-        self.stageRatio=self.stageRatioCalc(self.gearRatio,self.Np,self.ratioType,self.gearConfiguration)
+        #print self.ratio_type
+        #print self.gear_configuration
+        self.stageRatio=self.stageRatioCalc(self.gear_ratio,self.Np,self.ratio_type,self.gear_configuration)
         #print self.stageRatio
 
-        m=self.gbxWeightEst(self.gearConfiguration,self.gearRatio,self.Np,self.ratioType,self.shType,self.rotorTorque)
+        m=self.gbxWeightEst(self.gear_configuration,self.gear_ratio,self.Np,self.ratio_type,self.shaft_type,self.rotor_torque)
         self.mass = float(m)
-        self.stageMasses=self.stageMass
+        self.stage_masses=self.stageMass
         # calculate mass properties
         cm0   = 0.0
         cm1   = cm0
-        cm2   = 0.025 * self.rotorDiameter
+        cm2   = 0.025 * self.rotor_diameter
         self.cm = np.array([cm0, cm1, cm2])
 
-        length = (0.012 * self.rotorDiameter)
-        height = (0.015 * self.rotorDiameter)
+        length = (0.012 * self.rotor_diameter)
+        height = (0.015 * self.rotor_diameter)
         diameter = (0.75 * height)
 
         I0 = self.mass * (diameter ** 2 ) / 8 + (self.mass / 2) * (height ** 2) / 8
@@ -1536,8 +1536,8 @@ class Gearbox_drive(Component):
         I2 = I1
         self.I = np.array([I0, I1, I2])
 
-        '''def rotorTorque():
-            tq = self.gbxPower*1000 / self.eff / (self.rotorSpeed * (pi / 30.0))
+        '''def rotor_torque():
+            tq = self.gbxPower*1000 / self.eff / (self.rotor_speed * (pi / 30.0))
             return tq
         '''
      
@@ -1585,7 +1585,7 @@ class Gearbox_drive(Component):
 
         return indStageMass
         
-    def gbxWeightEst(self, config,overallRatio,Np,ratioType,shType,torque):
+    def gbxWeightEst(self, config,overallRatio,Np,ratio_type,shaft_type,torque):
 
 
         '''
@@ -1599,9 +1599,9 @@ class Gearbox_drive(Component):
         Kfact=0.0
 
         #K factor for pitting analysis
-        if self.rotorTorque < 200000.0:
+        if self.rotor_torque < 200000.0:
             Kfact = 850.0
-        elif self.rotorTorque < 700000.0:
+        elif self.rotor_torque < 700000.0:
             Kfact = 950.0
         else:
             Kfact = 1100.0
@@ -1610,13 +1610,13 @@ class Gearbox_drive(Component):
         Kunit=8.029
 
         # Shaft length factor
-        if self.shType == 'normal':
+        if self.shaft_type == 'normal':
             Kshaft = 1.0
-        elif self.shType == 'short':
+        elif self.shaft_type == 'short':
             Kshaft = 1.25
 
         #Individual stage torques
-        torqueTemp=self.rotorTorque
+        torqueTemp=self.rotor_torque
         for s in range(len(self.stageRatio)):
             #print torqueTemp
             #print self.stageRatio[s]
@@ -1628,7 +1628,7 @@ class Gearbox_drive(Component):
         
         return gbxWeight
 
-    def stageRatioCalc(self, overallRatio,Np,ratioType,config):
+    def stageRatioCalc(self, overallRatio,Np,ratio_type,config):
         '''
         Calculates individual stage ratios using either empirical relationships from the Sunderland model or a SciPy constrained optimization routine.
         '''
@@ -1636,7 +1636,7 @@ class Gearbox_drive(Component):
         K_r=0
                     
         #Assumes we can model everything w/Sunderland model to estimate speed ratio
-        if ratioType == 'empirical':
+        if ratio_type == 'empirical':
             if config == 'p': 
                 x=[overallRatio]
             if config == 'e':
@@ -1656,7 +1656,7 @@ class Gearbox_drive(Component):
             elif config == 'ppp':
                 x=[overallRatio**(1.0/3.0),overallRatio**(1.0/3.0),overallRatio**(1.0/3.0)]
         
-        elif ratioType == 'optimal':
+        elif ratio_type == 'optimal':
             x=np.zeros([3,1])
 
             if config == 'eep':
@@ -1750,28 +1750,28 @@ class Bedplate_drive(Component):
     '''
 
     #variables
-    hssLoc = Float(iotype ='in', units = 'm', desc='HSS CM location')
-    hssMass = Float(iotype ='in', units = 'kg', desc='HSS mass')
-    genLoc = Float(iotype ='in', units = 'm', desc='generator CM location')
-    genMass = Float(iotype ='in', units = 'kg', desc='generator mass')
-    lssLoc = Float(iotype ='in', units = 'm', desc='LSS CM location')
-    lssMass = Float(iotype ='in', units = 'kg', desc='LSS mass')
-    mb1Loc = Float(iotype ='in', units = 'm', desc='Upwind main bearing CM location')
-    mb1Mass = Float(iotype ='in', units = 'kg', desc='Upwind main bearing mass')
-    mb2Loc = Float(iotype ='in', units = 'm', desc='Downwind main bearing CM location')
-    mb2Mass = Float(iotype ='in', units = 'kg', desc='Downwind main bearing mass')
-    transMass = Float(iotype ='in', units = 'kg', desc='Transformer mass')
-    towerTopDiameter = Float(iotype ='in', units = 'm', desc='diameter of the top tower section at the yaw gear')
-    shaftLength = Float(iotype = 'in', units = 'm', desc='LSS length')
-    rotorDiameter = Float(iotype = 'in', units = 'm', desc='rotor diameter')
-    machineRating = Float(iotype='in', units='kW', desc='machineRating machine rating of the turbine')
-    rotorMass = Float(iotype='in', units='kg', desc='rotor mass')
-    rotorBendingMoment_y = Float(iotype='in', units='N*m', desc='The bending moment about the y axis')
-    rotorForce_z = Float(iotype='in', units='N', desc='The force along the z axis applied at hub center')
+    hss_location = Float(iotype ='in', units = 'm', desc='HSS CM location')
+    hss_mass = Float(iotype ='in', units = 'kg', desc='HSS mass')
+    generator_location = Float(iotype ='in', units = 'm', desc='generator CM location')
+    generator_mass = Float(iotype ='in', units = 'kg', desc='generator mass')
+    lss_location = Float(iotype ='in', units = 'm', desc='LSS CM location')
+    lss_mass = Float(iotype ='in', units = 'kg', desc='LSS mass')
+    mb1_location = Float(iotype ='in', units = 'm', desc='Upwind main bearing CM location')
+    mb1_mass = Float(iotype ='in', units = 'kg', desc='Upwind main bearing mass')
+    mb2_location = Float(iotype ='in', units = 'm', desc='Downwind main bearing CM location')
+    mb2_mass = Float(iotype ='in', units = 'kg', desc='Downwind main bearing mass')
+    transformer_mass = Float(iotype ='in', units = 'kg', desc='Transformer mass')
+    tower_top_diameter = Float(iotype ='in', units = 'm', desc='diameter of the top tower section at the yaw gear')
+    shaft_length = Float(iotype = 'in', units = 'm', desc='LSS length')
+    rotor_diameter = Float(iotype = 'in', units = 'm', desc='rotor diameter')
+    machine_rating = Float(iotype='in', units='kW', desc='machine_rating machine rating of the turbine')
+    rotor_mass = Float(iotype='in', units='kg', desc='rotor mass')
+    rotor_bending_moment_y = Float(iotype='in', units='N*m', desc='The bending moment about the y axis')
+    rotor_force_z = Float(iotype='in', units='N', desc='The force along the z axis applied at hub center')
 
     #parameters
     #check openmdao syntax for boolean
-    uptowerTransformer = Bool(iotype = 'in', desc = 'Boolean stating if transformer is uptower')
+    uptower_transformer = Bool(iotype = 'in', desc = 'Boolean stating if transformer is uptower')
 
     #outputs
     mass = Float(0.0, iotype='out', units='kg', desc='overall component mass')
@@ -1786,13 +1786,13 @@ class Bedplate_drive(Component):
 
         Parameters
         ----------
-        towerTopDiameter : float
+        tower_top_diameter : float
           Diameter of the top tower section at the nacelle flange [m].
-        shaftLength : float
+        shaft_length : float
           Length of the LSS [m]
-        rotorDiameter : float
+        rotor_diameter : float
           The wind turbine rotor diameter [m].
-        uptowerTransformer : int
+        uptower_transformer : int
           Determines if the transformer is uptower ('1') or downtower ('0').
         '''
 
@@ -1801,7 +1801,7 @@ class Bedplate_drive(Component):
         #length is LSS length plus tower radius
         #diameter is 1.25x tower diameter
         #guess at initial thickness same as hub
-        #towerTopDiam, shaftLength, rotorDiameter, uptowerTransformer=0
+        #towerTopDiam, shaft_length, rotor_diameter, uptower_transformer=0
 
         super(Bedplate_drive,self).__init__()
 
@@ -1815,29 +1815,29 @@ class Bedplate_drive(Component):
         density = 7800
 
         #rear component weights and locations
-        transLoc = 3.0*self.genLoc
-        self.transMass = 2.4445*(self.machineRating) + 1599.0
-        convLoc = 2.0*self.genLoc
-        convMass = 0.3*self.transMass 
+        transLoc = 3.0*self.generator_location
+        self.transformer_mass = 2.4445*(self.machine_rating) + 1599.0
+        convLoc = 2.0*self.generator_location
+        convMass = 0.3*self.transformer_mass 
 
         rearTotalLength = 0.0
 
         if transLoc > 0:
           rearTotalLength = transLoc + 1.0
         else:
-          rearTotalLength = self.genLoc + 1.0
+          rearTotalLength = self.generator_location + 1.0
 
         #component masses and locations
-        mb1Loc = abs(self.mb1Loc)
-        mb2Loc = abs(self.mb2Loc)
-        lssLoc= abs(self.lssLoc)
+        mb1_location = abs(self.mb1_location)
+        mb2_location = abs(self.mb2_location)
+        lss_location= abs(self.lss_location)
 
-        frontTotalLength = mb1Loc + 0.2
+        frontTotalLength = mb1_location + 0.2
 
         #rotor weights and loads
         rotorLoc = frontTotalLength
-        rotorFz=abs(self.rotorForce_z)
-        rotorMy=abs(self.rotorBendingMoment_y)
+        rotorFz=abs(self.rotor_force_z)
+        rotorMy=abs(self.rotor_bending_moment_y)
         rotorLoc=frontTotalLength
 
         #initial I-beam dimensions
@@ -1873,16 +1873,16 @@ class Bedplate_drive(Component):
           #Tip Deflection for load not at end
           
 
-          hssTipDefl = midDeflection(rearTotalLength,self.hssLoc,self.hssMass*g/2,E,I)
-          genTipDefl = midDeflection(rearTotalLength,self.genLoc,self.genMass*g/2,E,I)
+          hssTipDefl = midDeflection(rearTotalLength,self.hss_location,self.hss_mass*g/2,E,I)
+          genTipDefl = midDeflection(rearTotalLength,self.generator_location,self.generator_mass*g/2,E,I)
           convTipDefl = midDeflection(rearTotalLength,convLoc,convMass*g/2,E,I)
-          transTipDefl = midDeflection(rearTotalLength,transLoc,self.transMass*g/2,E,I)
+          transTipDefl = midDeflection(rearTotalLength,transLoc,self.transformer_mass*g/2,E,I)
           selfTipDefl = distDeflection(rearTotalLength,w*g,E,I)
 
           totalTipDefl = hssTipDefl + genTipDefl + +convTipDefl + transTipDefl +  selfTipDefl 
           
           #root stress
-          totalBendingMoment=(self.hssLoc*self.hssMass + self.genLoc*self.genMass + convLoc*convMass + transLoc*self.transMass + w*rearTotalLength**2/2.0)*g
+          totalBendingMoment=(self.hss_location*self.hss_mass + self.generator_location*self.generator_mass + convLoc*convMass + transLoc*self.transformer_mass + w*rearTotalLength**2/2.0)*g
           rootStress = totalBendingMoment*h0/2/I
 
           #mass
@@ -1927,10 +1927,10 @@ class Bedplate_drive(Component):
           #Tip Deflection for load not at end
           
 
-          mb1TipDefl = midDeflection(frontTotalLength,mb1Loc,self.mb1Mass*g/2.0,E,I)
-          mb2TipDefl = midDeflection(frontTotalLength,mb2Loc,self.mb2Mass*g/2.0,E,I)
-          lssTipDefl = midDeflection(frontTotalLength,lssLoc,self.lssMass*g/2.0,E,I)
-          rotorTipDefl = midDeflection(frontTotalLength,rotorLoc,self.rotorMass*g/2.0,E,I)
+          mb1TipDefl = midDeflection(frontTotalLength,mb1_location,self.mb1_mass*g/2.0,E,I)
+          mb2TipDefl = midDeflection(frontTotalLength,mb2_location,self.mb2_mass*g/2.0,E,I)
+          lssTipDefl = midDeflection(frontTotalLength,lss_location,self.lss_mass*g/2.0,E,I)
+          rotorTipDefl = midDeflection(frontTotalLength,rotorLoc,self.rotor_mass*g/2.0,E,I)
           rotorFzTipDefl = midDeflection(frontTotalLength,rotorLoc,rotorFz/2.0,E,I)
           selfTipDefl = distDeflection(frontTotalLength,w*g,E,I)
           rotorMyTipDefl = rotorMy*frontTotalLength**2/(2.0*E*I)
@@ -1938,7 +1938,7 @@ class Bedplate_drive(Component):
           totalTipDefl = mb1TipDefl + mb2TipDefl + lssTipDefl  + rotorTipDefl + selfTipDefl +rotorMyTipDefl + rotorFzTipDefl
 
           #root stress
-          totalBendingMoment=(mb1Loc*self.mb1Mass/2.0 + mb2Loc*self.mb2Mass/2.0 + lssLoc*self.lssMass/2.0 + w*frontTotalLength**2/2.0 + rotorLoc*self.rotorMass)*g + rotorLoc*rotorFz/2.0 +rotorMy/2.0
+          totalBendingMoment=(mb1_location*self.mb1_mass/2.0 + mb2_location*self.mb2_mass/2.0 + lss_location*self.lss_mass/2.0 + w*frontTotalLength**2/2.0 + rotorLoc*self.rotor_mass)*g + rotorLoc*rotorFz/2.0 +rotorMy/2.0
           rootStress = totalBendingMoment*h0/2/I
 
           #mass
@@ -1991,12 +1991,12 @@ class Bedplate_drive(Component):
         print totalSteelMass+ totalCastMass
         self.mass = totalCastMass+ totalSteelMass
         self.length = frontTotalLength + rearTotalLength
-        self.width = b0 + self.towerTopDiameter
+        self.width = b0 + self.tower_top_diameter
 
         # calculate mass properties
         cm = np.array([0.0,0.0,0.0])
         cm[0] = cm[1] = 0.0
-        cm[2] = 0.0122 * self.rotorDiameter                             # half distance from shaft to yaw axis
+        cm[2] = 0.0122 * self.rotor_diameter                             # half distance from shaft to yaw axis
         self.cm = cm
 
         self.depth = (self.length / 2.0)
@@ -2017,13 +2017,13 @@ class Bedplate_drive_old(Component):
     '''
 
     #variables
-    towerTopDiameter = Float(iotype ='in', desc='diameter of the top tower section at the yaw gear')
-    shaftLength = Float(iotype = 'in', desc='LSS length')
-    rotorDiameter = Float(iotype = 'in', desc='rotor diameter')
+    tower_top_diameter = Float(iotype ='in', desc='diameter of the top tower section at the yaw gear')
+    shaft_length = Float(iotype = 'in', desc='LSS length')
+    rotor_diameter = Float(iotype = 'in', desc='rotor diameter')
 
     #parameters
     #check openmdao syntax for boolean
-    uptowerTransformer = Bool(iotype = 'in', desc = 'Boolean stating if transformer is uptower')
+    uptower_transformer = Bool(iotype = 'in', desc = 'Boolean stating if transformer is uptower')
 
     #outputs
     mass = Float(0.0, iotype='out', units='kg', desc='overall component mass')
@@ -2038,13 +2038,13 @@ class Bedplate_drive_old(Component):
 
         Parameters
         ----------
-        towerTopDiameter : float
+        tower_top_diameter : float
           Diameter of the top tower section at the nacelle flange [m].
-        shaftLength : float
+        shaft_length : float
           Length of the LSS [m]
-        rotorDiameter : float
+        rotor_diameter : float
           The wind turbine rotor diameter [m].
-        uptowerTransformer : int
+        uptower_transformer : int
           Determines if the transformer is uptower ('1') or downtower ('0').
         '''
 
@@ -2053,13 +2053,13 @@ class Bedplate_drive_old(Component):
         #length is LSS length plus tower radius
         #diameter is 1.25x tower diameter
         #guess at initial thickness same as hub
-        #towerTopDiam, shaftLength, rotorDiameter, uptowerTransformer=0
+        #towerTopDiam, shaft_length, rotor_diameter, uptower_transformer=0
 
         super(Bedplate_drive,self).__init__()
 
     def execute(self):
-        castThickness=self.rotorDiameter/620
-        castVolume=(self.shaftLength+self.towerTopDiameter/2)*pi*(self.towerTopDiameter*1.25)*0.25*castThickness
+        castThickness=self.rotor_diameter/620
+        castVolume=(self.shaft_length+self.tower_top_diameter/2)*pi*(self.tower_top_diameter*1.25)*0.25*castThickness
         castDensity=7.1*10.0**3 #kg/m^3
         castMass=castDensity*castVolume
         self.length=0.0
@@ -2068,11 +2068,11 @@ class Bedplate_drive_old(Component):
         
         #These numbers based off V80, need to update
         steelVolume=0.0
-        if self.uptowerTransformer == True:
-            self.length=1.5*self.shaftLength
+        if self.uptower_transformer == True:
+            self.length=1.5*self.shaft_length
             steelVolume=self.length*self.width*self.depth/4.0
-        elif self.uptowerTransformer == False:
-            self.length=self.shaftLength
+        elif self.uptower_transformer == False:
+            self.length=self.shaft_length
             steelVolume=self.length*self.width*self.depth/4.0
         steelDensity=7900 #kg/m**3
         steelMass=steelDensity*steelVolume
@@ -2082,7 +2082,7 @@ class Bedplate_drive_old(Component):
         # calculate mass properties
         cm = np.array([0.0,0.0,0.0])
         cm[0] = cm[1] = 0.0
-        cm[2] = 0.0122 * self.rotorDiameter                             # half distance from shaft to yaw axis
+        cm[2] = 0.0122 * self.rotor_diameter                             # half distance from shaft to yaw axis
         self.cm = cm
 
         self.depth = (self.length / 2.0)
@@ -2103,13 +2103,13 @@ class YawSystem_drive(Component):
           It contains an update method to determine the mass, mass properties, and dimensions of the component.
     '''
     #variables
-    rotorDiameter = Float(iotype='in', units='m', desc='rotor diameter')
-    rotorThrust = Float(iotype='in', units='N', desc='maximum rotor thrust')
-    towerTopDiameter = Float(iotype='in', units='m', desc='tower top diameter')
-    aboveYawMass = Float(iotype='in', units='kg', desc='above yaw mass')
+    rotor_diameter = Float(iotype='in', units='m', desc='rotor diameter')
+    rotor_thrust = Float(iotype='in', units='N', desc='maximum rotor thrust')
+    tower_top_diameter = Float(iotype='in', units='m', desc='tower top diameter')
+    above_yaw_mass = Float(iotype='in', units='kg', desc='above yaw mass')
 
     #parameters
-    numYawMotors = Float(iotype='in', desc='number of yaw motors')
+    yaw_motors_number = Float(iotype='in', desc='number of yaw motors')
 
     #outputs
     mass = Float(0.0, iotype='out', units='kg', desc='overall component mass')
@@ -2124,33 +2124,33 @@ class YawSystem_drive(Component):
         ----------
         towerTopDiam : float
           Diameter of the tower top section [m]
-        rotorDiameter : float
+        rotor_diameter : float
           Rotor Diameter [m].
-        numYawMotors : int
+        yaw_motors_number : int
           Number of yaw motors.
         '''
         super(YawSystem_drive, self).__init__()
 
     def execute(self):
 
-        if self.numYawMotors == 0 :
-          if self.rotorDiameter < 90.0 :
-            self.numYawMotors = 4.0
-          elif self.rotorDiameter < 120.0 :
-            self.numYawMotors = 6.0
+        if self.yaw_motors_number == 0 :
+          if self.rotor_diameter < 90.0 :
+            self.yaw_motors_number = 4.0
+          elif self.rotor_diameter < 120.0 :
+            self.yaw_motors_number = 6.0
           else:
-            self.numYawMotors = 8.0
+            self.yaw_motors_number = 8.0
 
         #assume friction plate surface width is 1/10 the diameter
         #assume friction plate thickness scales with rotor diameter
-        frictionPlateVol=pi*self.towerTopDiameter*(self.towerTopDiameter*0.10)*(self.rotorDiameter/1000.0)
+        frictionPlateVol=pi*self.tower_top_diameter*(self.tower_top_diameter*0.10)*(self.rotor_diameter/1000.0)
         steelDensity=8000.0
         frictionPlateMass=frictionPlateVol*steelDensity
         
         #Assume same yaw motors as Vestas V80 for now: Bonfiglioli 709T2M
         yawMotorMass=190.0
         
-        totalYawMass=frictionPlateMass + (self.numYawMotors*yawMotorMass)
+        totalYawMass=frictionPlateMass + (self.yaw_motors_number*yawMotorMass)
         self.mass= totalYawMass
 
         # calculate mass properties

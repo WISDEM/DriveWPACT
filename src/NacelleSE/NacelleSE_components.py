@@ -862,7 +862,7 @@ class Generator(Component):
 
         # derivatives
         if (self.drivetrain_design < 4):
-            self.d_mass_d_rotor_diameter = 0   
+            self.d_mass_d_rotor_diameter = 0.0 
         else:  # direct drive
             self.d_mass_d_rotor_diameter = massExp[self.drivetrain_design] * (massCoeff[self.drivetrain_design] * CalcTorque ** (massExp[self.drivetrain_design] - 1)) * (self.machine_rating * 1.1 * 0.5 / 80)
 
@@ -876,10 +876,10 @@ class Generator(Component):
         self.d_I_d_rotor_diameter = np.array([0.0, 0.0, 0.0])
         self.d_I_d_rotor_diameter[0] = ((4.86*(10.**(-5)))*(self.rotor_diameter**4.333)) * 5.333 + \
                                 (1./8.) * (2./3.) * self.d_mass_d_rotor_diameter * (depth ** 2 + width ** 2) + \
-                                (1./8.) * (2./3.) * self.mass * (2.*depth*0.015 + 2.*width*0.5*0.15)
-        self.d_I_d_rotor_diameter[1] = (1/(2.*self.gear_ratio**2.))*(self.d_I_d_rotor_diameter[0]) + \
-                                 self.d_mass_d_rotor_diameter * (((1./3.) * (length ** 2.) / 12.) + ((2 / 3.) * (depth ** 2. + width ** 2. + (4./3.) * (length ** 2.)) / 16. )) + \
-                                 self.mass * ((1./3.) * (1./12.) * (2. * length * 1.6 * 0.015) + (2./3.) * (1./16.) * (2.*depth*0.015 + 2.*width*0.5*0.15 + (4./3.)*2.*length*1.6*0.015))
+                                (1./8.) * (2./3.) * self.mass * (2.*depth*0.015 + 2.*width*0.5*0.015)
+        self.d_I_d_rotor_diameter[1] = (1./(2.*self.gear_ratio**2))*(self.d_I_d_rotor_diameter[0]) + \
+                                 self.d_mass_d_rotor_diameter * (((1./3.) * (length ** 2) / 12.) + ((2. / 3.) * (depth ** 2 + width ** 2 + (4./3.) * (length ** 2)) / 16. )) + \
+                                 self.mass * ((1./3.) * (1./12.) * (2. * length * 1.6 * 0.015) + (2./3.) * (1./16.) * (2.*depth*0.015 + 2.*width*0.5*0.015 + (4./3.)*2.*length*1.6*0.015))
         self.d_I_d_rotor_diameter[2] = self.d_I_d_rotor_diameter[1]
 
         self.d_I_d_machine_rating = np.array([0.0, 0.0, 0.0])
@@ -1470,49 +1470,51 @@ class NacelleSystemAdder(Component): # changed name to nacelle - need to rename,
         self.d_mass_d_above_yaw_mass = 1.0
         self.d_mass_d_yawMass = 1.0
         
+        sum_mass = self.lss_mass + self.main_bearing_mass + self.second_bearing_mass + self.gearbox_mass + self.hss_mass + self.generator_mass + self.mainframe_mass
+        
         self.d_cm_d_lss_mass = np.array([0.0, 0.0, 0.0])
         for i in (range(0,3)):
-            self.d_cm_d_lss_mass[i] = (self.lss_cm[i]*self.mass - (self.lss_mass * self.lss_cm[i] + self.main_bearing_mass * self.main_bearing_cm[i] + \
+            self.d_cm_d_lss_mass[i] = (self.lss_cm[i]*sum_mass - (self.lss_mass * self.lss_cm[i] + self.main_bearing_mass * self.main_bearing_cm[i] + \
                     self.second_bearing_mass * self.second_bearing_cm[i] + self.gearbox_mass * self.gearbox_cm[i] + self.hss_mass * self.hss_cm[i] + \
-                    self.generator_mass * self.generator_cm[i] + self.mainframe_mass * self.bedplate_cm[i]))/ ((self.mass)**2)
+                    self.generator_mass * self.generator_cm[i] + self.mainframe_mass * self.bedplate_cm[i]))/ ((sum_mass)**2)
         self.d_cm_d_main_bearing_mass = np.array([0.0, 0.0, 0.0])
         for i in (range(0,3)):
-            self.d_cm_d_main_bearing_mass[i] = (self.main_bearing_cm[i]*self.mass - (self.lss_mass * self.lss_cm[i] + self.main_bearing_mass * self.main_bearing_cm[i] + \
+            self.d_cm_d_main_bearing_mass[i] = (self.main_bearing_cm[i]*sum_mass - (self.lss_mass * self.lss_cm[i] + self.main_bearing_mass * self.main_bearing_cm[i] + \
                     self.second_bearing_mass * self.second_bearing_cm[i] + self.gearbox_mass * self.gearbox_cm[i] + self.hss_mass * self.hss_cm[i] + \
-                    self.generator_mass * self.generator_cm[i] + self.mainframe_mass * self.bedplate_cm[i]))/ ((self.mass)**2)
+                    self.generator_mass * self.generator_cm[i] + self.mainframe_mass * self.bedplate_cm[i]))/ ((sum_mass)**2)
         self.d_cm_d_second_bearing_mass = np.array([0.0, 0.0, 0.0])
         for i in (range(0,3)):
-            self.d_cm_d_second_bearing_mass[i] = (self.second_bearing_cm[i]*self.mass - (self.lss_mass * self.lss_cm[i] + self.main_bearing_mass * self.main_bearing_cm[i] + \
+            self.d_cm_d_second_bearing_mass[i] = (self.second_bearing_cm[i]*sum_mass - (self.lss_mass * self.lss_cm[i] + self.main_bearing_mass * self.main_bearing_cm[i] + \
                     self.second_bearing_mass * self.second_bearing_cm[i] + self.gearbox_mass * self.gearbox_cm[i] + self.hss_mass * self.hss_cm[i] + \
-                    self.generator_mass * self.generator_cm[i] + self.mainframe_mass * self.bedplate_cm[i]))/ ((self.mass)**2)
+                    self.generator_mass * self.generator_cm[i] + self.mainframe_mass * self.bedplate_cm[i]))/ ((sum_mass)**2)
         self.d_cm_d_gearbox_mass = np.array([0.0, 0.0, 0.0])
         for i in (range(0,3)):
-            self.d_cm_d_gearbox_mass[i] = (self.gearbox_cm[i]*self.mass - (self.lss_mass * self.lss_cm[i] + self.main_bearing_mass * self.main_bearing_cm[i] + \
+            self.d_cm_d_gearbox_mass[i] = (self.gearbox_cm[i]*sum_mass - (self.lss_mass * self.lss_cm[i] + self.main_bearing_mass * self.main_bearing_cm[i] + \
                     self.second_bearing_mass * self.second_bearing_cm[i] + self.gearbox_mass * self.gearbox_cm[i] + self.hss_mass * self.hss_cm[i] + \
-                    self.generator_mass * self.generator_cm[i] + self.mainframe_mass * self.bedplate_cm[i]))/ ((self.mass)**2)
+                    self.generator_mass * self.generator_cm[i] + self.mainframe_mass * self.bedplate_cm[i]))/ ((sum_mass)**2)
         self.d_cm_d_hss_mass = np.array([0.0, 0.0, 0.0])
         for i in (range(0,3)):
-            self.d_cm_d_hss_mass[i] = (self.hss_cm[i]*self.mass - (self.lss_mass * self.lss_cm[i] + self.main_bearing_mass * self.main_bearing_cm[i] + \
+            self.d_cm_d_hss_mass[i] = (self.hss_cm[i]*sum_mass - (self.lss_mass * self.lss_cm[i] + self.main_bearing_mass * self.main_bearing_cm[i] + \
                     self.second_bearing_mass * self.second_bearing_cm[i] + self.gearbox_mass * self.gearbox_cm[i] + self.hss_mass * self.hss_cm[i] + \
-                    self.generator_mass * self.generator_cm[i] + self.mainframe_mass * self.bedplate_cm[i]))/ ((self.mass)**2)
+                    self.generator_mass * self.generator_cm[i] + self.mainframe_mass * self.bedplate_cm[i]))/ ((sum_mass)**2)
         self.d_cm_d_generator_mass = np.array([0.0, 0.0, 0.0])
         for i in (range(0,3)):
-            self.d_cm_d_generator_mass[i] = (self.generator_cm[i]*self.mass - (self.lss_mass * self.lss_cm[i] + self.main_bearing_mass * self.main_bearing_cm[i] + \
+            self.d_cm_d_generator_mass[i] = (self.generator_cm[i]*sum_mass - (self.lss_mass * self.lss_cm[i] + self.main_bearing_mass * self.main_bearing_cm[i] + \
                     self.second_bearing_mass * self.second_bearing_cm[i] + self.gearbox_mass * self.gearbox_cm[i] + self.hss_mass * self.hss_cm[i] + \
-                    self.generator_mass * self.generator_cm[i] + self.mainframe_mass * self.bedplate_cm[i]))/ ((self.mass)**2)
+                    self.generator_mass * self.generator_cm[i] + self.mainframe_mass * self.bedplate_cm[i]))/ ((sum_mass)**2)
         self.d_cm_d_mainframe_mass = np.array([0.0, 0.0, 0.0])
         for i in (range(0,3)):
-            self.d_cm_d_mainframe_mass[i] = (self.bedplate_cm[i]*self.mass - (self.lss_mass * self.lss_cm[i] + self.main_bearing_mass * self.main_bearing_cm[i] + \
+            self.d_cm_d_mainframe_mass[i] = (self.bedplate_cm[i]*sum_mass - (self.lss_mass * self.lss_cm[i] + self.main_bearing_mass * self.main_bearing_cm[i] + \
                     self.second_bearing_mass * self.second_bearing_cm[i] + self.gearbox_mass * self.gearbox_cm[i] + self.hss_mass * self.hss_cm[i] + \
-                    self.generator_mass * self.generator_cm[i] + self.mainframe_mass * self.bedplate_cm[i]))/ ((self.mass)**2)
+                    self.generator_mass * self.generator_cm[i] + self.mainframe_mass * self.bedplate_cm[i]))/ ((sum_mass)**2)
 
-        self.d_cm_d_lss_cm = self.lss_mass / self.mass
-        self.d_cm_d_main_bearing_cm = self.main_bearing_mass / self.mass
-        self.d_cm_d_second_bearing_cm = self.second_bearing_mass / self.mass
-        self.d_cm_d_gearbox_cm = self.gearbox_mass / self.mass
-        self.d_cm_d_hss_cm = self.hss_mass / self.mass
-        self.d_cm_d_generator_cm = self.generator_mass / self.mass
-        self.d_cm_d_mainframeCM = self.mainframe_mass / self.mass
+        self.d_cm_d_lss_cm = self.lss_mass / sum_mass
+        self.d_cm_d_main_bearing_cm = self.main_bearing_mass / sum_mass
+        self.d_cm_d_second_bearing_cm = self.second_bearing_mass / sum_mass
+        self.d_cm_d_gearbox_cm = self.gearbox_mass / sum_mass
+        self.d_cm_d_hss_cm = self.hss_mass / sum_mass
+        self.d_cm_d_generator_cm = self.generator_mass / sum_mass
+        self.d_cm_d_mainframeCM = self.mainframe_mass / sum_mass
         
         self.d_I_d_lss_I = 1
         self.d_I_d_main_bearing_I = 1
@@ -1542,7 +1544,9 @@ class NacelleSystemAdder(Component): # changed name to nacelle - need to rename,
             self.d_I_d_generator_mass[i] = (self.generator_cm[i]-self.cm[i])**2 + 2 * self.generator_mass * (self.generator_cm[i] - self.cm[i]) * self.d_cm_d_generator_cm
         self.d_I_d_mainframe_mass = np.array([0.0, 0.0, 0.0])
         for i in (range(0,3)):
-            self.d_I_d_mainframe_mass[i] = (self.bedplate_cm[i]-self.cm[i])**2 + 2 * self.mainframe_mass * (self.bedplate_cm[i] - self.cm[i]) * self.d_cm_d_mainframeCM
+            self.d_I_d_mainframe_mass[i] = (self.bedplate_cm[i]-self.cm[i])**2 + 2 * self.mainframe_mass * (self.bedplate_cm[i] - self.cm[i]) * self.d_cm_d_mainframeCM + \
+                                           self.bedplate_I[i] / self.bedplate_mass
+                                            
 
         self.d_I_d_lss_cm = np.array([0.0, 0.0, 0.0])
         for i in range(0,3):
@@ -1576,20 +1580,20 @@ class NacelleSystemAdder(Component): # changed name to nacelle - need to rename,
                             self.d_cm_d_lss_cm, 0, 0, self.d_cm_d_main_bearing_cm, 0, 0, self.d_cm_d_second_bearing_cm, 0, 0, self.d_cm_d_gearbox_cm, 0, 0, self.d_cm_d_hss_cm, 0, 0, self.d_cm_d_generator_cm, 0, 0, self.d_cm_d_mainframeCM, 0, 0, \
                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
                            [0, 0, self.d_cm_d_lss_mass[1], self.d_cm_d_main_bearing_mass[1], self.d_cm_d_second_bearing_mass[1], self.d_cm_d_gearbox_mass[1], self.d_cm_d_hss_mass[1], self.d_cm_d_generator_mass[1], self.d_cm_d_mainframe_mass[1], \
-                            self.d_cm_d_lss_cm, 0, 0, self.d_cm_d_main_bearing_cm, 0, 0, self.d_cm_d_second_bearing_cm, 0, 0, self.d_cm_d_gearbox_cm, 0, 0, self.d_cm_d_hss_cm, 0, 0, self.d_cm_d_generator_cm, 0, 0, self.d_cm_d_mainframeCM, 0, 0, \
+                            0, self.d_cm_d_lss_cm, 0, 0, self.d_cm_d_main_bearing_cm, 0, 0, self.d_cm_d_second_bearing_cm, 0, 0, self.d_cm_d_gearbox_cm, 0, 0, self.d_cm_d_hss_cm, 0, 0, self.d_cm_d_generator_cm, 0, 0, self.d_cm_d_mainframeCM, 0, \
                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
                            [0, 0, self.d_cm_d_lss_mass[2], self.d_cm_d_main_bearing_mass[2], self.d_cm_d_second_bearing_mass[2], self.d_cm_d_gearbox_mass[2], self.d_cm_d_hss_mass[2], self.d_cm_d_generator_mass[2], self.d_cm_d_mainframe_mass[2], \
-                            self.d_cm_d_lss_cm, 0, 0, self.d_cm_d_main_bearing_cm, 0, 0, self.d_cm_d_second_bearing_cm, 0, 0, self.d_cm_d_gearbox_cm, 0, 0, self.d_cm_d_hss_cm, 0, 0, self.d_cm_d_generator_cm, 0, 0, self.d_cm_d_mainframeCM, 0, 0, \
+                            0, 0, self.d_cm_d_lss_cm, 0, 0, self.d_cm_d_main_bearing_cm, 0, 0, self.d_cm_d_second_bearing_cm, 0, 0, self.d_cm_d_gearbox_cm, 0, 0, self.d_cm_d_hss_cm, 0, 0, self.d_cm_d_generator_cm, 0, 0, self.d_cm_d_mainframeCM, \
                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
                            [0, 0, self.d_I_d_lss_mass[0], self.d_I_d_main_bearing_mass[0], self.d_I_d_second_bearing_mass[0], self.d_I_d_gearbox_mass[0], self.d_I_d_hss_mass[0], self.d_I_d_generator_mass[0], self.d_I_d_mainframe_mass[0], \
                            self.d_I_d_lss_cm[0], 0, 0, self.d_I_d_main_bearing_cm[0], 0, 0, self.d_I_d_second_bearing_cm[0], 0, 0, self.d_I_d_gearbox_cm[0], 0, 0, self.d_I_d_hss_cm[0], 0, 0, self.d_I_d_generator_cm[0], 0, 0, self.d_I_d_mainframeCM[0], 0, 0, \
                            self.d_I_d_lss_I, 0, 0, self.d_I_d_main_bearing_I, 0, 0, self.d_I_d_second_bearing_I, 0, 0, self.d_I_d_gearbox_I, 0, 0, self.d_I_d_hss_I, 0, 0, self.d_I_d_generator_I, 0, 0, self.d_I_d_mainframeI, 0, 0], \
                            [0, 0, self.d_I_d_lss_mass[1], self.d_I_d_main_bearing_mass[1], self.d_I_d_second_bearing_mass[1], self.d_I_d_gearbox_mass[1], self.d_I_d_hss_mass[1], self.d_I_d_generator_mass[1], self.d_I_d_mainframe_mass[1], \
-                           self.d_I_d_lss_cm[1], 0, 0, self.d_I_d_main_bearing_cm[1], 0, 0, self.d_I_d_second_bearing_cm[1], 0, 0, self.d_I_d_gearbox_cm[1], 0, 0, self.d_I_d_hss_cm[1], 0, 0, self.d_I_d_generator_cm[1], 0, 0, self.d_I_d_mainframeCM[1], 0, 0, \
-                           self.d_I_d_lss_I, 0, 0, self.d_I_d_main_bearing_I, 0, 0, self.d_I_d_second_bearing_I, 0, 0, self.d_I_d_gearbox_I, 0, 0, self.d_I_d_hss_I, 0, 0, self.d_I_d_generator_I, 0, 0, self.d_I_d_mainframeI, 0, 0], \
+                           0, self.d_I_d_lss_cm[1], 0, 0, self.d_I_d_main_bearing_cm[1], 0, 0, self.d_I_d_second_bearing_cm[1], 0, 0, self.d_I_d_gearbox_cm[1], 0, 0, self.d_I_d_hss_cm[1], 0, 0, self.d_I_d_generator_cm[1], 0, 0, self.d_I_d_mainframeCM[1], 0, \
+                           0, self.d_I_d_lss_I, 0, 0, self.d_I_d_main_bearing_I, 0, 0, self.d_I_d_second_bearing_I, 0, 0, self.d_I_d_gearbox_I, 0, 0, self.d_I_d_hss_I, 0, 0, self.d_I_d_generator_I, 0, 0, self.d_I_d_mainframeI, 0], \
                            [0, 0, self.d_I_d_lss_mass[2], self.d_I_d_main_bearing_mass[2], self.d_I_d_second_bearing_mass[2], self.d_I_d_gearbox_mass[2], self.d_I_d_hss_mass[2], self.d_I_d_generator_mass[2], self.d_I_d_mainframe_mass[2], \
-                           self.d_I_d_lss_cm[2], 0, 0, self.d_I_d_main_bearing_cm[2], 0, 0, self.d_I_d_second_bearing_cm[2], 0, 0, self.d_I_d_gearbox_cm[2], 0, 0, self.d_I_d_hss_cm[2], 0, 0, self.d_I_d_generator_cm[2], 0, 0, self.d_I_d_mainframeCM[2], 0, 0, \
-                           self.d_I_d_lss_I, 0, 0, self.d_I_d_main_bearing_I, 0, 0, self.d_I_d_second_bearing_I, 0, 0, self.d_I_d_gearbox_I, 0, 0, self.d_I_d_hss_I, 0, 0, self.d_I_d_generator_I, 0, 0, self.d_I_d_mainframeI, 0, 0]])
+                           0, 0, self.d_I_d_lss_cm[2], 0, 0, self.d_I_d_main_bearing_cm[2], 0, 0, self.d_I_d_second_bearing_cm[2], 0, 0, self.d_I_d_gearbox_cm[2], 0, 0, self.d_I_d_hss_cm[2], 0, 0, self.d_I_d_generator_cm[2], 0, 0, self.d_I_d_mainframeCM[2], \
+                           0, 0, self.d_I_d_lss_I, 0, 0, self.d_I_d_main_bearing_I, 0, 0, self.d_I_d_second_bearing_I, 0, 0, self.d_I_d_gearbox_I, 0, 0, self.d_I_d_hss_I, 0, 0, self.d_I_d_generator_I, 0, 0, self.d_I_d_mainframeI]])
 
     def provideJ(self):
 

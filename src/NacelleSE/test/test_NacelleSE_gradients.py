@@ -173,7 +173,7 @@ class Test_Generator(unittest.TestCase):
         gen.machine_rating = 1500.
         gen.drivetrain_design = 1
 
-        check_gradient_unit_test(self, gen,display=True)
+        check_gradient_unit_test(self, gen,display=False)
 
 class Test_Bedplate(unittest.TestCase):
 
@@ -230,7 +230,7 @@ class Test_YawSystem(unittest.TestCase):
 
         check_gradient_unit_test(self, yaw,display=False)
 
-'''class Test_NacelleSystemAdder(unittest.TestCase):
+class Test_NacelleSystemAdder(unittest.TestCase):
 
     def test1(self):
 
@@ -261,7 +261,7 @@ class Test_YawSystem(unittest.TestCase):
         nac.generator_I = np.array([1.0, 1.0, 1.0])
         nac.bedplate_I = np.array([1.0, 1.0, 1.0])
 
-        check_gradient_unit_test(self, nac,display=True)'''
+        check_gradient_unit_test(self, nac,display=False)
 
 
 if __name__ == "__main__":

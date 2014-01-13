@@ -15,13 +15,13 @@ from DriveSE_components import Hub_drive
 class HubBase(Assembly):
 
     # variables
-    bladeMass = Float(iotype='in', units='kg', desc='mass of one blade')
-    rotorBendingMoment = Float(iotype='in', units='N*m', desc='flapwise bending moment at blade root')
-    rotorDiameter = Float(iotype='in', units='m', desc='rotor diameter')
-    bladeRootDiameter = Float(iotype='in', units='m', desc='blade root diameter')
+    blade_mass = Float(iotype='in', units='kg', desc='mass of one blade')
+    rotor_bending_moment = Float(iotype='in', units='N*m', desc='flapwise bending moment at blade root')
+    rotor_diameter = Float(iotype='in', units='m', desc='rotor diameter')
+    blade_root_diameter = Float(iotype='in', units='m', desc='blade root diameter')
     
     # parameters
-    bladeNumber = Int(3, iotype='in', desc='number of turbine blades')
+    blade_number = Int(3, iotype='in', desc='number of turbine blades')
 
 class HubSE(HubBase):
     ''' 
@@ -30,7 +30,7 @@ class HubSE(HubBase):
     '''
     
     # parameters
-    hubDiameter = Float(0.0, iotype='in', units='m', desc='hub diameter')   
+    hub_diameter = Float(0.0, iotype='in', units='m', desc='hub diameter')   
 
     def __init__(self):
     	  
@@ -48,11 +48,11 @@ class HubSE(HubBase):
         self.driver.workflow.add(['hubSystem','hub', 'pitchSystem', 'spinner'])
         
         # connect inputs
-        self.connect('bladeMass', ['pitchSystem.bladeMass'])
-        self.connect('rotorBendingMoment', ['hub.rotorBendingMoment', 'pitchSystem.rotorBendingMoment'])
-        self.connect('bladeNumber', ['hub.bladeNumber', 'pitchSystem.bladeNumber'])
-        self.connect('rotorDiameter', ['hub.rotorDiameter', 'pitchSystem.rotorDiameter', 'spinner.rotorDiameter'])
-        self.connect('hubDiameter', ['hub.hubDiameter', 'pitchSystem.hubDiameter', 'spinner.hubDiameter'])
+        self.connect('blade_mass', ['pitchSystem.blade_mass'])
+        self.connect('rotor_bending_moment', ['hub.rotor_bending_moment', 'pitchSystem.rotor_bending_moment'])
+        self.connect('blade_number', ['hub.blade_number', 'pitchSystem.blade_number'])
+        self.connect('rotor_diameter', ['hub.rotor_diameter', 'pitchSystem.rotor_diameter', 'spinner.rotor_diameter'])
+        self.connect('hub_diameter', ['hub.hub_diameter', 'pitchSystem.hub_diameter', 'spinner.hub_diameter'])
         
         # connect components
         self.connect('hub.mass', 'hubSystem.hubMass')
@@ -94,12 +94,12 @@ class HubSE_drive(HubBase):
         self.driver.workflow.add(['hubSystem','hub', 'pitchSystem', 'spinner'])
         
         # connect inputs
-        self.connect('bladeMass', ['pitchSystem.bladeMass'])
-        self.connect('rotorBendingMoment', ['pitchSystem.rotorBendingMoment'])
-        self.connect('bladeNumber', ['hub.bladeNumber', 'pitchSystem.bladeNumber'])
-        self.connect('rotorDiameter', ['hub.rotorDiameter', 'pitchSystem.rotorDiameter', 'spinner.rotorDiameter'])
-        self.connect('hub.diameter', ['pitchSystem.hubDiameter', 'spinner.hubDiameter'])
-        self.connect('bladeRootDiameter', 'hub.bladeRootDiam')
+        self.connect('blade_mass', ['pitchSystem.blade_mass'])
+        self.connect('rotor_bending_moment', ['pitchSystem.rotor_bending_moment'])
+        self.connect('blade_number', ['hub.blade_number', 'pitchSystem.blade_number'])
+        self.connect('rotor_diameter', ['hub.rotor_diameter', 'pitchSystem.rotor_diameter', 'spinner.rotor_diameter'])
+        self.connect('hub.diameter', ['pitchSystem.hub_diameter', 'spinner.hub_diameter'])
+        self.connect('blade_root_diameter', 'hub.blade_root_diameter')
         
         # connect components
         self.connect('hub.mass', 'hubSystem.hubMass')
@@ -127,17 +127,17 @@ def example():
     # NREL 5 MW turbine
     print "NREL 5 MW turbine test"
     hub = HubSE_drive()
-    hub.bladeMass = 17740.0 # kg
-    hub.rotorDiameter = 126.0 # m
-    hub.bladeNumber  = 3
-    hub.bladeRootDiameter   = 3.542
+    hub.blade_mass = 17740.0 # kg
+    hub.rotor_diameter = 126.0 # m
+    hub.blade_number  = 3
+    hub.blade_root_diameter   = 3.542
     #AirDensity= 1.225 # kg/(m^3)
     #Solidity  = 0.0517 
     #RatedWindSpeed = 11.05 # m/s
-    #hub.rotorBendingMoment = (3.06 * pi / 8) * AirDensity * (RatedWindSpeed ** 2) * (Solidity * (hub.rotorDiameter ** 3)) / hub.bladeNumber
-    #print hub.rotorBendingMoment
-    hub.rotorBendingMoment = 16665000.0 # y-direction
-    #hub.rotorBendingMoment = 21529000.0 #combined x-y for single blade
+    #hub.rotor_bending_moment = (3.06 * pi / 8) * AirDensity * (RatedWindSpeed ** 2) * (Solidity * (hub.rotor_diameter ** 3)) / hub.blade_number
+    #print hub.rotor_bending_moment
+    hub.rotor_bending_moment = 16665000.0 # y-direction
+    #hub.rotor_bending_moment = 21529000.0 #combined x-y for single blade
     
     hub.run()
 
@@ -156,17 +156,17 @@ def example_80m_redesign():
     # NREL 5 MW turbine
     print "NREL 5 MW turbine test"
     hub = HubSE_drive()
-    hub.bladeMass = 16097.0 # kg
-    hub.rotorDiameter = 126.0 # m
-    hub.bladeNumber  = 3
-    hub.bladeRootDiameter   = 3.405
+    hub.blade_mass = 16097.0 # kg
+    hub.rotor_diameter = 126.0 # m
+    hub.blade_number  = 3
+    hub.blade_root_diameter   = 3.405
     #AirDensity= 1.225 # kg/(m^3)
     #Solidity  = 0.0517 
     #RatedWindSpeed = 11.05 # m/s
-    #hub.rotorBendingMoment = (3.06 * pi / 8) * AirDensity * (RatedWindSpeed ** 2) * (Solidity * (hub.rotorDiameter ** 3)) / hub.bladeNumber
-    #print hub.rotorBendingMoment
-    hub.rotorBendingMoment = 14619000 # y-direction
-    #hub.rotorBendingMoment = 21529000.0 #combined x-y for single blade
+    #hub.rotor_bending_moment = (3.06 * pi / 8) * AirDensity * (RatedWindSpeed ** 2) * (Solidity * (hub.rotor_diameter ** 3)) / hub.blade_number
+    #print hub.rotor_bending_moment
+    hub.rotor_bending_moment = 14619000 # y-direction
+    #hub.rotor_bending_moment = 21529000.0 #combined x-y for single blade
     
     hub.run()
 
@@ -186,17 +186,17 @@ def example_100m_redesign():
     # NREL 5 MW turbine
     print "NREL 5 MW turbine test"
     hub = HubSE_drive()
-    hub.bladeMass = 16423.0 # kg
-    hub.rotorDiameter = 126.0 # m
-    hub.bladeNumber  = 3
-    hub.bladeRootDiameter   = 3.405
+    hub.blade_mass = 16423.0 # kg
+    hub.rotor_diameter = 126.0 # m
+    hub.blade_number  = 3
+    hub.blade_root_diameter   = 3.405
     #AirDensity= 1.225 # kg/(m^3)
     #Solidity  = 0.0517 
     #RatedWindSpeed = 11.05 # m/s
-    #hub.rotorBendingMoment = (3.06 * pi / 8) * AirDensity * (RatedWindSpeed ** 2) * (Solidity * (hub.rotorDiameter ** 3)) / hub.bladeNumber
-    #print hub.rotorBendingMoment
-    hub.rotorBendingMoment = 14619000 # y-direction
-    #hub.rotorBendingMoment = 21529000.0 #combined x-y for single blade
+    #hub.rotor_bending_moment = (3.06 * pi / 8) * AirDensity * (RatedWindSpeed ** 2) * (Solidity * (hub.rotor_diameter ** 3)) / hub.blade_number
+    #print hub.rotor_bending_moment
+    hub.rotor_bending_moment = 14619000 # y-direction
+    #hub.rotor_bending_moment = 21529000.0 #combined x-y for single blade
     
     hub.run()
 
@@ -213,14 +213,14 @@ def example2():
     # WindPACT 1.5 MW turbine
     print "WindPACT 1.5 MW turbine test"
     hub = HubSE()
-    hub.bladeMass = 4470.0
-    hub.rotorDiameter = 70.0
+    hub.blade_mass = 4470.0
+    hub.rotor_diameter = 70.0
     hub.bladeNumer  = 3
-    hub.hubDiameter   = 3.0
+    hub.hub_diameter   = 3.0
     AirDensity= 1.225
     Solidity  = 0.065
     RatedWindSpeed = 12.12
-    hub.rotorBendingMoment = (3.06 * pi / 8) * AirDensity * (RatedWindSpeed ** 2) * (Solidity * (hub.rotorDiameter ** 3)) / hub.bladeNumber
+    hub.rotor_bending_moment = (3.06 * pi / 8) * AirDensity * (RatedWindSpeed ** 2) * (Solidity * (hub.rotor_diameter ** 3)) / hub.blade_number
 
     hub.run()
 
@@ -234,14 +234,14 @@ def example2():
 
     # GRC 750 kW turbine
     print "windpact 750 kW turbine test"
-    hub.bladeMass = 3400.0
-    hub.rotorDiameter = 48.2
+    hub.blade_mass = 3400.0
+    hub.rotor_diameter = 48.2
     hub.bladeNumer = 3
-    hub.hubDiameter = 3.0
+    hub.hub_diameter = 3.0
     AirDensity = 1.225
     Solidity = 0.07 # uknown value
     RatedWindSpeed = 16.0
-    hub.rotorBendingMoment = (3.06 * pi / 8) * AirDensity * (RatedWindSpeed ** 2) * (Solidity * (hub.rotorDiameter ** 3)) / hub.bladeNumber
+    hub.rotor_bending_moment = (3.06 * pi / 8) * AirDensity * (RatedWindSpeed ** 2) * (Solidity * (hub.rotor_diameter ** 3)) / hub.blade_number
 
     hub.run()
 
@@ -255,14 +255,14 @@ def example2():
 
     # Windpact / Alstom 3.0 MW
     print "windpact / Alstom 3.0 MW"
-    hub.bladeMass = 13363.0 # from CSM - not included in windpact/alstom data
-    hub.rotorDiameter = 100.8 # alstom
+    hub.blade_mass = 13363.0 # from CSM - not included in windpact/alstom data
+    hub.rotor_diameter = 100.8 # alstom
     hub.bladeNumer = 3
-    hub.hubDiameter = 0.0
+    hub.hub_diameter = 0.0
     AirDensity = 1.225
     Solidity = 0.06 # unknown value
     RatedWindSpeed = 12.0 # expected to be closer to 1.5 and 5 MW
-    hub.rotorBendingMoment = (3.06 * pi / 8) * AirDensity * (RatedWindSpeed ** 2) * (Solidity * (hub.rotorDiameter ** 3)) / hub.bladeNumber 
+    hub.rotor_bending_moment = (3.06 * pi / 8) * AirDensity * (RatedWindSpeed ** 2) * (Solidity * (hub.rotor_diameter ** 3)) / hub.blade_number 
 
     hub.run()
     
@@ -279,17 +279,17 @@ def example_100m_redesign_ideal():
     # NREL 5 MW turbine
     print "NREL 5 MW turbine test"
     hub = HubSE_drive()
-    hub.bladeMass = 16097.0 # kg
-    hub.rotorDiameter = 126.0 # m
-    hub.bladeNumber  = 3
-    hub.bladeRootDiameter   = 3.405
+    hub.blade_mass = 16097.0 # kg
+    hub.rotor_diameter = 126.0 # m
+    hub.blade_number  = 3
+    hub.blade_root_diameter   = 3.405
     #AirDensity= 1.225 # kg/(m^3)
     #Solidity  = 0.0517 
     #RatedWindSpeed = 11.05 # m/s
-    #hub.rotorBendingMoment = (3.06 * pi / 8) * AirDensity * (RatedWindSpeed ** 2) * (Solidity * (hub.rotorDiameter ** 3)) / hub.bladeNumber
-    #print hub.rotorBendingMoment
-    hub.rotorBendingMoment = 14619000 # y-direction
-    #hub.rotorBendingMoment = 21529000.0 #combined x-y for single blade
+    #hub.rotor_bending_moment = (3.06 * pi / 8) * AirDensity * (RatedWindSpeed ** 2) * (Solidity * (hub.rotor_diameter ** 3)) / hub.blade_number
+    #print hub.rotor_bending_moment
+    hub.rotor_bending_moment = 14619000 # y-direction
+    #hub.rotor_bending_moment = 21529000.0 #combined x-y for single blade
     
     hub.run()
 

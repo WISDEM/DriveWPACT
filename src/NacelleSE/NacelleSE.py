@@ -33,6 +33,11 @@ class NacelleBase(Assembly):
     bevel = Int(iotype='in', desc='Flag for the presence of a bevel stage - 1 if present, 0 if not')
     gear_configuration = Str(iotype='in', desc='tring that represents the configuration of the gearbox (stage number and types)')
 
+    # outputs
+    mass = Float(0.0, iotype='out', units='kg', desc='nacelle mass')
+    cm = Array(iotype='out', units='m', desc='center of mass of nacelle from tower top in yaw-aligned coordinate system')
+    I = Array(iotype='out', units='kg*m**2', desc='mass moments of inertia for nacelle [Ixx, Iyy, Izz, Ixy, Ixz, Iyz] about its center of mass')
+
 #-------------------------------------------------------------------------------------
 
 
@@ -109,9 +114,9 @@ class NacelleSE(NacelleBase):
         self.connect('bedplate.I', ['nacelleSystem.bedplate_I'])
 
         # create passthroughs
-        self.create_passthrough('nacelleSystem.mass')
-        self.create_passthrough('nacelleSystem.cm')
-        self.create_passthrough('nacelleSystem.I')
+        self.connect('nacelleSystem.mass', 'mass')
+        self.connect('nacelleSystem.cm', 'cm')
+        self.connect('nacelleSystem.I', 'I')
 
 
     '''def getNacelleComponentMasses(self):

@@ -66,7 +66,10 @@ class LowSpeedShaft(Component):
         '''
         
         super(LowSpeedShaft,self).__init__()
-    
+
+        #controls what happens if derivatives are missing
+        self.missing_deriv_policy = 'assume_zero'
+
     def execute(self):
 
         # compute masses, dimensions and cost
@@ -149,7 +152,15 @@ class LowSpeedShaft(Component):
         self.d_I_d_rotor_mass[1] = (1/2.) * self.d_I_d_rotor_mass[0] + (1./16.) * (4./3.) * (self.length**2.) * self.d_lss_mass_d_rotor_mass
         self.d_I_d_rotor_mass[2] = self.d_I_d_rotor_mass[1]
 
-    def linearize(self):        
+    def list_deriv_vars(self):        
+
+        inputs = ['rotor_diameter', 'rotor_torque', 'rotor_mass']
+        outputs = ['length', 'design_torque', 'design_bending_load', 'mass', 'cm', 'I']
+        
+        return inputs, outputs
+    
+    def provideJ(self):
+
         # Jacobian
         self.J = np.array([[self.d_length_d_rotor_diameter, 0, 0], \
                            [0, self.d_torque_d_rotor_torque, 0], \
@@ -162,12 +173,7 @@ class LowSpeedShaft(Component):
                            [self.d_I_d_rotor_diameter[1], self.d_I_d_rotor_torque[1], self.d_I_d_rotor_mass[1]], \
                            [self.d_I_d_rotor_diameter[2], self.d_I_d_rotor_torque[2], self.d_I_d_rotor_mass[2]]])
 
-    def provideJ(self):
-
-        inputs = ['rotor_diameter', 'rotor_torque', 'rotor_mass']
-        outputs = ['length', 'design_torque', 'design_bending_load', 'mass', 'cm', 'I']
-
-        return inputs, outputs, self.J
+        return self.J
 
 #-------------------------------------------------------------------------------
 
@@ -216,7 +222,10 @@ class MainBearing(Component):
         '''
         
         super(MainBearing, self).__init__()
-    
+
+        #controls what happens if derivatives are missing
+        self.missing_deriv_policy = 'assume_zero'
+
     def execute(self):
       
         # compute masses, dimensions and cost
@@ -271,8 +280,15 @@ class MainBearing(Component):
         self.d_I_d_lss_diameter[1] = (1/2.) * self.d_I_d_lss_diameter[0]
         self.d_I_d_lss_diameter[2] = (1/2.) * self.d_I_d_lss_diameter[0]
 
-    def linearize(self):                               
+    def list_deriv_vars(self):                               
+
+        inputs = ['lss_diameter', 'rotor_diameter']
+        outputs = ['mass', 'cm', 'I']
         
+        return inputs, outputs
+
+    def provideJ(self):
+
         # Jacobian
         self.J = np.array([[self.d_mass_d_lss_diameter, 0], \
                            [0, self.d_cm_d_rotor_diameter[0]], \
@@ -282,12 +298,7 @@ class MainBearing(Component):
                            [self.d_I_d_lss_diameter[1], 0], \
                            [self.d_I_d_lss_diameter[2], 0]])
 
-    def provideJ(self):
-
-        inputs = ['lss_diameter', 'rotor_diameter']
-        outputs = ['mass', 'cm', 'I']
-
-        return inputs, outputs, self.J
+        return self.J
 
 #-------------------------------------------------------------------------------
 
@@ -336,7 +347,10 @@ class SecondBearing(Component):
         '''
         
         super(SecondBearing, self).__init__()
-    
+
+        #controls what happens if derivatives are missing
+        self.missing_deriv_policy = 'assume_zero'
+
     def execute(self):
       
         # compute masses, dimensions and cost
@@ -389,8 +403,15 @@ class SecondBearing(Component):
         self.d_I_d_lss_diameter[1] = (1/2.) * self.d_I_d_lss_diameter[0]
         self.d_I_d_lss_diameter[2] = (1/2.) * self.d_I_d_lss_diameter[0]                          
 
-    def linearize(self):
+    def list_deriv_vars(self):
+
+        inputs = ['lss_diameter', 'rotor_diameter']
+        outputs = ['mass', 'cm', 'I']
         
+        return inputs, outputs
+
+    def provideJ(self):
+
         # Jacobian
         self.J = np.array([[self.d_mass_d_lss_diameter, 0], \
                            [0, self.d_cm_d_rotor_diameter[0]], \
@@ -400,12 +421,7 @@ class SecondBearing(Component):
                            [self.d_I_d_lss_diameter[1], 0], \
                            [self.d_I_d_lss_diameter[2], 0]])
 
-    def provideJ(self):
-
-        inputs = ['lss_diameter', 'rotor_diameter']
-        outputs = ['mass', 'cm', 'I']
-
-        return inputs, outputs, self.J
+        return self.J
 
 #-------------------------------------------------------------------------------
 
@@ -464,7 +480,10 @@ class Gearbox(Component):
         '''
 
         super(Gearbox,self).__init__()
-    
+
+        #controls what happens if derivatives are missing
+        self.missing_deriv_policy = 'assume_zero'
+
     def execute(self):
         
         self.mass = self.calc_mass([self.rotor_diameter, self.rotor_torque, self.gear_ratio]) # [self.mass, self.cm[0], self.cm[1], self.cm[2], self.I[0], self.I[1], self.I[2]]
@@ -509,20 +528,8 @@ class Gearbox(Component):
         self.d_I_d_gear_ratio[1] = self.d_mass_d_gear_ratio * ((0.5 * (diameter ** 2) + (2 / 3.) * (length ** 2) + 0.25 * (height ** 2)) / 8.)
         self.d_I_d_gear_ratio[2] = self.d_I_d_gear_ratio[1]        
 
-    def linearize(self):
-
-        # Jacobian
-        self.J = np.array([[0, self.d_mass_d_rotor_torque, self.d_mass_d_gear_ratio], \
-                           [self.d_cm_d_rotor_diameter[0], 0, 0], \
-                           [self.d_cm_d_rotor_diameter[1], 0, 0], \
-                           [self.d_cm_d_rotor_diameter[2], 0, 0], \
-                           [self.d_I_d_rotor_diameter[0], self.d_I_d_rotor_torque[0], self.d_I_d_gear_ratio[0]], \
-                           [self.d_I_d_rotor_diameter[1], self.d_I_d_rotor_torque[1], self.d_I_d_gear_ratio[1]], \
-                           [self.d_I_d_rotor_diameter[2], self.d_I_d_rotor_torque[2], self.d_I_d_gear_ratio[2]]]) 
-
         # TODO: hack for second stage mass calcuation
         self.mass = self.calc_mass([self.rotor_diameter, self.rotor_torque, self.gear_ratio]) # [self.mass, self.cm[0], self.cm[1], self.cm[2], self.I[0], self.I[1], self.I[2]]
-
 
     def calc_mass(self, x):
       
@@ -582,12 +589,25 @@ class Gearbox(Component):
 
         return mass
 
-    def provideJ(self):
+    def list_deriv_vars(self):
 
         inputs = ['rotor_diameter', 'rotor_torque', 'gear_ratio']
         outputs = ['mass', 'cm', 'I']
+        
+        return inputs, outputs
 
-        return inputs, outputs, self.J
+    def provideJ(self):
+
+        # Jacobian
+        self.J = np.array([[0, self.d_mass_d_rotor_torque, self.d_mass_d_gear_ratio], \
+                           [self.d_cm_d_rotor_diameter[0], 0, 0], \
+                           [self.d_cm_d_rotor_diameter[1], 0, 0], \
+                           [self.d_cm_d_rotor_diameter[2], 0, 0], \
+                           [self.d_I_d_rotor_diameter[0], self.d_I_d_rotor_torque[0], self.d_I_d_gear_ratio[0]], \
+                           [self.d_I_d_rotor_diameter[1], self.d_I_d_rotor_torque[1], self.d_I_d_gear_ratio[1]], \
+                           [self.d_I_d_rotor_diameter[2], self.d_I_d_rotor_torque[2], self.d_I_d_gear_ratio[2]]]) 
+
+        return self.J
 
     def __getParallelStageWeight(self,rotor_torque,stage,stageRatio1,stageRatio2,stageRatio3):
 
@@ -712,7 +732,10 @@ class HighSpeedSide(Component):
         '''
 
         super(HighSpeedSide,self).__init__()
-    
+
+        #controls what happens if derivatives are missing
+        self.missing_deriv_policy = 'assume_zero'
+
     def execute(self):
         
         # compute masses, dimensions and cost        
@@ -761,7 +784,14 @@ class HighSpeedSide(Component):
         self.d_I_d_rotor_torque[1] = self.d_mass_d_rotor_torque * ((3/4.) * (diameter ** 2) + (length ** 2)) / 12.
         self.d_I_d_rotor_torque[2] = self.d_I_d_rotor_torque[1]        
 
-    def linearize(self):
+    def list_deriv_vars(self):
+
+        inputs = ['rotor_diameter','lss_diameter', 'rotor_torque', 'gear_ratio']
+        outputs = ['mass', 'cm', 'I']
+        
+        return inputs, outputs
+
+    def provideJ(self):
 
         # Jacobian
         self.J = np.array([[0, 0, self.d_mass_d_rotor_torque, self.d_mass_d_gear_ratio], \
@@ -772,12 +802,7 @@ class HighSpeedSide(Component):
                            [0, self.d_I_d_lss_diameter[1], self.d_I_d_rotor_torque[1], self.d_I_d_gear_ratio[1]], \
                            [0, self.d_I_d_lss_diameter[2], self.d_I_d_rotor_torque[2], self.d_I_d_gear_ratio[2]]])
 
-    def provideJ(self):
-
-        inputs = ['rotor_diameter','lss_diameter', 'rotor_torque', 'gear_ratio']
-        outputs = ['mass', 'cm', 'I']
-
-        return inputs, outputs, self.J
+        return self.J
 
 
 #-------------------------------------------------------------------------------
@@ -828,7 +853,10 @@ class Generator(Component):
         '''
 
         super(Generator, self).__init__()
-    
+
+        #controls what happens if derivatives are missing
+        self.missing_deriv_policy = 'assume_zero'
+
     def execute(self):
 
         massCoeff = [None, 6.4737, 10.51 ,  5.34  , 37.68  ]           
@@ -893,7 +921,14 @@ class Generator(Component):
         self.d_I_d_gear_ratio[1] = (1/2.) * self.I[0] * (-2.) * (self.gear_ratio**(-3))
         self.d_I_d_gear_ratio[2] = self.d_I_d_gear_ratio[1]
 
-    def linearize(self):
+    def list_deriv_vars(self):
+
+        inputs = ['rotor_diameter','machine_rating', 'gear_ratio']
+        outputs = ['mass', 'cm', 'I']
+        
+        return inputs, outputs
+
+    def provideJ(self):
 
         # Jacobian
         self.J = np.array([[self.d_mass_d_rotor_diameter, self.d_mass_d_machine_rating, 0], \
@@ -904,12 +939,7 @@ class Generator(Component):
                            [self.d_I_d_rotor_diameter[1], self.d_I_d_machine_rating[1], self.d_I_d_gear_ratio[1]], \
                            [self.d_I_d_rotor_diameter[2], self.d_I_d_machine_rating[2], self.d_I_d_gear_ratio[2]]])
 
-    def provideJ(self):
-
-        inputs = ['rotor_diameter','machine_rating', 'gear_ratio']
-        outputs = ['mass', 'cm', 'I']
-
-        return inputs, outputs, self.J
+        return self.J
 
 #-------------------------------------------------------------------------------
 
@@ -970,6 +1000,9 @@ class Bedplate(Component):
         '''
 
         super(Bedplate,self).__init__()
+
+        #controls what happens if derivatives are missing
+        self.missing_deriv_policy = 'assume_zero'
 
     def execute(self):
 
@@ -1061,7 +1094,14 @@ class Bedplate(Component):
         self.d_I_d_tower_top_diameter[1] = (1/16.) * (self.d_mass_d_tower_top_diameter)*(self.width**2 + depth**2 + (4/3.) * self.length**2)
         self.d_I_d_tower_top_diameter[2] = self.d_I_d_tower_top_diameter[1]
 
-    def linearize(self):
+    def list_deriv_vars(self):
+
+        inputs = ['rotor_diameter','rotor_thrust', 'rotor_torque', 'rotor_mass', 'tower_top_diameter']
+        outputs = ['mass', 'cm', 'I', 'length', 'width']
+        
+        return inputs, outputs
+
+    def provideJ(self):
 
         # Jacobian
         self.J = np.array([[self.d_mass_d_rotor_diameter, self.d_mass_d_rotor_thrust, self.d_mass_d_rotor_torque, self.d_mass_d_rotor_mass, self.d_mass_d_tower_top_diameter], \
@@ -1074,12 +1114,7 @@ class Bedplate(Component):
                            [self.d_length_d_rotor_diameter, 0, 0, 0, 0], \
                            [self.d_width_d_rotor_diameter, 0, 0, 0, 0]])
 
-    def provideJ(self):
-
-        inputs = ['rotor_diameter','rotor_thrust', 'rotor_torque', 'rotor_mass', 'tower_top_diameter']
-        outputs = ['mass', 'cm', 'I', 'length', 'width']
-
-        return inputs, outputs, self.J
+        return self.J
                            
 
 #-------------------------------------------------------------------------------
@@ -1173,6 +1208,9 @@ class AboveYawMassAdder(Component):
     
         super(AboveYawMassAdder, self).__init__()
 
+        #controls what happens if derivatives are missing
+        self.missing_deriv_policy = 'assume_zero'
+
     def execute(self):
 
         # electronic systems, hydraulics and controls 
@@ -1226,7 +1264,14 @@ class AboveYawMassAdder(Component):
         self.d_width_d_bedplate_width = 1.0
         self.d_height_d_bedplate_length = (2.0/3.0)
 
-    def linearize(self):
+    def list_deriv_vars(self):
+
+        inputs = ['machine_rating','lss_mass', 'main_bearing_mass', 'second_bearing_mass', 'gearbox_mass', 'hss_mass', 'generator_mass', 'bedplate_mass', 'bedplate_length', 'bedplate_width']
+        outputs = ['hvac_mass', 'vs_electronics_mass', 'platforms_mass', 'mainframe_mass', 'cover_mass', 'above_yaw_mass', 'length', 'width', 'height']
+
+        return inputs, outputs
+
+    def provideJ(self):
 
         # Jacobian
         self.J = np.array([[self.d_hvac_mass_d_machine_rating, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
@@ -1239,12 +1284,7 @@ class AboveYawMassAdder(Component):
                           [0, 0, 0, 0, 0, 0, 0, 0, 0, self.d_width_d_bedplate_width], \
                           [0, 0, 0, 0, 0, 0, 0, 0, self.d_height_d_bedplate_length, 0]])
 
-    def provideJ(self):
-
-        inputs = ['machine_rating','lss_mass', 'main_bearing_mass', 'second_bearing_mass', 'gearbox_mass', 'hss_mass', 'generator_mass', 'bedplate_mass', 'bedplate_length', 'bedplate_width']
-        outputs = ['hvac_mass', 'vs_electronics_mass', 'platforms_mass', 'mainframe_mass', 'cover_mass', 'above_yaw_mass', 'length', 'width', 'height']
-
-        return inputs, outputs, self.J
+        return self.J
 
 class YawSystem(Component):
     ''' YawSystem class
@@ -1290,7 +1330,10 @@ class YawSystem(Component):
         '''
         
         super(YawSystem, self).__init__()
-    
+
+        #controls what happens if derivatives are missing
+        self.missing_deriv_policy = 'assume_zero'
+
     def execute(self): 
         
         # yaw weight depends on moment due to weight of components above yaw bearing and moment due to max thrust load
@@ -1314,17 +1357,19 @@ class YawSystem(Component):
         self.d_mass_d_tower_top_diameter = yawfactor * 0.975 * self.rotor_thrust
         self.d_mass_d_above_yaw_mass = yawfactor * 0.4 * self.rotor_diameter
 
-    def linearize(self):
-
-        # Jacobian
-        self.J = np.array([[self.d_mass_d_rotor_diameter, self.d_mass_d_rotor_thrust, self.d_mass_d_tower_top_diameter, self.d_mass_d_above_yaw_mass]])
-        
-    def provideJ(self):
+    def list_deriv_vars(self):
 
         inputs = ['rotor_diameter', 'rotor_thrust', 'tower_top_diameter', 'above_yaw_mass']
         outputs = ['mass']
 
-        return inputs, outputs, self.J    
+        return inputs, outputs
+        
+    def provideJ(self):
+
+        # Jacobian
+        self.J = np.array([[self.d_mass_d_rotor_diameter, self.d_mass_d_rotor_thrust, self.d_mass_d_tower_top_diameter, self.d_mass_d_above_yaw_mass]])
+
+        return self.J    
 
 #-------------------------------------------------------------------------------
 
@@ -1430,7 +1475,10 @@ class NacelleSystemAdder(Component): # changed name to nacelle - need to rename,
         '''
         
         super(NacelleSystemAdder , self).__init__()
-    
+
+        #controls what happens if derivatives are missing
+        self.missing_deriv_policy = 'assume_zero'
+
     def execute(self):
 
         # aggregation of nacelle mass
@@ -1570,7 +1618,16 @@ class NacelleSystemAdder(Component): # changed name to nacelle - need to rename,
         for i in range(0,3):
             self.d_I_d_mainframeCM[i] = 2 * self.mainframe_mass * (self.bedplate_cm[i] - self.cm[i]) * (1 - self.d_cm_d_mainframeCM)
 
-    def linearize(self):
+    def list_deriv_vars(self):
+
+        inputs = ['above_yaw_mass', 'yawMass', 'lss_mass', 'main_bearing_mass', 'second_bearing_mass', 'gearbox_mass', 'hss_mass', 'generator_mass', 'mainframe_mass', \
+                      'lss_cm', 'main_bearing_cm', 'second_bearing_cm', 'gearbox_cm', 'hss_cm', 'generator_cm', 'bedplate_cm', \
+                      'lss_I', 'main_bearing_I', 'second_bearing_I', 'gearbox_I', 'hss_I', 'generator_I', 'bedplate_I']
+        outputs = ['mass', 'cm', 'I']
+        
+        return inputs, outputs
+
+    def provideJ(self):
 
         # Jacobian
         self.J = np.array([[self.d_mass_d_above_yaw_mass, self.d_mass_d_yawMass, 0, 0, 0, 0, 0, 0, 0, \
@@ -1595,14 +1652,7 @@ class NacelleSystemAdder(Component): # changed name to nacelle - need to rename,
                            0, 0, self.d_I_d_lss_cm[2], 0, 0, self.d_I_d_main_bearing_cm[2], 0, 0, self.d_I_d_second_bearing_cm[2], 0, 0, self.d_I_d_gearbox_cm[2], 0, 0, self.d_I_d_hss_cm[2], 0, 0, self.d_I_d_generator_cm[2], 0, 0, self.d_I_d_mainframeCM[2], \
                            0, 0, self.d_I_d_lss_I, 0, 0, self.d_I_d_main_bearing_I, 0, 0, self.d_I_d_second_bearing_I, 0, 0, self.d_I_d_gearbox_I, 0, 0, self.d_I_d_hss_I, 0, 0, self.d_I_d_generator_I, 0, 0, self.d_I_d_mainframeI]])
 
-    def provideJ(self):
-
-        inputs = ['above_yaw_mass', 'yawMass', 'lss_mass', 'main_bearing_mass', 'second_bearing_mass', 'gearbox_mass', 'hss_mass', 'generator_mass', 'mainframe_mass', \
-                      'lss_cm', 'main_bearing_cm', 'second_bearing_cm', 'gearbox_cm', 'hss_cm', 'generator_cm', 'bedplate_cm', \
-                      'lss_I', 'main_bearing_I', 'second_bearing_I', 'gearbox_I', 'hss_I', 'generator_I', 'bedplate_I']
-        outputs = ['mass', 'cm', 'I']
-
-        return inputs, outputs, self.J
+        return self.J
 
 #--------------------------------------------------------------------------------------------------------
 

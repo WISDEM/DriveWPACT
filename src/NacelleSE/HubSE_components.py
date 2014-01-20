@@ -59,6 +59,9 @@ class Hub(Component):
 
         super(Hub, self).__init__()
 
+        #controls what happens if derivatives are missing
+        self.missing_deriv_policy = 'assume_zero'
+
     def execute(self):
 
         # Sunderland method for calculating hub, pitch and spinner cone masses
@@ -104,7 +107,14 @@ class Hub(Component):
                ((self.diameter / 2) ** 3 - (self.diameter / 2 - self.thickness) ** 3)
         self.d_I_d_hub_diameter = 0.4 * self.mass * ((0.5**5 - (0.5 - 0.055/3.3)**5)/(0.5**3 - (0.5 - 0.055/3.3)**3)) * 2 * self.diameter
     
-    def linearize(self):
+    def list_deriv_vars(self):
+
+        inputs = ['rotor_bending_moment', 'rotor_diameter', 'hub_diameter']
+        outputs = ['mass', 'cm', 'I']
+        
+        return inputs, outputs
+
+    def provideJ(self):
   
         # Jacobian
         self.J = np.array([[self.d_hubMass_d_rotor_bending_moment, 0, 0], \
@@ -115,12 +125,7 @@ class Hub(Component):
                            [self.d_I_d_rotor_bending_moment, 0, self.d_I_d_hub_diameter], \
                            [self.d_I_d_rotor_bending_moment, 0, self.d_I_d_hub_diameter]])
 
-    def provideJ(self):
-
-        inputs = ['rotor_bending_moment', 'rotor_diameter', 'hub_diameter']
-        outputs = ['mass', 'cm', 'I']
-
-        return inputs, outputs, self.J
+        return self.J
 
 #-------------------------------------------------------------------------------
 
@@ -175,6 +180,9 @@ class PitchSystem(Component):
 
         super(PitchSystem, self).__init__()
 
+        #controls what happens if derivatives are missing
+        self.missing_deriv_policy = 'assume_zero'
+
     def execute(self):
 
         # Sunderland method for calculating pitch system masses
@@ -221,7 +229,14 @@ class PitchSystem(Component):
         self.d_I_d_hub_diameter = self.mass * (2./4.) * self.diameter
 
 
-    def linearize(self):
+    def list_deriv_vars(self):
+
+        inputs = ['blade_mass', 'rotor_bending_moment', 'rotor_diameter', 'hub_diameter']
+        outputs = ['mass', 'cm', 'I']
+        
+        return inputs, outputs
+
+    def provideJ(self):
 
         # Jacobian
         self.J = np.array([[self.d_pitchMass_d_blade_mass, self.d_pitchMass_d_rotor_bending_moment, 0, 0], \
@@ -232,12 +247,7 @@ class PitchSystem(Component):
                            [self.d_I_d_blade_mass, self.d_I_d_rotor_bending_moment, 0, self.d_I_d_hub_diameter], \
                            [self.d_I_d_blade_mass, self.d_I_d_rotor_bending_moment, 0, self.d_I_d_hub_diameter]])
 
-    def provideJ(self):
-
-        inputs = ['blade_mass', 'rotor_bending_moment', 'rotor_diameter', 'hub_diameter']
-        outputs = ['mass', 'cm', 'I']
-
-        return inputs, outputs, self.J
+        return self.J
 
 #-------------------------------------------------------------------------------      
 
@@ -283,6 +293,9 @@ class Spinner(Component):
 
         super(Spinner, self).__init__()
 
+        #controls what happens if derivatives are missing
+        self.missing_deriv_policy = 'assume_zero'
+
     def execute(self):
 
         self.mass =18.5 * self.rotor_diameter + (-520.5)   # spinner mass comes from cost and scaling model
@@ -314,7 +327,14 @@ class Spinner(Component):
                ((self.diameter / 2) ** 3 - (self.diameter / 2 - self.thickness) ** 3)
         self.d_I_d_hub_diameter = 0.4 * self.mass * ((0.5**5 - (0.5 - 0.055/3.3)**5)/(0.5**3 - (0.5 - 0.055/3.3)**3)) * 2 * self.diameter
 
-    def linearize(self):
+    def list_deriv_vars(self):
+
+        inputs = ['rotor_diameter', 'hub_diameter']
+        outputs = ['mass', 'cm', 'I']
+
+        return inputs, outputs
+
+    def provideJ(self):
 
         # Jacobian
         self.J = np.array([[self.d_spinnerMass_d_rotor_diameter, 0], \
@@ -325,12 +345,7 @@ class Spinner(Component):
                            [self.d_I_d_rotor_diameter, self.d_I_d_hub_diameter], \
                            [self.d_I_d_rotor_diameter, self.d_I_d_hub_diameter]])
 
-    def provideJ(self):
-
-        inputs = ['rotor_diameter', 'hub_diameter']
-        outputs = ['mass', 'cm', 'I']
-
-        return inputs, outputs, self.J
+        return self.J
 
 #-------------------------------------------------------------------------------
 
@@ -395,6 +410,9 @@ class HubSystemAdder(Component):
         '''
 
         super(HubSystemAdder, self).__init__()
+
+        #controls what happens if derivatives are missing
+        self.missing_deriv_policy = 'assume_zero'
 
     def execute(self):
 
@@ -468,7 +486,14 @@ class HubSystemAdder(Component):
         for i in range(0,3):
             self.d_I_d_spinnerCM[i] = 2 * self.spinnerMass * (self.spinnerCM[i] - self.cm[i]) * (1 - self.d_cm_d_spinnerCM)
 
-    def linearize(self):
+    def list_deriv_vars(self):
+
+        inputs = ['hubMass', 'pitchMass', 'spinnerMass', 'hubCM', 'pitchCM', 'spinnerCM',  'hubI', 'pitchI', 'spinnerI']
+        outputs = ['mass', 'cm', 'I']
+        
+        return inputs, outputs
+
+    def provideJ(self):
 
         # Jacobian
         self.J = np.array([[self.d_mass_d_hubMass, self.d_mass_d_pitchMass, self.d_mass_d_spinnerMass, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
@@ -479,12 +504,7 @@ class HubSystemAdder(Component):
                            [self.d_I_d_hubMass[1], self.d_I_d_pitchMass[1], self.d_I_d_spinnerMass[1], 0, self.d_I_d_hubCM[1], 0, 0, self.d_I_d_pitchCM[1], 0, 0, self.d_I_d_spinnerCM[1], 0, 0, self.d_I_d_hubI, 0, 0, self.d_I_d_pitchI, 0, 0, self.d_I_d_spinnerI, 0], \
                            [self.d_I_d_hubMass[2], self.d_I_d_pitchMass[2], self.d_I_d_spinnerMass[2], 0, 0, self.d_I_d_hubCM[2], 0, 0, self.d_I_d_pitchCM[2], 0, 0, self.d_I_d_spinnerCM[2], 0, 0, self.d_I_d_hubI, 0, 0, self.d_I_d_pitchI, 0, 0, self.d_I_d_spinnerI]])
 
-    def provideJ(self):
-
-        inputs = ['hubMass', 'pitchMass', 'spinnerMass', 'hubCM', 'pitchCM', 'spinnerCM',  'hubI', 'pitchI', 'spinnerI']
-        outputs = ['mass', 'cm', 'I']
-
-        return inputs, outputs, self.J
+        return self.J
 
 #--------------------------------------------------------------------------------------------------------
 

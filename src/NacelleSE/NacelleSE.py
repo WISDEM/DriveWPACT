@@ -5,13 +5,14 @@ Created by Katherine Dykes 2012.
 Copyright (c) NREL. All rights reserved.
 """
 
-from openmdao.main.api import Component, Assembly
+from openmdao.main.api import Assembly
 from openmdao.main.datatypes.api import Float, Bool, Int, Str, Array
-from math import pi, cos, sqrt
+from math import pi
 import numpy as np
 
 from NacelleSE_components import LowSpeedShaft, MainBearing, SecondBearing, Gearbox, HighSpeedSide, Generator, Bedplate, AboveYawMassAdder, YawSystem, NacelleSystemAdder
-from DriveSE_components import LowSpeedShaft_drive, Gearbox_drive, MainBearing_drive, SecondBearing_drive, Bedplate_drive,YawSystem_drive, LowSpeedShaft_drive3pt, LowSpeedShaft_drive4pt
+from DriveSE_components import LowSpeedShaft_drive, Gearbox_drive, MainBearing_drive, SecondBearing_drive, Bedplate_drive, YawSystem_drive, LowSpeedShaft_drive3pt, LowSpeedShaft_drive4pt
+
 
 class NacelleBase(Assembly):
 
@@ -20,7 +21,7 @@ class NacelleBase(Assembly):
     rotor_mass = Float(iotype='in', units='kg', desc='rotor mass')
     rotor_torque = Float(iotype='in', units='N*m', desc='rotor torque at rated power')
     rotor_thrust = Float(iotype='in', units='N', desc='maximum rotor thrust')
-    rotor_speed = Float(iotype='in', units='m/s', desc='rotor speed at rated')
+    rotor_speed = Float(iotype='in', units='rpm', desc='rotor speed at rated')
     machine_rating = Float(iotype='in', units='kW', desc='machine rating of generator')
     gear_ratio = Float(iotype='in', desc='overall gearbox ratio')
     tower_top_diameter = Float(iotype='in', units='m', desc='diameter of tower top')
@@ -34,10 +35,11 @@ class NacelleBase(Assembly):
 
 #-------------------------------------------------------------------------------------
 
+
 class NacelleSE(NacelleBase):
-    ''' 
+    '''
        NacelleSE class
-          The NacelleSE class is used to represent the nacelle system of a wind turbine.             
+          The NacelleSE class is used to represent the nacelle system of a wind turbine.
     '''
 
     def configure(self):
@@ -47,18 +49,18 @@ class NacelleSE(NacelleBase):
         self.add('nacelleSystem', NacelleSystemAdder())
         self.add('lowSpeedShaft', LowSpeedShaft())
         self.add('mainBearing', MainBearing())
-        self.add('secondBearing',SecondBearing())
+        self.add('secondBearing', SecondBearing())
         self.add('gearbox', Gearbox())
         self.add('highSpeedSide', HighSpeedSide())
         self.add('generator', Generator())
         self.add('bedplate', Bedplate())
         self.add('yawSystem', YawSystem())
-        
+
         # workflow
         self.driver.workflow.add(['above_yaw_massAdder', 'nacelleSystem', 'lowSpeedShaft', 'mainBearing', 'secondBearing', 'gearbox', 'highSpeedSide', 'generator', 'bedplate', 'yawSystem'])
-        
+
         # connect inputs
-        self.connect('rotor_diameter', ['lowSpeedShaft.rotor_diameter', 'mainBearing.rotor_diameter', 'secondBearing.rotor_diameter', 'gearbox.rotor_diameter', 'highSpeedSide.rotor_diameter', \
+        self.connect('rotor_diameter', ['lowSpeedShaft.rotor_diameter', 'mainBearing.rotor_diameter', 'secondBearing.rotor_diameter', 'gearbox.rotor_diameter', 'highSpeedSide.rotor_diameter',
                      'generator.rotor_diameter', 'bedplate.rotor_diameter', 'yawSystem.rotor_diameter'])
         self.connect('rotor_torque', ['lowSpeedShaft.rotor_torque', 'gearbox.rotor_torque', 'highSpeedSide.rotor_torque', 'bedplate.rotor_torque'])
         self.connect('rotor_mass', ['lowSpeedShaft.rotor_mass', 'bedplate.rotor_mass'])
@@ -71,8 +73,8 @@ class NacelleSE(NacelleBase):
         self.connect('gear_configuration', 'gearbox.gear_configuration')
         self.connect('bevel', 'gearbox.bevel')
         self.connect('crane', 'above_yaw_massAdder.crane')
-        
-        
+
+
         # connect components
         self.connect('lowSpeedShaft.design_torque', ['mainBearing.lss_design_torque', 'secondBearing.lss_design_torque'])
         self.connect('lowSpeedShaft.diameter', ['mainBearing.lss_diameter', 'secondBearing.lss_diameter', 'highSpeedSide.lss_diameter'])
@@ -105,20 +107,20 @@ class NacelleSE(NacelleBase):
         self.connect('highSpeedSide.I', ['nacelleSystem.hss_I'])
         self.connect('generator.I', ['nacelleSystem.generator_I'])
         self.connect('bedplate.I', ['nacelleSystem.bedplate_I'])
-            
+
         # create passthroughs
         self.create_passthrough('nacelleSystem.mass')
         self.create_passthrough('nacelleSystem.cm')
         self.create_passthrough('nacelleSystem.I')
-        
+
 
     '''def getNacelleComponentMasses(self):
         """ Returns detailed nacelle assembly masses
-        
+
         detailedMasses : array_like of float
            detailed masses for nacelle components
         """
-        
+
         detailedMasses = [self.lss_mass, self.mainBearingsMass, self.gearbox_mass, self.hss_mass, self.generator_mass, self.vs_electronics_mass, \
                 self.electrical_mass, self.hvac_mass, \
                 self.ControlsMass, self.yawMass, self.mainframe_mass, self.cover_mass]
@@ -129,9 +131,9 @@ class NacelleSE(NacelleBase):
 
 class NacelleSE_drive(NacelleBase):
 
-    ''' 
+    '''
        NacelleSE class
-          The NacelleSE class is used to represent the nacelle system of a wind turbine.             
+          The NacelleSE class is used to represent the nacelle system of a wind turbine.
     '''
 
     # parameters
@@ -150,7 +152,7 @@ class NacelleSE_drive(NacelleBase):
     uptower_transformer = Bool(iotype = 'in', desc = 'Boolean stating if transformer is uptower')
 
 
-    
+
     # potential additional new parameters
 
     '''        name : str
@@ -187,24 +189,24 @@ class NacelleSE_drive(NacelleBase):
         self.add('generator', Generator())
         self.add('bedplate', Bedplate_drive())
         self.add('yawSystem', YawSystem_drive())
-        
+
         # workflow
         self.driver.workflow.add(['above_yaw_massAdder', 'nacelleSystem', 'lowSpeedShaft', 'mainBearing', 'secondBearing', 'gearbox', 'highSpeedSide', 'generator', 'bedplate', 'yawSystem'])
-        
+
         # connect inputs
         self.connect('rotor_diameter', ['lowSpeedShaft.rotor_diameter', 'mainBearing.rotor_diameter', 'secondBearing.rotor_diameter', 'gearbox.rotor_diameter', 'highSpeedSide.rotor_diameter', \
                      'generator.rotor_diameter', 'bedplate.rotor_diameter', 'yawSystem.rotor_diameter'])
         self.connect('rotor_bending_moment', 'lowSpeedShaft.rotor_bending_moment')
-    
+
         self.connect('rotor_torque', ['lowSpeedShaft.rotor_torque', 'gearbox.rotor_torque', 'highSpeedSide.rotor_torque'])
-    
+
         self.connect('rotor_mass', 'lowSpeedShaft.rotor_mass')
         self.connect('rotor_speed', ['mainBearing.rotor_speed', 'secondBearing.rotor_speed'])
 
         self.connect('rotor_thrust', 'yawSystem.rotor_thrust')
         self.connect('tower_top_diameter', ['bedplate.tower_top_diameter', 'yawSystem.tower_top_diameter'])
         self.connect('machine_rating', ['generator.machine_rating', 'above_yaw_massAdder.machine_rating', 'lowSpeedShaft.machine_rating'])
-      
+
         self.connect('drivetrain_design', 'generator.drivetrain_design')
         self.connect('gear_ratio', ['gearbox.gear_ratio', 'generator.gear_ratio', 'highSpeedSide.gear_ratio'])
         self.connect('gear_configuration', 'gearbox.gear_configuration')
@@ -216,8 +218,8 @@ class NacelleSE_drive(NacelleBase):
         self.connect('shaftD2', 'lowSpeedShaft.shaftD2')
         self.connect('shaft_ratio', 'lowSpeedShaft.shaft_ratio')
         self.connect('rotorRatedRPM', 'lowSpeedShaft.rotor_speed')
-        
-        
+
+
         # connect components
         self.connect('lowSpeedShaft.design_torque', ['mainBearing.lss_design_torque', 'secondBearing.lss_design_torque'])
         self.connect('lowSpeedShaft.diameter', ['mainBearing.lss_diameter', 'secondBearing.lss_diameter', 'highSpeedSide.lss_diameter'])
@@ -250,20 +252,20 @@ class NacelleSE_drive(NacelleBase):
         self.connect('highSpeedSide.I', ['nacelleSystem.hss_I'])
         self.connect('generator.I', ['nacelleSystem.generator_I'])
         self.connect('bedplate.I', ['nacelleSystem.bedplate_I'])
-            
+
         # create passthroughs
         self.create_passthrough('nacelleSystem.mass')
         self.create_passthrough('nacelleSystem.cm')
         self.create_passthrough('nacelleSystem.I')
-        
+
 
     '''def getNacelleComponentMasses(self):
         """ Returns detailed nacelle assembly masses
-        
+
         detailedMasses : array_like of float
            detailed masses for nacelle components
         """
-        
+
         detailedMasses = [self.lss_mass, self.mainBearingsMass, self.gearbox_mass, self.hss_mass, self.generator_mass, self.vs_electronics_mass, \
                 self.electrical_mass, self.hvac_mass, \
                 self.ControlsMass, self.yawMass, self.mainframe_mass, self.cover_mass]
@@ -274,9 +276,9 @@ class NacelleSE_drive(NacelleBase):
 
 class NacelleSE_drive3pt(NacelleBase):
 
-    ''' 
+    '''
        NacelleSE class
-          The NacelleSE class is used to represent the nacelle system of a wind turbine.             
+          The NacelleSE class is used to represent the nacelle system of a wind turbine.
     '''
 
     # parameters
@@ -285,7 +287,7 @@ class NacelleSE_drive3pt(NacelleBase):
     rotor_bending_moment_z = Float(iotype='in', units='N*m', desc='The bending moment about the z axis')
     rotor_force_x = Float(iotype='in', units='N', desc='The force along the x axis applied at hub center')
     rotor_force_y = Float(iotype='in', units='N', desc='The force along the y axis applied at hub center')
-    rotor_force_z = Float(iotype='in', units='N', desc='The force along the z axis applied at hub center')    
+    rotor_force_z = Float(iotype='in', units='N', desc='The force along the z axis applied at hub center')
     shaft_angle = Float(iotype='in', units='deg', desc='Angle of the LSS inclindation with respect to the horizontal')
     shaft_ratio = Float(iotype='in', desc='Ratio of inner diameter to outer diameter.  Leave zero for solid LSS')
     rotorRatedRPM = Float(iotype='in', units='rpm', desc='Speed of rotor at rated power')
@@ -295,7 +297,7 @@ class NacelleSE_drive3pt(NacelleBase):
     uptower_transformer = Bool(iotype = 'in', desc = 'Boolean stating if transformer is uptower')
     shrink_disc_mass = Float(iotype='in', units='kg', desc='Mass of the shrink disc')
 
-    
+
     # potential additional new parameters
 
     '''        name : str
@@ -332,10 +334,10 @@ class NacelleSE_drive3pt(NacelleBase):
         self.add('generator', Generator())
         self.add('bedplate', Bedplate_drive())
         self.add('yawSystem', YawSystem_drive())
-        
+
         # workflow
         self.driver.workflow.add(['above_yaw_massAdder', 'nacelleSystem', 'lowSpeedShaft', 'mainBearing', 'secondBearing', 'gearbox', 'highSpeedSide', 'generator', 'bedplate', 'yawSystem'])
-        
+
         # connect inputs
         self.connect('rotor_diameter', ['lowSpeedShaft.rotor_diameter', 'mainBearing.rotor_diameter', 'secondBearing.rotor_diameter', 'gearbox.rotor_diameter', 'highSpeedSide.rotor_diameter', \
                      'generator.rotor_diameter', 'bedplate.rotor_diameter', 'yawSystem.rotor_diameter'])
@@ -359,7 +361,7 @@ class NacelleSE_drive3pt(NacelleBase):
         self.connect('shaft_ratio', 'lowSpeedShaft.shaft_ratio')
         self.connect('shrink_disc_mass', 'lowSpeedShaft.shrink_disc_mass')
         self.connect('carrier_mass', 'lowSpeedShaft.carrier_mass')
-        
+
         # connect components
         self.connect('lowSpeedShaft.design_torque', ['mainBearing.lss_design_torque', 'secondBearing.lss_design_torque'])
         self.connect('lowSpeedShaft.diameter', ['mainBearing.lss_diameter', 'secondBearing.lss_diameter', 'highSpeedSide.lss_diameter'])
@@ -393,20 +395,20 @@ class NacelleSE_drive3pt(NacelleBase):
         self.connect('highSpeedSide.I', ['nacelleSystem.hss_I'])
         self.connect('generator.I', ['nacelleSystem.generator_I'])
         self.connect('bedplate.I', ['nacelleSystem.bedplate_I'])
-            
+
         # create passthroughs
         self.create_passthrough('nacelleSystem.mass')
         self.create_passthrough('nacelleSystem.cm')
         self.create_passthrough('nacelleSystem.I')
-        
+
 
     '''def getNacelleComponentMasses(self):
         """ Returns detailed nacelle assembly masses
-        
+
         detailedMasses : array_like of float
            detailed masses for nacelle components
         """
-        
+
         detailedMasses = [self.lss_mass, self.mainBearingsMass, self.gearbox_mass, self.hss_mass, self.generator_mass, self.vs_electronics_mass, \
                 self.electrical_mass, self.hvac_mass, \
                 self.ControlsMass, self.yawMass, self.mainframe_mass, self.cover_mass]
@@ -417,9 +419,9 @@ class NacelleSE_drive3pt(NacelleBase):
 
 class NacelleSE_drive4pt(NacelleBase):
 
-    ''' 
+    '''
        NacelleSE class
-          The NacelleSE class is used to represent the nacelle system of a wind turbine.             
+          The NacelleSE class is used to represent the nacelle system of a wind turbine.
     '''
 
     # variables
@@ -428,7 +430,7 @@ class NacelleSE_drive4pt(NacelleBase):
     rotor_bending_moment_z = Float(iotype='in', units='N*m', desc='The bending moment about the z axis')
     rotor_force_x = Float(iotype='in', units='N', desc='The force along the x axis applied at hub center')
     rotor_force_y = Float(iotype='in', units='N', desc='The force along the y axis applied at hub center')
-    rotor_force_z = Float(iotype='in', units='N', desc='The force along the z axis applied at hub center')    
+    rotor_force_z = Float(iotype='in', units='N', desc='The force along the z axis applied at hub center')
     shaft_angle = Float(iotype='in', units='deg', desc='Angle of the LSS inclindation with respect to the horizontal') # Bedplate tilting angle
     shaft_ratio = Float(iotype='in', desc='Ratio of inner diameter to outer diameter.  Leave zero for solid LSS')
     rotorRatedRPM = Float(iotype='in', units='rpm', desc='Speed of rotor at rated power')
@@ -478,10 +480,10 @@ class NacelleSE_drive4pt(NacelleBase):
         self.add('generator', Generator())
         self.add('bedplate', Bedplate_drive())
         self.add('yawSystem', YawSystem_drive())
-        
+
         # workflow
         self.driver.workflow.add(['above_yaw_massAdder', 'nacelleSystem', 'lowSpeedShaft', 'mainBearing', 'secondBearing', 'gearbox', 'highSpeedSide', 'generator', 'bedplate', 'yawSystem'])
-        
+
         # connect inputs
         self.connect('rotor_diameter', ['lowSpeedShaft.rotor_diameter', 'mainBearing.rotor_diameter', 'secondBearing.rotor_diameter', 'gearbox.rotor_diameter', 'highSpeedSide.rotor_diameter', \
                      'generator.rotor_diameter', 'bedplate.rotor_diameter', 'yawSystem.rotor_diameter'])
@@ -509,7 +511,7 @@ class NacelleSE_drive4pt(NacelleBase):
         self.connect('Np', 'gearbox.Np')
         self.connect('ratio_type', 'gearbox.ratio_type')
         self.connect('shaft_type', 'gearbox.shaft_type')
-        
+
         # connect components
         self.connect('lowSpeedShaft.design_torque', ['mainBearing.lss_design_torque', 'secondBearing.lss_design_torque'])
         self.connect('lowSpeedShaft.diameter1', ['mainBearing.lss_diameter', 'highSpeedSide.lss_diameter'])
@@ -549,20 +551,20 @@ class NacelleSE_drive4pt(NacelleBase):
         self.connect('highSpeedSide.I', ['nacelleSystem.hss_I'])
         self.connect('generator.I', ['nacelleSystem.generator_I'])
         self.connect('bedplate.I', ['nacelleSystem.bedplate_I'])
-            
+
         # create passthroughs
         self.create_passthrough('nacelleSystem.mass')
         self.create_passthrough('nacelleSystem.cm')
         self.create_passthrough('nacelleSystem.I')
-        
+
 
     '''def getNacelleComponentMasses(self):
         """ Returns detailed nacelle assembly masses
-        
+
         detailedMasses : array_like of float
            detailed masses for nacelle components
         """
-        
+
         detailedMasses = [self.lss_mass, self.mainBearingsMass, self.gearbox_mass, self.hss_mass, self.generator_mass, self.vs_electronics_mass, \
                 self.electrical_mass, self.hvac_mass, \
                 self.ControlsMass, self.yawMass, self.mainframe_mass, self.cover_mass]
@@ -626,7 +628,7 @@ def example():
     nace.tower_top_diameter = 3.78 # m
 
     nace.run()
-    
+
     print 'Nacelle system model results'
     print 'Low speed shaft %8.1f kg %6.2f m Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
           % (nace.lowSpeedShaft.mass , nace.lowSpeedShaft.I[0], nace.lowSpeedShaft.I[1], nace.lowSpeedShaft.I[2], nace.lowSpeedShaft.cm[0], nace.lowSpeedShaft.cm[1], nace.lowSpeedShaft.cm[2])
@@ -678,9 +680,9 @@ def example2():
     nace.rotor_diameter = 70 # rotor diameter [m]
     nace.rotor_speed = 21.830
     DrivetrainEfficiency = 0.95
-    nace.rotor_torque = (nace.machine_rating * 1000 / DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30)) 
+    nace.rotor_torque = (nace.machine_rating * 1000 / DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30))
         # rotor torque [Nm] calculated from max / rated rotor speed and machine rating
-    nace.rotor_thrust = 324000 
+    nace.rotor_thrust = 324000
     nace.rotor_mass = 28560 # rotor mass [kg]
 
     # WindPACT 1.5 MW Tower Variables
@@ -721,11 +723,11 @@ def example2():
     # 11878.2 kg
     print 'Overall nacelle:  %8.1f kg .cm %6.2f %6.2f %6.2f I %6.2f %6.2f %6.2f' % (nace.mass, nace.cm[0], nace.cm[1], nace.cm[2], nace.I[0], nace.I[1], nace.I[2]  )
     # 207727.1
- 
+
     # GRC Drivetrain variables
     nace.drivetrain_design = 1 # geared 3-stage Gearbox with induction generator machine
     nace.machine_rating = 750 # machine rating [kW]
-    nace.gear_ratio = 81.491 
+    nace.gear_ratio = 81.491
     nace.gear_configuration = 'epp'
     nace.bevel = 0
 
@@ -782,7 +784,7 @@ def example2():
     # Alstom Drivetrain variables
     nace.drivetrain_design = 1 # geared 3-stage Gearbox with induction generator machine
     nace.machine_rating = 3000 # machine rating [kW]
-    nace.gear_ratio = 102.19 # 
+    nace.gear_ratio = 102.19 #
     nace.gear_configuration = 'eep'
     nace.bevel = 0
 
@@ -799,7 +801,7 @@ def example2():
 
     # Tower Variables
     nace.tower_top_diameter = 3.5 # tower top diameter [m] - not given
-    
+
     print '----- Alstom 3.0 MW Turbine -----'
     nace.run()
 
@@ -860,7 +862,7 @@ def example_80_redesign():
     nace.rotor_force_x = 560450 #500930.84
     nace.rotor_force_y = 165440 #0.0
     nace.rotor_force_z = -804320 #1e6
-   
+
 
     # NREL 5 MW Drivetrain variables
     nace.drivetrain_design = 1 # geared 3-stage Gearbox with induction generator machine
@@ -888,7 +890,7 @@ def example_80_redesign():
     nace.tower_top_diameter = 3.78 # m
 
     nace.run()
-    
+
     print 'Nacelle system model results'
     print 'Low speed shaft %8.1f kg %6.2f m Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
           % (nace.lowSpeedShaft.mass , nace.lowSpeedShaft.I[0], nace.lowSpeedShaft.I[1], nace.lowSpeedShaft.I[2], nace.lowSpeedShaft.cm[0], nace.lowSpeedShaft.cm[1], nace.lowSpeedShaft.cm[2])
@@ -946,7 +948,7 @@ def example_100_redesign():
     nace.rotor_force_x = 875740 #500930.84
     nace.rotor_force_y = 23503 #0.0
     nace.rotor_force_z = -1339300 #1e6
-   
+
 
     # NREL 5 MW Drivetrain variables
     nace.drivetrain_design = 1 # geared 3-stage Gearbox with induction generator machine
@@ -974,7 +976,7 @@ def example_100_redesign():
     nace.tower_top_diameter = 3.78 # m
 
     nace.run()
-    
+
     print 'Nacelle system model results'
     print 'Low speed shaft %8.1f kg %6.2f m Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
           % (nace.lowSpeedShaft.mass , nace.lowSpeedShaft.I[0], nace.lowSpeedShaft.I[1], nace.lowSpeedShaft.I[2], nace.lowSpeedShaft.cm[0], nace.lowSpeedShaft.cm[1], nace.lowSpeedShaft.cm[2])
@@ -1032,7 +1034,7 @@ def example_100_ideal():
     nace.rotor_force_x = 560450 #500930.84
     nace.rotor_force_y = 165440 #0.0
     nace.rotor_force_z = -804320 #1e6
-   
+
 
     # NREL 5 MW Drivetrain variables
     nace.drivetrain_design = 1 # geared 3-stage Gearbox with induction generator machine
@@ -1060,7 +1062,7 @@ def example_100_ideal():
     nace.tower_top_diameter = 3.78 # m
 
     nace.run()
-    
+
     print 'Nacelle system model results'
     print 'Low speed shaft %8.1f kg %6.2f m Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
           % (nace.lowSpeedShaft.mass , nace.lowSpeedShaft.I[0], nace.lowSpeedShaft.I[1], nace.lowSpeedShaft.I[2], nace.lowSpeedShaft.cm[0], nace.lowSpeedShaft.cm[1], nace.lowSpeedShaft.cm[2])
@@ -1093,7 +1095,7 @@ def example_100_ideal():
     # 11878.2 kg
     print 'Overall nacelle:  %8.1f kg .cm %6.2f %6.2f %6.2f I %6.2f %6.2f %6.2f' % (nace.mass, nace.cm[0], nace.cm[1], nace.cm[2], nace.I[0], nace.I[1], nace.I[2]  )
     # 207727.1
-    
+
 if __name__ == '__main__':
     ''' Main runs through tests of several drivetrain configurations with known component masses and dimensions '''
 

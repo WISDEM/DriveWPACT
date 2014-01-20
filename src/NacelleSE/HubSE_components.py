@@ -13,16 +13,16 @@ from math import pi
 #-------------------------------------------------------------------------------
 
 class Hub(Component):
-    ''' Hub class    
-          The Hub class is used to represent the hub component of a wind turbine. 
+    ''' Hub class
+          The Hub class is used to represent the hub component of a wind turbine.
           It contains the general properties for a wind turbine component as well as additional design load and dimentional attributes as listed below.
-          It contains an update method to determine the mass, mass properties, and dimensions of the component.            
+          It contains an update method to determine the mass, mass properties, and dimensions of the component.
     '''
 
     # variables
     rotor_bending_moment = Float(iotype='in', units='N*m', desc='flapwise bending moment at blade root')
     rotor_diameter = Float(iotype='in', units='m', desc='rotor diameter')
-    
+
     # parameters
     hub_diameter = Float(0.0, iotype='in', units='m', desc='hub diameter')
     blade_number = Int(3, iotype='in', desc='number of turbine blades')
@@ -31,11 +31,11 @@ class Hub(Component):
     mass = Float(0.0, iotype='out', units='kg', desc='overall component mass')
     cm = Array(np.array([0.0, 0.0, 0.0]), iotype='out', desc='center of mass of the component in [x,y,z] for an arbitrary coordinate system')
     I = Array(np.array([0.0, 0.0, 0.0]), iotype='out', desc=' moments of Inertia for the component [Ixx, Iyy, Izz] around its center of mass')
-    
+
     def __init__(self):
-        ''' 
-        Initializes hub component 
-        
+        '''
+        Initializes hub component
+
         Parameters
         ----------
         rotor_bending_moment : float
@@ -46,7 +46,7 @@ class Hub(Component):
           the specified hub diameter (if == 0, then it is set within compute method) [m]
         blade_number : int
           Number of wind turbine rotor blades
-        
+
         Returns
         -------
         mass : float
@@ -54,7 +54,7 @@ class Hub(Component):
         cm : array of float
           center of mass of the component (relative to tower top center) [m, m, m]
         I : array of float
-          principle moments of inertia for the component (Ixx, iyy, Izz) around its center of mass (relative to tower top center) [kg*m^2, kg*m^2, kg*m^2]   
+          principle moments of inertia for the component (Ixx, iyy, Izz) around its center of mass (relative to tower top center) [kg*m^2, kg*m^2, kg*m^2]
         '''
 
         super(Hub, self).__init__()
@@ -75,7 +75,7 @@ class Hub(Component):
         '''if rotor_bending_moment == 0.0:
             rotor_bending_moment = (3.06 * pi / 8) * AirDensity * (RatedWindSpeed ** 2) * (Solidity * (RotorDiam ** 3)) / BladeNum
                                                             # simplified equation for blade root moment (Sunderland model) if one is not provided'''
-        
+
         self.mass =50 * hubgeomFact * hubloadFact * hubcontFact * self.blade_number * self.rotor_bending_moment * (hubmatldensity / hubmatlstress)
                                                             # mass of hub based on Sunderland model
                                                             # 31.4 adapted to 50 to fit 5 MW data
@@ -93,12 +93,11 @@ class Hub(Component):
         cm[2]     = 0.025 * self.rotor_diameter
         self.cm = (cm)
 
-        I = np.array([0.0, 0.0, 0.0])
+        I = np.zeros(3)
         I[0] = 0.4 * (self.mass) * ((self.diameter / 2) ** 5 - (self.diameter / 2 - self.thickness) ** 5) / \
                ((self.diameter / 2) ** 3 - (self.diameter / 2 - self.thickness) ** 3)
         I[1] = I[0]
         I[2] = I[1]
-        self.I = (I)
 
         # derivatives
         self.d_hubMass_d_rotor_bending_moment = 50 * hubgeomFact * hubloadFact * hubcontFact * self.blade_number * (hubmatldensity / hubmatlstress)
@@ -106,16 +105,16 @@ class Hub(Component):
         self.d_I_d_rotor_bending_moment = 0.4 * (self.d_hubMass_d_rotor_bending_moment) * ((self.diameter / 2) ** 5 - (self.diameter / 2 - self.thickness) ** 5) / \
                ((self.diameter / 2) ** 3 - (self.diameter / 2 - self.thickness) ** 3)
         self.d_I_d_hub_diameter = 0.4 * self.mass * ((0.5**5 - (0.5 - 0.055/3.3)**5)/(0.5**3 - (0.5 - 0.055/3.3)**3)) * 2 * self.diameter
-    
+
     def list_deriv_vars(self):
 
         inputs = ['rotor_bending_moment', 'rotor_diameter', 'hub_diameter']
         outputs = ['mass', 'cm', 'I']
-        
+
         return inputs, outputs
 
     def provideJ(self):
-  
+
         # Jacobian
         self.J = np.array([[self.d_hubMass_d_rotor_bending_moment, 0, 0], \
                            [0, self.d_cm_d_rotor_diameter[0], 0], \
@@ -129,10 +128,10 @@ class Hub(Component):
 
 #-------------------------------------------------------------------------------
 
-class PitchSystem(Component): 
+class PitchSystem(Component):
     '''
-     PitchSystem class          
-      The PitchSystem class is used to represent the pitch system of a wind turbine. 
+     PitchSystem class
+      The PitchSystem class is used to represent the pitch system of a wind turbine.
       It contains the general properties for a wind turbine component as well as additional design load and dimentional attributes as listed below.
       It contains an update method to determine the mass, mass properties, and dimensions of the component.
     '''
@@ -141,7 +140,7 @@ class PitchSystem(Component):
     blade_mass = Float(iotype='in', units='kg', desc='mass of one blade')
     rotor_bending_moment = Float(iotype='in', units='N*m', desc='flapwise bending moment at blade root')
     rotor_diameter = Float(iotype='in', units='m', desc='rotor diameter')
-    
+
     # parameters
     hub_diameter = Float(0.0, iotype='in', units='m', desc='hub diameter')
     blade_number = Int(3, iotype='in', desc='number of turbine blades')
@@ -150,11 +149,11 @@ class PitchSystem(Component):
     mass = Float(0.0, iotype='out', units='kg', desc='overall component mass')
     cm = Array(np.array([0.0, 0.0, 0.0]), iotype='out', desc='center of mass of the component in [x,y,z] for an arbitrary coordinate system')
     I = Array(np.array([0.0, 0.0, 0.0]), iotype='out', desc=' moments of Inertia for the component [Ixx, Iyy, Izz] around its center of mass')
-    
+
     def __init__(self):
-        ''' 
+        '''
         Initializes pitch system
-        
+
         Parameters
         ----------
         blade_mass : float
@@ -233,7 +232,7 @@ class PitchSystem(Component):
 
         inputs = ['blade_mass', 'rotor_bending_moment', 'rotor_diameter', 'hub_diameter']
         outputs = ['mass', 'cm', 'I']
-        
+
         return inputs, outputs
 
     def provideJ(self):
@@ -249,16 +248,16 @@ class PitchSystem(Component):
 
         return self.J
 
-#-------------------------------------------------------------------------------      
+#-------------------------------------------------------------------------------
 
-class Spinner(Component): 
-    ''' 
+class Spinner(Component):
+    '''
        Spinner class
-          The SpinnerClass is used to represent the spinner of a wind turbine. 
+          The SpinnerClass is used to represent the spinner of a wind turbine.
           It contains the general properties for a wind turbine component as well as additional design load and dimentional attributes as listed below.
           It contains an update method to determine the mass, mass properties, and dimensions of the component.
     '''
-    
+
     # variables
     rotor_diameter = Float(iotype='in', units='m', desc='rotor diameter')
 
@@ -269,11 +268,11 @@ class Spinner(Component):
     mass = Float(0.0, iotype='out', units='kg', desc='overall component mass')
     cm = Array(np.array([0.0, 0.0, 0.0]), iotype='out', desc='center of mass of the component in [x,y,z] for an arbitrary coordinate system')
     I = Array(np.array([0.0, 0.0, 0.0]), iotype='out', desc=' moments of Inertia for the component [Ixx, Iyy, Izz] around its center of mass')
-    
+
     def __init__(self):
-        ''' 
+        '''
         Initializes spinner system
-        
+
         Parameters
         ----------
         rotor_diameter : float
@@ -349,15 +348,15 @@ class Spinner(Component):
 
 #-------------------------------------------------------------------------------
 
-class HubSystemAdder(Component): 
-    ''' 
-       HubSystem class
-          The HubSystem class is used to represent the hub system of a wind turbine. 
-          It contains the general properties for a wind turbine component as well as additional design load and dimentional attributes as listed below.
-          It contains an update method to determine the mass, mass properties, and dimensions of the component.            
+class HubSystemAdder(Component):
     '''
-    
-    # variables    
+       HubSystem class
+          The HubSystem class is used to represent the hub system of a wind turbine.
+          It contains the general properties for a wind turbine component as well as additional design load and dimentional attributes as listed below.
+          It contains an update method to determine the mass, mass properties, and dimensions of the component.
+    '''
+
+    # variables
     hubMass = Float(iotype='in', units='kg', desc='overall component mass')
     hubCM = Array(np.array([0.0, 0.0, 0.0]), iotype='in', desc='center of mass of the component in [x,y,z] for an arbitrary coordinate system')
     hubI = Array(np.array([0.0, 0.0, 0.0]), iotype='in', desc=' moments of Inertia for the component [Ixx, Iyy, Izz] around its center of mass')
@@ -372,12 +371,12 @@ class HubSystemAdder(Component):
     mass = Float(0.0, iotype='out', units='kg', desc='overall component mass')
     cm = Array(np.array([0.0, 0.0, 0.0]), iotype='out', desc='center of mass of the component in [x,y,z] for an arbitrary coordinate system')
     I = Array(np.array([0.0, 0.0, 0.0]), iotype='out', desc=' moments of Inertia for the component [Ixx, Iyy, Izz] around its center of mass')
-    
-    
+
+
     def __init__(self):
-        ''' 
-        Initializes hub system component 
-        
+        '''
+        Initializes hub system component
+
         Parameters
         ----------
         hubMass : float
@@ -427,13 +426,13 @@ class HubSystemAdder(Component):
                     self.spinnerMass * self.spinnerCM[i] ) / (self.mass)
         self.cm = cm
 
-        I = np.array([0.0, 0.0, 0.0])
-        for i in (range(0,3)):                        # calculating MOI, at nacelle center of gravity with origin at tower top center / yaw mass center, ignoring masses of non-drivetrain components / auxiliary systems
+        I = np.zeros(6)
+        for i in range(3):                        # calculating MOI, at nacelle center of gravity with origin at tower top center / yaw mass center, ignoring masses of non-drivetrain components / auxiliary systems
             # calculate moments around CM
             # sum moments around each components CM
             I[i]  =  self.hubI[i] + self.pitchI[i] + self.spinnerI[i]
             # translate to hub system CM using parallel axis theorem
-            for j in (range(0,3)): 
+            for j in (range(0,3)):
                 if i != j:
                     I[i] +=  (self.hubMass * (self.hubCM[i] - self.cm[i]) ** 2) + \
                                   (self.pitchMass * (self.pitchCM[i] - self.cm[i]) ** 2) + \
@@ -465,13 +464,13 @@ class HubSystemAdder(Component):
         self.d_I_d_hubI = 1
         self.d_I_d_pitchI = 1
         self.d_I_d_spinnerI = 1
-        
+
         self.d_I_d_hubMass = np.array([0.0, 0.0, 0.0])
         for i in (range(0,3)):
-            self.d_I_d_hubMass[i] = (self.hubCM[i]-self.cm[i])**2 + 2 * self.hubMass * (self.hubCM[i] - self.cm[i]) * self.d_cm_d_hubCM        
+            self.d_I_d_hubMass[i] = (self.hubCM[i]-self.cm[i])**2 + 2 * self.hubMass * (self.hubCM[i] - self.cm[i]) * self.d_cm_d_hubCM
         self.d_I_d_pitchMass = np.array([0.0, 0.0, 0.0])
         for i in (range(0,3)):
-            self.d_I_d_pitchMass[i] = (self.pitchCM[i]-self.cm[i])**2 + 2 * self.pitchMass * (self.pitchCM[i] - self.cm[i]) * self.d_cm_d_pitchCM  
+            self.d_I_d_pitchMass[i] = (self.pitchCM[i]-self.cm[i])**2 + 2 * self.pitchMass * (self.pitchCM[i] - self.cm[i]) * self.d_cm_d_pitchCM
         self.d_I_d_spinnerMass = np.array([0.0, 0.0, 0.0])
         for i in (range(0,3)):
             self.d_I_d_spinnerMass[i] = (self.spinnerCM[i]-self.cm[i])**2 + 2 * self.spinnerMass * (self.spinnerCM[i] - self.cm[i]) * self.d_cm_d_spinnerCM
@@ -490,7 +489,7 @@ class HubSystemAdder(Component):
 
         inputs = ['hubMass', 'pitchMass', 'spinnerMass', 'hubCM', 'pitchCM', 'spinnerCM',  'hubI', 'pitchI', 'spinnerI']
         outputs = ['mass', 'cm', 'I']
-        
+
         return inputs, outputs
 
     def provideJ(self):

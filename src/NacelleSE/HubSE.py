@@ -5,12 +5,13 @@ Created by Katherine Dykes 2012.
 Copyright (c) NREL. All rights reserved.
 """
 
-from openmdao.main.api import Component, Assembly
-from openmdao.main.datatypes.api import Array, Float, Bool, Int
+from openmdao.main.api import Assembly
+from openmdao.main.datatypes.api import Float, Int
 from math import pi
 
 from HubSE_components import Hub, PitchSystem, Spinner, HubSystemAdder
 from DriveSE_components import Hub_drive
+
 
 class HubBase(Assembly):
 
@@ -19,22 +20,20 @@ class HubBase(Assembly):
     rotor_bending_moment = Float(iotype='in', units='N*m', desc='flapwise bending moment at blade root')
     rotor_diameter = Float(iotype='in', units='m', desc='rotor diameter')
     blade_root_diameter = Float(iotype='in', units='m', desc='blade root diameter')
-    
+
     # parameters
     blade_number = Int(3, iotype='in', desc='number of turbine blades')
 
-class HubSE(HubBase):
-    ''' 
-       HubSE class
-          The HubSE class is used to represent the hub system of a wind turbine.             
-    '''
-    
-    # parameters
-    hub_diameter = Float(0.0, iotype='in', units='m', desc='hub diameter')   
 
-    def __init__(self):
-    	  
-    	  super(HubSE, self).__ini__()
+class HubSE(HubBase):
+    '''
+       HubSE class
+          The HubSE class is used to represent the hub system of a wind turbine.
+    '''
+
+    # # parameters
+    # hub_diameter = Float(0.0, iotype='in', units='m', desc='hub diameter')
+
 
     def configure(self):
 
@@ -43,17 +42,17 @@ class HubSE(HubBase):
         self.add('hub', Hub())
         self.add('pitchSystem', PitchSystem())
         self.add('spinner', Spinner())
-        
+
         # workflow
-        self.driver.workflow.add(['hubSystem','hub', 'pitchSystem', 'spinner'])
-        
+        self.driver.workflow.add(['hubSystem', 'hub', 'pitchSystem', 'spinner'])
+
         # connect inputs
         self.connect('blade_mass', ['pitchSystem.blade_mass'])
         self.connect('rotor_bending_moment', ['hub.rotor_bending_moment', 'pitchSystem.rotor_bending_moment'])
         self.connect('blade_number', ['hub.blade_number', 'pitchSystem.blade_number'])
         self.connect('rotor_diameter', ['hub.rotor_diameter', 'pitchSystem.rotor_diameter', 'spinner.rotor_diameter'])
-        self.connect('hub_diameter', ['hub.hub_diameter', 'pitchSystem.hub_diameter', 'spinner.hub_diameter'])
-        
+        self.connect('blade_root_diameter', ['hub.hub_diameter', 'pitchSystem.hub_diameter', 'spinner.hub_diameter'])
+
         # connect components
         self.connect('hub.mass', 'hubSystem.hubMass')
         self.connect('hub.cm', 'hubSystem.hubCM')
@@ -64,7 +63,7 @@ class HubSE(HubBase):
         self.connect('spinner.mass', 'hubSystem.spinnerMass')
         self.connect('spinner.cm', 'hubSystem.spinnerCM')
         self.connect('spinner.I', 'hubSystem.spinnerI')
-        
+
         # create passthroughs
         self.create_passthrough('hubSystem.mass')
         self.create_passthrough('hubSystem.cm')
@@ -72,15 +71,12 @@ class HubSE(HubBase):
 
 #-------------------------------------------------------------------------------
 
-class HubSE_drive(HubBase):
-    ''' 
-       HubSE class
-          The HubSE class is used to represent the hub system of a wind turbine.             
-    '''
 
-    def __init__(self):
-    	  
-    	  super(HubSE_drive, self).__init__()
+class HubSE_drive(HubBase):
+    '''
+       HubSE class
+          The HubSE class is used to represent the hub system of a wind turbine.
+    '''
 
     def configure(self):
 
@@ -89,10 +85,10 @@ class HubSE_drive(HubBase):
         self.add('hub', Hub_drive())
         self.add('pitchSystem', PitchSystem())
         self.add('spinner', Spinner())
-        
+
         # workflow
-        self.driver.workflow.add(['hubSystem','hub', 'pitchSystem', 'spinner'])
-        
+        self.driver.workflow.add(['hubSystem', 'hub', 'pitchSystem', 'spinner'])
+
         # connect inputs
         self.connect('blade_mass', ['pitchSystem.blade_mass'])
         self.connect('rotor_bending_moment', ['pitchSystem.rotor_bending_moment'])
@@ -100,7 +96,7 @@ class HubSE_drive(HubBase):
         self.connect('rotor_diameter', ['hub.rotor_diameter', 'pitchSystem.rotor_diameter', 'spinner.rotor_diameter'])
         self.connect('hub.diameter', ['pitchSystem.hub_diameter', 'spinner.hub_diameter'])
         self.connect('blade_root_diameter', 'hub.blade_root_diameter')
-        
+
         # connect components
         self.connect('hub.mass', 'hubSystem.hubMass')
         self.connect('hub.cm', 'hubSystem.hubCM')
@@ -111,7 +107,7 @@ class HubSE_drive(HubBase):
         self.connect('spinner.mass', 'hubSystem.spinnerMass')
         self.connect('spinner.cm', 'hubSystem.spinnerCM')
         self.connect('spinner.I', 'hubSystem.spinnerI')
-        
+
         # create passthroughs
         self.create_passthrough('hubSystem.mass')
         self.create_passthrough('hubSystem.cm')
@@ -121,7 +117,7 @@ class HubSE_drive(HubBase):
 #-------------------------------------------------------------------------------
 
 def example():
-  
+
     # simple test of module
 
     # NREL 5 MW turbine
@@ -132,13 +128,13 @@ def example():
     hub.blade_number  = 3
     hub.blade_root_diameter   = 3.542
     #AirDensity= 1.225 # kg/(m^3)
-    #Solidity  = 0.0517 
+    #Solidity  = 0.0517
     #RatedWindSpeed = 11.05 # m/s
     #hub.rotor_bending_moment = (3.06 * pi / 8) * AirDensity * (RatedWindSpeed ** 2) * (Solidity * (hub.rotor_diameter ** 3)) / hub.blade_number
     #print hub.rotor_bending_moment
     hub.rotor_bending_moment = 16665000.0 # y-direction
     #hub.rotor_bending_moment = 21529000.0 #combined x-y for single blade
-    
+
     hub.run()
 
     print "Hub Components"
@@ -150,7 +146,7 @@ def example():
     print '    I {0:6.1f} {1:6.1f} {2:6.1f}'.format(hub.I[0], hub.I[1], hub.I[2])
 
 def example_80m_redesign():
-  
+
     # simple test of module
 
     # NREL 5 MW turbine
@@ -161,13 +157,13 @@ def example_80m_redesign():
     hub.blade_number  = 3
     hub.blade_root_diameter   = 3.405
     #AirDensity= 1.225 # kg/(m^3)
-    #Solidity  = 0.0517 
+    #Solidity  = 0.0517
     #RatedWindSpeed = 11.05 # m/s
     #hub.rotor_bending_moment = (3.06 * pi / 8) * AirDensity * (RatedWindSpeed ** 2) * (Solidity * (hub.rotor_diameter ** 3)) / hub.blade_number
     #print hub.rotor_bending_moment
     hub.rotor_bending_moment = 14619000 # y-direction
     #hub.rotor_bending_moment = 21529000.0 #combined x-y for single blade
-    
+
     hub.run()
 
     print "Hub Components"
@@ -180,7 +176,7 @@ def example_80m_redesign():
 
 
 def example_100m_redesign():
-  
+
     # simple test of module
 
     # NREL 5 MW turbine
@@ -191,13 +187,13 @@ def example_100m_redesign():
     hub.blade_number  = 3
     hub.blade_root_diameter   = 3.405
     #AirDensity= 1.225 # kg/(m^3)
-    #Solidity  = 0.0517 
+    #Solidity  = 0.0517
     #RatedWindSpeed = 11.05 # m/s
     #hub.rotor_bending_moment = (3.06 * pi / 8) * AirDensity * (RatedWindSpeed ** 2) * (Solidity * (hub.rotor_diameter ** 3)) / hub.blade_number
     #print hub.rotor_bending_moment
     hub.rotor_bending_moment = 14619000 # y-direction
     #hub.rotor_bending_moment = 21529000.0 #combined x-y for single blade
-    
+
     hub.run()
 
     print "Hub Components"
@@ -262,10 +258,10 @@ def example2():
     AirDensity = 1.225
     Solidity = 0.06 # unknown value
     RatedWindSpeed = 12.0 # expected to be closer to 1.5 and 5 MW
-    hub.rotor_bending_moment = (3.06 * pi / 8) * AirDensity * (RatedWindSpeed ** 2) * (Solidity * (hub.rotor_diameter ** 3)) / hub.blade_number 
+    hub.rotor_bending_moment = (3.06 * pi / 8) * AirDensity * (RatedWindSpeed ** 2) * (Solidity * (hub.rotor_diameter ** 3)) / hub.blade_number
 
     hub.run()
-    
+
     print "Hub Components"
     print '  hub         {0:8.1f} kg'.format(hub.hub.mass)
     print '  pitch mech  {0:8.1f} kg'.format(hub.pitchSystem.mass)
@@ -273,7 +269,7 @@ def example2():
     print 'HUB TOTAL     {0:8.1f} kg'.format(hub.mass)
     print 'cm {0:6.2f} {1:6.2f} {2:6.2f}'.format(hub.cm[0], hub.cm[1], hub.cm[2])
     print 'I {0:6.1f} {1:6.1f} {2:6.1f}'.format(hub.I[0], hub.I[1], hub.I[2])
-    
+
 def example_100m_redesign_ideal():
     # simple test of module
     # NREL 5 MW turbine
@@ -284,13 +280,13 @@ def example_100m_redesign_ideal():
     hub.blade_number  = 3
     hub.blade_root_diameter   = 3.405
     #AirDensity= 1.225 # kg/(m^3)
-    #Solidity  = 0.0517 
+    #Solidity  = 0.0517
     #RatedWindSpeed = 11.05 # m/s
     #hub.rotor_bending_moment = (3.06 * pi / 8) * AirDensity * (RatedWindSpeed ** 2) * (Solidity * (hub.rotor_diameter ** 3)) / hub.blade_number
     #print hub.rotor_bending_moment
     hub.rotor_bending_moment = 14619000 # y-direction
     #hub.rotor_bending_moment = 21529000.0 #combined x-y for single blade
-    
+
     hub.run()
 
     print "Hub Components"
@@ -304,7 +300,7 @@ def example_100m_redesign_ideal():
 if __name__ == "__main__":
 
     example()
-    example_80m_redesign()    
+    example_80m_redesign()
     example_100m_redesign()
     example_100m_redesign_ideal()
     #example2()

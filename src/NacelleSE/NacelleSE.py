@@ -37,6 +37,14 @@ class NacelleBase(Assembly):
     mass = Float(0.0, iotype='out', units='kg', desc='nacelle mass')
     cm = Array(iotype='out', units='m', desc='center of mass of nacelle from tower top in yaw-aligned coordinate system')
     I = Array(iotype='out', units='kg*m**2', desc='mass moments of inertia for nacelle [Ixx, Iyy, Izz, Ixy, Ixz, Iyz] about its center of mass')
+    low_speed_shaft_mass = Float(iotype='out', units='kg', desc='component mass')
+    main_bearing_mass = Float(iotype='out', units='kg', desc='component mass')
+    second_bearing_mass = Float(iotype='out', units='kg', desc='component mass')
+    gearbox_mass = Float(iotype='out', units='kg', desc='component mass')
+    high_speed_side_mass = Float(iotype='out', units='kg', desc='component mass')
+    generator_mass = Float(iotype='out', units='kg', desc='component mass')
+    bedplate_mass = Float(iotype='out', units='kg', desc='component mass')
+    yaw_system_mass = Float(iotype='out', units='kg', desc='component mass')
 
 #-------------------------------------------------------------------------------------
 
@@ -113,10 +121,18 @@ class NacelleSE(NacelleBase):
         self.connect('generator.I', ['nacelleSystem.generator_I'])
         self.connect('bedplate.I', ['nacelleSystem.bedplate_I'])
 
-        # create passthroughs
+        # connect outputs
         self.connect('nacelleSystem.mass', 'mass')
         self.connect('nacelleSystem.cm', 'cm')
         self.connect('nacelleSystem.I', 'I')
+        self.connect('lowSpeedShaft.mass', 'low_speed_shaft_mass')
+        self.connect('mainBearing.mass', 'main_bearing_mass')
+        self.connect('secondBearing.mass', 'second_bearing_mass')
+        self.connect('gearbox.mass', 'gearbox_mass')
+        self.connect('highSpeedSide.mass', 'high_speed_side_mass')
+        self.connect('generator.mass', 'generator_mass')
+        self.connect('bedplate.mass', 'bedplate_mass')
+        self.connect('yawSystem.mass', 'yaw_system_mass')
 
 
     '''def getNacelleComponentMasses(self):

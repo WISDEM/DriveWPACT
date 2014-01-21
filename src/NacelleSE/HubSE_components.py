@@ -5,10 +5,9 @@ Created by Katherine Dykes 2012.
 Copyright (c) NREL. All rights reserved.
 """
 
-from openmdao.main.api import Component, Assembly
-from openmdao.main.datatypes.api import Array, Float, Bool, Int
+from openmdao.main.api import Component
+from openmdao.main.datatypes.api import Array, Float, Int
 import numpy as np
-from math import pi
 
 #-------------------------------------------------------------------------------
 

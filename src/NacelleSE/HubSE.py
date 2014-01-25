@@ -6,7 +6,7 @@ Copyright (c) NREL. All rights reserved.
 """
 
 from openmdao.main.api import Assembly
-from openmdao.main.datatypes.api import Float, Int
+from openmdao.main.datatypes.api import Float, Int, Array
 from math import pi
 
 from HubSE_components import Hub, PitchSystem, Spinner, HubSystemAdder
@@ -23,6 +23,15 @@ class HubBase(Assembly):
 
     # parameters
     blade_number = Int(3, iotype='in', desc='number of turbine blades')
+
+    # outputs
+    hub_system_mass = Float(0.0, iotype='out', units='kg', desc='overall component mass')
+    hub_system_cm = Array(iotype='out', desc='center of mass of the hub relative to tower to in yaw-aligned c.s.')
+    hub_system_I = Array(iotype='out', desc='mass moments of Inertia of hub [Ixx, Iyy, Izz, Ixy, Ixz, Iyz] around its center of mass in yaw-aligned c.s.')
+
+    hub_mass = Float(0.0, iotype='out', units='kg')
+    pitch_system_mass = Float(0.0, iotype='out', units='kg')
+    spinner_mass = Float(0.0, iotype='out', units='kg')
 
 
 class HubSE(HubBase):
@@ -68,13 +77,13 @@ class HubSE(HubBase):
         self.connect('spinner.cm', 'hubSystem.spinner_cm')
         self.connect('spinner.I', 'hubSystem.spinner_I')
 
-        # create passthroughs
-        self.create_passthrough('hubSystem.hub_system_mass')
-        self.create_passthrough('hubSystem.hub_system_cm')
-        self.create_passthrough('hubSystem.hub_system_I')
-        self.connect('hubSystem.hub_mass','hub_mass')
-        self.connect('hubSystem.pitch_system_mass','pitch_system_mass')
-        self.connect('hubSystem.spinner_mass','spinner_mass')
+        # connect outputs
+        self.connect('hubSystem.mass', 'hub_system_mass')
+        self.connect('hubSystem.cm', 'hub_system_cm')
+        self.connect('hubSystem.I', 'hub_system_I')
+        self.connect('hub.mass', 'hub_mass')
+        self.connect('pitchSystem.mass', 'pitch_system_mass')
+        self.connect('spinner.mass', 'spinner_mass')
 
 #-------------------------------------------------------------------------------
 
@@ -115,10 +124,13 @@ class HubSE_drive(HubBase):
         self.connect('spinner.cm', 'hubSystem.spinner_cm')
         self.connect('spinner.I', 'hubSystem.spinner_I')
 
-        # create passthroughs
-        self.create_passthrough('hubSystem.hub_system_mass')
-        self.create_passthrough('hubSystem.hub_system_cm')
-        self.create_passthrough('hubSystem.hub_system_I')
+        # connect outputs
+        self.connect('hubSystem.mass', 'hub_system_mass')
+        self.connect('hubSystem.cm', 'hub_system_cm')
+        self.connect('hubSystem.I', 'hub_system_I')
+        self.connect('hub.mass', 'hub_mass')
+        self.connect('pitchSystem.mass', 'pitch_system_mass')
+        self.connect('spinner.mass', 'spinner_mass')
 
 
 #-------------------------------------------------------------------------------

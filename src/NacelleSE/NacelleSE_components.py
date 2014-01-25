@@ -1408,8 +1408,8 @@ class NacelleSystemAdder(Component): # changed name to nacelle - need to rename,
 
     # returns
     nacelle_mass = Float(0.0, iotype='out', units='kg', desc='overall component mass')
-    nacelle_cm = Array(np.array([0.0, 0.0, 0.0]), iotype='out', desc='center of mass of the component in [x,y,z] for an arbitrary coordinate system')
-    nacelle_I = Array(np.array([0.0, 0.0, 0.0]), iotype='out', desc=' moments of Inertia for the component [Ixx, Iyy, Izz] around its center of mass')
+    nacelle_cm = Array(np.array([0.0, 0.0, 0.0]), units='m', iotype='out', desc='center of mass of the component in [x,y,z] for an arbitrary coordinate system')
+    nacelle_I = Array(np.array([0.0, 0.0, 0.0]), units='kg*m**2', iotype='out', desc=' moments of Inertia for the component [Ixx, Iyy, Izz] around its center of mass')
 
     def __init__(self):
         ''' Initialize above yaw mass adder component

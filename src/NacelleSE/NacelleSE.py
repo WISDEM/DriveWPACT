@@ -33,6 +33,19 @@ class NacelleBase(Assembly):
     bevel = Int(0, iotype='in', desc='Flag for the presence of a bevel stage - 1 if present, 0 if not')
     gear_configuration = Str(iotype='in', desc='tring that represents the configuration of the gearbox (stage number and types)')
 
+    # outputs
+    nacelle_mass = Float(0.0, iotype='out', units='kg', desc='nacelle mass')
+    nacelle_cm = Array(iotype='out', units='m', desc='center of mass of nacelle from tower top in yaw-aligned coordinate system')
+    nacelle_I = Array(iotype='out', units='kg*m**2', desc='mass moments of inertia for nacelle [Ixx, Iyy, Izz, Ixy, Ixz, Iyz] about its center of mass')
+    low_speed_shaft_mass = Float(iotype='out', units='kg', desc='component mass')
+    main_bearing_mass = Float(iotype='out', units='kg', desc='component mass')
+    second_bearing_mass = Float(iotype='out', units='kg', desc='component mass')
+    gearbox_mass = Float(iotype='out', units='kg', desc='component mass')
+    high_speed_side_mass = Float(iotype='out', units='kg', desc='component mass')
+    generator_mass = Float(iotype='out', units='kg', desc='component mass')
+    bedplate_mass = Float(iotype='out', units='kg', desc='component mass')
+    yaw_system_mass = Float(iotype='out', units='kg', desc='component mass')
+
 #-------------------------------------------------------------------------------------
 
 
@@ -117,10 +130,10 @@ class NacelleSE(NacelleBase):
         self.connect('generator.I', ['nacelleSystem.generator_I'])
         self.connect('bedplate.I', ['nacelleSystem.bedplate_I'])
 
-        # create passthroughs
-        self.create_passthrough('nacelleSystem.nacelle_mass')
-        self.create_passthrough('nacelleSystem.nacelle_cm')
-        self.create_passthrough('nacelleSystem.nacelle_I')
+        # connect outputs
+        self.connect('nacelleSystem.mass', 'nacelle_mass')
+        self.connect('nacelleSystem.cm', 'nacelle_cm')
+        self.connect('nacelleSystem.I', 'nacelle_I')
         self.connect('lowSpeedShaft.mass', 'low_speed_shaft_mass')
         self.connect('mainBearing.mass', 'main_bearing_mass')
         self.connect('secondBearing.mass', 'second_bearing_mass')
@@ -128,7 +141,7 @@ class NacelleSE(NacelleBase):
         self.connect('highSpeedSide.mass', 'high_speed_side_mass')
         self.connect('generator.mass', 'generator_mass')
         self.connect('bedplate.mass', 'bedplate_mass')
-
+        self.connect('yawSystem.mass', 'yaw_system_mass')
 
     '''def getNacelleComponentMasses(self):
         """ Returns detailed nacelle assembly masses

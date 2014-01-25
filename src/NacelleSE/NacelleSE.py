@@ -30,7 +30,7 @@ class NacelleBase(Assembly):
     # parameters
     drivetrain_design = Int(iotype='in', desc='type of gearbox based on drivetrain type: 1 = standard 3-stage gearbox, 2 = single-stage, 3 = multi-gen, 4 = direct drive')
     crane = Bool(iotype='in', desc='flag for presence of crane')
-    bevel = Int(iotype='in', desc='Flag for the presence of a bevel stage - 1 if present, 0 if not')
+    bevel = Int(0, iotype='in', desc='Flag for the presence of a bevel stage - 1 if present, 0 if not')
     gear_configuration = Str(iotype='in', desc='tring that represents the configuration of the gearbox (stage number and types)')
 
 #-------------------------------------------------------------------------------------
@@ -41,6 +41,15 @@ class NacelleSE(NacelleBase):
        NacelleSE class
           The NacelleSE class is used to represent the nacelle system of a wind turbine.
     '''
+
+    low_speed_shaft_mass = Float(iotype='out', units='kg', desc='component mass')
+    main_bearing_mass = Float(iotype='out', units='kg', desc='component mass')
+    second_bearing_mass = Float(iotype='out', units='kg', desc='component mass')
+    gearbox_mass = Float(iotype='out', units='kg', desc='component mass')
+    high_speed_side_mass = Float(iotype='out', units='kg', desc='component mass')
+    generator_mass = Float(iotype='out', units='kg', desc='component mass')
+    bedplate_mass = Float(iotype='out', units='kg', desc='component mass')
+    yaw_system_mass = Float(iotype='out', units='kg', desc='component mass')
 
     def configure(self):
 
@@ -109,9 +118,16 @@ class NacelleSE(NacelleBase):
         self.connect('bedplate.I', ['nacelleSystem.bedplate_I'])
 
         # create passthroughs
-        self.create_passthrough('nacelleSystem.mass')
-        self.create_passthrough('nacelleSystem.cm')
-        self.create_passthrough('nacelleSystem.I')
+        self.create_passthrough('nacelleSystem.nacelle_mass')
+        self.create_passthrough('nacelleSystem.nacelle_cm')
+        self.create_passthrough('nacelleSystem.nacelle_I')
+        self.connect('lowSpeedShaft.mass', 'low_speed_shaft_mass')
+        self.connect('mainBearing.mass', 'main_bearing_mass')
+        self.connect('secondBearing.mass', 'second_bearing_mass')
+        self.connect('gearbox.mass', 'gearbox_mass')
+        self.connect('highSpeedSide.mass', 'high_speed_side_mass')
+        self.connect('generator.mass', 'generator_mass')
+        self.connect('bedplate.mass', 'bedplate_mass')
 
 
     '''def getNacelleComponentMasses(self):
@@ -682,8 +698,8 @@ def example2():
     DrivetrainEfficiency = 0.95
     nace.rotor_torque = (nace.machine_rating * 1000 / DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30))
         # rotor torque [Nm] calculated from max / rated rotor speed and machine rating
-    nace.rotor_thrust = 324000
-    nace.rotor_mass = 28560 # rotor mass [kg]
+    nace.rotor_thrust = 324000.
+    nace.rotor_mass = 28560. # rotor mass [kg]
 
     # WindPACT 1.5 MW Tower Variables
     nace.tower_top_diameter = 2.7 # tower top diameter [m]
@@ -721,7 +737,7 @@ def example2():
     # 9097.4 kg
     print 'Yaw system      %8.1f kg' % (nace.yawSystem.mass )
     # 11878.2 kg
-    print 'Overall nacelle:  %8.1f kg .cm %6.2f %6.2f %6.2f I %6.2f %6.2f %6.2f' % (nace.mass, nace.cm[0], nace.cm[1], nace.cm[2], nace.I[0], nace.I[1], nace.I[2]  )
+    print 'Overall nacelle:  %8.1f kg .cm %6.2f %6.2f %6.2f I %6.2f %6.2f %6.2f' % (nace.nacelle_mass, nace.nacelle_cm[0], nace.nacelle_cm[1], nace.nacelle_cm[2], nace.nacelle_I[0], nace.nacelle_I[1], nace.nacelle_I[2]  )
     # 207727.1
 
     # GRC Drivetrain variables
@@ -778,7 +794,7 @@ def example2():
     # 9097.4 kg
     print 'Yaw system      %8.1f kg' % (nace.yawSystem.mass )
     # 11878.2 kg
-    print 'Overall nacelle:  %8.1f kg .cm %6.2f %6.2f %6.2f I %6.2f %6.2f %6.2f' % (nace.mass, nace.cm[0], nace.cm[1], nace.cm[2], nace.I[0], nace.I[1], nace.I[2]  )
+    print 'Overall nacelle:  %8.1f kg .cm %6.2f %6.2f %6.2f I %6.2f %6.2f %6.2f' % (nace.nacelle_mass, nace.nacelle_cm[0], nace.nacelle_cm[1], nace.nacelle_cm[2], nace.nacelle_I[0], nace.nacelle_I[1], nace.nacelle_I[2]  )
     # 207727.1
 
     # Alstom Drivetrain variables
@@ -796,8 +812,8 @@ def example2():
     nace.rotor_speed = 15.1 # based on windpact 3 MW
     DrivetrainEfficiency = 0.95
     nace.rotor_torque = (nace.machine_rating * 1000 / DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30)) # rotor torque [Nm] calculated from max / rated rotor speed and machine rating
-    nace.rotor_thrust = 797000 # based on windpact 3.0 MW - Alstom thrust not provided
-    nace.rotor_mass = 49498 # rotor mass [kg] - not given - using Windpact 3.0 MW
+    nace.rotor_thrust = 797000. # based on windpact 3.0 MW - Alstom thrust not provided
+    nace.rotor_mass = 49498. # rotor mass [kg] - not given - using Windpact 3.0 MW
 
     # Tower Variables
     nace.tower_top_diameter = 3.5 # tower top diameter [m] - not given
@@ -835,9 +851,7 @@ def example2():
     # 9097.4 kg
     print 'Yaw system      %8.1f kg' % (nace.yawSystem.mass )
     # 11878.2 kg
-    print 'Overall nacelle:  %8.1f kg .cm %6.2f %6.2f %6.2f I %6.2f %6.2f %6.2f' % (nace.mass, nace.cm[0], nace.cm[1], nace.cm[2], nace.I[0], nace.I[1], nace.I[2]  )
-    # 207727.1
-
+    print 'Overall nacelle:  %8.1f kg .cm %6.2f %6.2f %6.2f I %6.2f %6.2f %6.2f' % (nace.nacelle_mass, nace.nacelle_cm[0], nace.nacelle_cm[1], nace.nacelle_cm[2], nace.nacelle_I[0], nace.nacelle_I[1], nace.nacelle_I[2]  )
 
 def example_80_redesign():
 
@@ -1099,8 +1113,8 @@ def example_100_ideal():
 if __name__ == '__main__':
     ''' Main runs through tests of several drivetrain configurations with known component masses and dimensions '''
 
-    example()
-    example_80_redesign()
-    example_100_redesign()
-    example_100_ideal()
+    #example()
+    #example_80_redesign()
+    #example_100_redesign()
+    #example_100_ideal()
     example2()

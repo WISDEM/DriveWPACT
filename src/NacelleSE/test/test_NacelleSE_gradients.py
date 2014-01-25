@@ -27,7 +27,7 @@ class Test_Hub(unittest.TestCase):
         hub.hub_diameter   = 3.542
         hub.rotor_bending_moment = 16665000.0 # y-direction
 
-        check_gradient_unit_test(self, hub,display=False)
+        check_gradient_unit_test(self, hub,display=True)
 
 class Test_PitchSystem(unittest.TestCase):
 
@@ -59,15 +59,15 @@ class Test_HubSystemAdder(unittest.TestCase):
     def test1(self):
 
         hub_system = HubSystemAdder()
-        hub_system.hubMass = 10000.
-        hub_system.pitchMass = 10000.
-        hub_system.spinnerMass = 1000.
-        hub_system.hubCM = [-2.,0., 1.0]
-        hub_system.pitchCM = [-2., 0., 1.0]
-        hub_system.spinnerCM = [-2., 0., 1.0]
-        hub_system.hubI = [1000., 1000., 1000.]
-        hub_system.pitchI = [1000., 1000., 1000.]
-        hub_system.spinnerI = [1000., 1000., 1000.]
+        hub_system.hub_mass = 10000.
+        hub_system.pitch_mass = 10000.
+        hub_system.spinner_mass = 1000.
+        hub_system.hub_cm = [-2.,0., 1.0]
+        hub_system.pitch_cm = [-2., 0., 1.0]
+        hub_system.spinner_cm = [-2., 0., 1.0]
+        hub_system.hub_I = [1000., 1000., 1000.]
+        hub_system.pitch_I = [1000., 1000., 1000.]
+        hub_system.spinner_I = [1000., 1000., 1000.]
 
         check_gradient_unit_test(self, hub_system,display=False)
 

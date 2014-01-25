@@ -34,6 +34,10 @@ class HubSE(HubBase):
     # # parameters
     # hub_diameter = Float(0.0, iotype='in', units='m', desc='hub diameter')
 
+    # outputs
+    hub_mass = Float(iotype='out')
+    pitch_system_mass = Float(iotype='out')
+    spinner_mass = Float(iotype='out')
 
     def configure(self):
 
@@ -54,20 +58,23 @@ class HubSE(HubBase):
         self.connect('blade_root_diameter', ['hub.hub_diameter', 'pitchSystem.hub_diameter', 'spinner.hub_diameter'])
 
         # connect components
-        self.connect('hub.mass', 'hubSystem.hubMass')
-        self.connect('hub.cm', 'hubSystem.hubCM')
-        self.connect('hub.I', 'hubSystem.hubI')
-        self.connect('pitchSystem.mass', 'hubSystem.pitchMass')
-        self.connect('pitchSystem.cm', 'hubSystem.pitchCM')
-        self.connect('pitchSystem.I', 'hubSystem.pitchI')
-        self.connect('spinner.mass', 'hubSystem.spinnerMass')
-        self.connect('spinner.cm', 'hubSystem.spinnerCM')
-        self.connect('spinner.I', 'hubSystem.spinnerI')
+        self.connect('hub.mass', 'hubSystem.hub_mass')
+        self.connect('hub.cm', 'hubSystem.hub_cm')
+        self.connect('hub.I', 'hubSystem.hub_I')
+        self.connect('pitchSystem.mass', 'hubSystem.pitch_system_mass')
+        self.connect('pitchSystem.cm', 'hubSystem.pitch_system_cm')
+        self.connect('pitchSystem.I', 'hubSystem.pitch_system_I')
+        self.connect('spinner.mass', 'hubSystem.spinner_mass')
+        self.connect('spinner.cm', 'hubSystem.spinner_cm')
+        self.connect('spinner.I', 'hubSystem.spinner_I')
 
         # create passthroughs
-        self.create_passthrough('hubSystem.mass')
-        self.create_passthrough('hubSystem.cm')
-        self.create_passthrough('hubSystem.I')
+        self.create_passthrough('hubSystem.hub_system_mass')
+        self.create_passthrough('hubSystem.hub_system_cm')
+        self.create_passthrough('hubSystem.hub_system_I')
+        self.connect('hubSystem.hub_mass','hub_mass')
+        self.connect('hubSystem.pitch_system_mass','pitch_system_mass')
+        self.connect('hubSystem.spinner_mass','spinner_mass')
 
 #-------------------------------------------------------------------------------
 
@@ -98,20 +105,20 @@ class HubSE_drive(HubBase):
         self.connect('blade_root_diameter', 'hub.blade_root_diameter')
 
         # connect components
-        self.connect('hub.mass', 'hubSystem.hubMass')
-        self.connect('hub.cm', 'hubSystem.hubCM')
-        self.connect('hub.I', 'hubSystem.hubI')
-        self.connect('pitchSystem.mass', 'hubSystem.pitchMass')
-        self.connect('pitchSystem.cm', 'hubSystem.pitchCM')
-        self.connect('pitchSystem.I', 'hubSystem.pitchI')
-        self.connect('spinner.mass', 'hubSystem.spinnerMass')
-        self.connect('spinner.cm', 'hubSystem.spinnerCM')
-        self.connect('spinner.I', 'hubSystem.spinnerI')
+        self.connect('hub.mass', 'hubSystem.hub_mass')
+        self.connect('hub.cm', 'hubSystem.hub_cm')
+        self.connect('hub.I', 'hubSystem.hub_I')
+        self.connect('pitchSystem.mass', 'hubSystem.pitch_system_mass')
+        self.connect('pitchSystem.cm', 'hubSystem.pitch_system_cm')
+        self.connect('pitchSystem.I', 'hubSystem.pitch_system_I')
+        self.connect('spinner.mass', 'hubSystem.spinner_mass')
+        self.connect('spinner.cm', 'hubSystem.spinner_cm')
+        self.connect('spinner.I', 'hubSystem.spinner_I')
 
         # create passthroughs
-        self.create_passthrough('hubSystem.mass')
-        self.create_passthrough('hubSystem.cm')
-        self.create_passthrough('hubSystem.I')
+        self.create_passthrough('hubSystem.hub_system_mass')
+        self.create_passthrough('hubSystem.hub_system_cm')
+        self.create_passthrough('hubSystem.hub_system_I')
 
 
 #-------------------------------------------------------------------------------
@@ -224,9 +231,9 @@ def example2():
     print '  hub         {0:8.1f} kg'.format(hub.hub.mass)
     print '  pitch mech  {0:8.1f} kg'.format(hub.pitchSystem.mass)
     print '  nose cone   {0:8.1f} kg'.format(hub.spinner.mass)
-    print 'HUB TOTAL     {0:8.1f} kg'.format(hub.mass)
-    print 'cm {0:6.2f} {1:6.2f} {2:6.2f}'.format(hub.cm[0], hub.cm[1], hub.cm[2])
-    print 'I {0:6.1f} {1:6.1f} {2:6.1f}'.format(hub.I[0], hub.I[1], hub.I[2])
+    print 'HUB TOTAL     {0:8.1f} kg'.format(hub.hub_system_mass)
+    print 'cm {0:6.2f} {1:6.2f} {2:6.2f}'.format(hub.hub_system_cm[0], hub.hub_system_cm[1], hub.hub_system_cm[2])
+    print 'I {0:6.1f} {1:6.1f} {2:6.1f}'.format(hub.hub_system_I[0], hub.hub_system_I[1], hub.hub_system_I[2])
 
     # GRC 750 kW turbine
     print "windpact 750 kW turbine test"
@@ -245,9 +252,9 @@ def example2():
     print '  hub         {0:8.1f} kg'.format(hub.hub.mass)
     print '  pitch mech  {0:8.1f} kg'.format(hub.pitchSystem.mass)
     print '  nose cone   {0:8.1f} kg'.format(hub.spinner.mass)
-    print 'HUB TOTAL     {0:8.1f} kg'.format(hub.mass)
-    print 'cm {0:6.2f} {1:6.2f} {2:6.2f}'.format(hub.cm[0], hub.cm[1], hub.cm[2])
-    print 'I {0:6.1f} {1:6.1f} {2:6.1f}'.format(hub.I[0], hub.I[1], hub.I[2])
+    print 'HUB TOTAL     {0:8.1f} kg'.format(hub.hub_system_mass)
+    print 'cm {0:6.2f} {1:6.2f} {2:6.2f}'.format(hub.hub_system_cm[0], hub.hub_system_cm[1], hub.hub_system_cm[2])
+    print 'I {0:6.1f} {1:6.1f} {2:6.1f}'.format(hub.hub_system_I[0], hub.hub_system_I[1], hub.hub_system_I[2])
 
     # Windpact / Alstom 3.0 MW
     print "windpact / Alstom 3.0 MW"
@@ -266,9 +273,9 @@ def example2():
     print '  hub         {0:8.1f} kg'.format(hub.hub.mass)
     print '  pitch mech  {0:8.1f} kg'.format(hub.pitchSystem.mass)
     print '  nose cone   {0:8.1f} kg'.format(hub.spinner.mass)
-    print 'HUB TOTAL     {0:8.1f} kg'.format(hub.mass)
-    print 'cm {0:6.2f} {1:6.2f} {2:6.2f}'.format(hub.cm[0], hub.cm[1], hub.cm[2])
-    print 'I {0:6.1f} {1:6.1f} {2:6.1f}'.format(hub.I[0], hub.I[1], hub.I[2])
+    print 'HUB TOTAL     {0:8.1f} kg'.format(hub.hub_system_mass)
+    print 'cm {0:6.2f} {1:6.2f} {2:6.2f}'.format(hub.hub_system_cm[0], hub.hub_system_cm[1], hub.hub_system_cm[2])
+    print 'I {0:6.1f} {1:6.1f} {2:6.1f}'.format(hub.hub_system_I[0], hub.hub_system_I[1], hub.hub_system_I[2])
 
 def example_100m_redesign_ideal():
     # simple test of module
@@ -299,8 +306,8 @@ def example_100m_redesign_ideal():
 
 if __name__ == "__main__":
 
-    example()
-    example_80m_redesign()
-    example_100m_redesign()
-    example_100m_redesign_ideal()
-    #example2()
+    #example()
+    #example_80m_redesign()
+    #example_100m_redesign()
+    #example_100m_redesign_ideal()
+    example2()

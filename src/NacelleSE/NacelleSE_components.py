@@ -1407,9 +1407,9 @@ class NacelleSystemAdder(Component): # changed name to nacelle - need to rename,
     bedplate_I = Array(np.array([0.0,0.0,0.0]),iotype = 'in', units='kg', desc='component I')
 
     # returns
-    mass = Float(0.0, iotype='out', units='kg', desc='overall component mass')
-    cm = Array(np.array([0.0, 0.0, 0.0]), iotype='out', desc='center of mass of the component in [x,y,z] for an arbitrary coordinate system')
-    I = Array(np.array([0.0, 0.0, 0.0]), iotype='out', desc=' moments of Inertia for the component [Ixx, Iyy, Izz] around its center of mass')
+    nacelle_mass = Float(0.0, iotype='out', units='kg', desc='overall component mass')
+    nacelle_cm = Array(np.array([0.0, 0.0, 0.0]), iotype='out', desc='center of mass of the component in [x,y,z] for an arbitrary coordinate system')
+    nacelle_I = Array(np.array([0.0, 0.0, 0.0]), iotype='out', desc=' moments of Inertia for the component [Ixx, Iyy, Izz] around its center of mass')
 
     def __init__(self):
         ''' Initialize above yaw mass adder component
@@ -1483,7 +1483,7 @@ class NacelleSystemAdder(Component): # changed name to nacelle - need to rename,
     def execute(self):
 
         # aggregation of nacelle mass
-        self.mass = (self.above_yaw_mass + self.yawMass)
+        self.nacelle_mass = (self.above_yaw_mass + self.yawMass)
 
         # calculation of mass center and moments of inertia
         cm = np.array([0.0,0.0,0.0])
@@ -1495,7 +1495,7 @@ class NacelleSystemAdder(Component): # changed name to nacelle - need to rename,
                     self.generator_mass * self.generator_cm[i] + self.mainframe_mass * self.bedplate_cm[i] ) / \
                     (self.lss_mass + self.main_bearing_mass + self.second_bearing_mass + \
                     self.gearbox_mass + self.hss_mass + self.generator_mass + self.mainframe_mass)
-        self.cm = cm
+        self.nacelle_cm = cm
 
         I = np.zeros(6)
         for i in (range(0,3)):                        # calculating MOI, at nacelle center of gravity with origin at tower top center / yaw mass center, ignoring masses of non-drivetrain components / auxiliary systems
@@ -1513,7 +1513,7 @@ class NacelleSystemAdder(Component): # changed name to nacelle - need to rename,
                                   self.hss_mass * (self.hss_cm[i] - cm[i]) ** 2 + \
                                   self.generator_mass * (self.generator_cm[i] - cm[i]) ** 2 + \
                                   self.mainframe_mass * (self.bedplate_cm[i] - cm[i]) ** 2
-        self.I = I
+        self.nacelle_I = I
 
         # derivatives
         self.d_mass_d_above_yaw_mass = 1.0
@@ -1575,56 +1575,56 @@ class NacelleSystemAdder(Component): # changed name to nacelle - need to rename,
 
         self.d_I_d_lss_mass = np.array([0.0, 0.0, 0.0])
         for i in (range(0,3)):
-            self.d_I_d_lss_mass[i] = (self.lss_cm[i]-self.cm[i])**2 + 2 * self.lss_mass * (self.lss_cm[i] - self.cm[i]) * self.d_cm_d_lss_cm
+            self.d_I_d_lss_mass[i] = (self.lss_cm[i]-self.nacelle_cm[i])**2 + 2 * self.lss_mass * (self.lss_cm[i] - self.nacelle_cm[i]) * self.d_cm_d_lss_cm
         self.d_I_d_main_bearing_mass = np.array([0.0, 0.0, 0.0])
         for i in (range(0,3)):
-            self.d_I_d_main_bearing_mass[i] = (self.main_bearing_cm[i]-self.cm[i])**2 + 2 * self.main_bearing_mass * (self.main_bearing_cm[i] - self.cm[i]) * self.d_cm_d_main_bearing_cm
+            self.d_I_d_main_bearing_mass[i] = (self.main_bearing_cm[i]-self.nacelle_cm[i])**2 + 2 * self.main_bearing_mass * (self.main_bearing_cm[i] - self.nacelle_cm[i]) * self.d_cm_d_main_bearing_cm
         self.d_I_d_second_bearing_mass = np.array([0.0, 0.0, 0.0])
         for i in (range(0,3)):
-            self.d_I_d_second_bearing_mass[i] = (self.second_bearing_cm[i]-self.cm[i])**2 + 2 * self.second_bearing_mass * (self.second_bearing_cm[i] - self.cm[i]) * self.d_cm_d_second_bearing_cm
+            self.d_I_d_second_bearing_mass[i] = (self.second_bearing_cm[i]-self.nacelle_cm[i])**2 + 2 * self.second_bearing_mass * (self.second_bearing_cm[i] - self.nacelle_cm[i]) * self.d_cm_d_second_bearing_cm
         self.d_I_d_gearbox_mass = np.array([0.0, 0.0, 0.0])
         for i in (range(0,3)):
-            self.d_I_d_gearbox_mass[i] = (self.gearbox_cm[i]-self.cm[i])**2 + 2 * self.gearbox_mass * (self.gearbox_cm[i] - self.cm[i]) * self.d_cm_d_gearbox_cm
+            self.d_I_d_gearbox_mass[i] = (self.gearbox_cm[i]-self.nacelle_cm[i])**2 + 2 * self.gearbox_mass * (self.gearbox_cm[i] - self.nacelle_cm[i]) * self.d_cm_d_gearbox_cm
         self.d_I_d_hss_mass = np.array([0.0, 0.0, 0.0])
         for i in (range(0,3)):
-            self.d_I_d_hss_mass[i] = (self.hss_cm[i]-self.cm[i])**2 + 2 * self.hss_mass * (self.hss_cm[i] - self.cm[i]) * self.d_cm_d_hss_cm
+            self.d_I_d_hss_mass[i] = (self.hss_cm[i]-self.nacelle_cm[i])**2 + 2 * self.hss_mass * (self.hss_cm[i] - self.nacelle_cm[i]) * self.d_cm_d_hss_cm
         self.d_I_d_generator_mass = np.array([0.0, 0.0, 0.0])
         for i in (range(0,3)):
-            self.d_I_d_generator_mass[i] = (self.generator_cm[i]-self.cm[i])**2 + 2 * self.generator_mass * (self.generator_cm[i] - self.cm[i]) * self.d_cm_d_generator_cm
+            self.d_I_d_generator_mass[i] = (self.generator_cm[i]-self.nacelle_cm[i])**2 + 2 * self.generator_mass * (self.generator_cm[i] - self.nacelle_cm[i]) * self.d_cm_d_generator_cm
         self.d_I_d_mainframe_mass = np.array([0.0, 0.0, 0.0])
         for i in (range(0,3)):
-            self.d_I_d_mainframe_mass[i] = (self.bedplate_cm[i]-self.cm[i])**2 + 2 * self.mainframe_mass * (self.bedplate_cm[i] - self.cm[i]) * self.d_cm_d_mainframeCM + \
+            self.d_I_d_mainframe_mass[i] = (self.bedplate_cm[i]-self.nacelle_cm[i])**2 + 2 * self.mainframe_mass * (self.bedplate_cm[i] - self.nacelle_cm[i]) * self.d_cm_d_mainframeCM + \
                                            self.bedplate_I[i] / self.bedplate_mass
 
 
         self.d_I_d_lss_cm = np.array([0.0, 0.0, 0.0])
         for i in range(0,3):
-            self.d_I_d_lss_cm[i] = 2 * self.lss_mass * (self.lss_cm[i] - self.cm[i]) * (1 - self.d_cm_d_lss_cm)
+            self.d_I_d_lss_cm[i] = 2 * self.lss_mass * (self.lss_cm[i] - self.nacelle_cm[i]) * (1 - self.d_cm_d_lss_cm)
         self.d_I_d_main_bearing_cm = np.array([0.0, 0.0, 0.0])
         for i in range(0,3):
-            self.d_I_d_main_bearing_cm[i] = 2 * self.main_bearing_mass * (self.main_bearing_cm[i] - self.cm[i]) * (1 - self.d_cm_d_main_bearing_cm)
+            self.d_I_d_main_bearing_cm[i] = 2 * self.main_bearing_mass * (self.main_bearing_cm[i] - self.nacelle_cm[i]) * (1 - self.d_cm_d_main_bearing_cm)
         self.d_I_d_second_bearing_cm = np.array([0.0, 0.0, 0.0])
         for i in range(0,3):
-            self.d_I_d_second_bearing_cm[i] = 2 * self.second_bearing_mass * (self.second_bearing_cm[i] - self.cm[i]) * (1 - self.d_cm_d_second_bearing_cm)
+            self.d_I_d_second_bearing_cm[i] = 2 * self.second_bearing_mass * (self.second_bearing_cm[i] - self.nacelle_cm[i]) * (1 - self.d_cm_d_second_bearing_cm)
         self.d_I_d_gearbox_cm = np.array([0.0, 0.0, 0.0])
         for i in range(0,3):
-            self.d_I_d_gearbox_cm[i] = 2 * self.gearbox_mass * (self.gearbox_cm[i] - self.cm[i]) * (1 - self.d_cm_d_gearbox_cm)
+            self.d_I_d_gearbox_cm[i] = 2 * self.gearbox_mass * (self.gearbox_cm[i] - self.nacelle_cm[i]) * (1 - self.d_cm_d_gearbox_cm)
         self.d_I_d_hss_cm = np.array([0.0, 0.0, 0.0])
         for i in range(0,3):
-            self.d_I_d_hss_cm[i] = 2 * self.hss_mass * (self.hss_cm[i] - self.cm[i]) * (1 - self.d_cm_d_hss_cm)
+            self.d_I_d_hss_cm[i] = 2 * self.hss_mass * (self.hss_cm[i] - self.nacelle_cm[i]) * (1 - self.d_cm_d_hss_cm)
         self.d_I_d_generator_cm = np.array([0.0, 0.0, 0.0])
         for i in range(0,3):
-            self.d_I_d_generator_cm[i] = 2 * self.generator_mass * (self.generator_cm[i] - self.cm[i]) * (1 - self.d_cm_d_generator_cm)
+            self.d_I_d_generator_cm[i] = 2 * self.generator_mass * (self.generator_cm[i] - self.nacelle_cm[i]) * (1 - self.d_cm_d_generator_cm)
         self.d_I_d_mainframeCM = np.array([0.0, 0.0, 0.0])
         for i in range(0,3):
-            self.d_I_d_mainframeCM[i] = 2 * self.mainframe_mass * (self.bedplate_cm[i] - self.cm[i]) * (1 - self.d_cm_d_mainframeCM)
+            self.d_I_d_mainframeCM[i] = 2 * self.mainframe_mass * (self.bedplate_cm[i] - self.nacelle_cm[i]) * (1 - self.d_cm_d_mainframeCM)
 
     def list_deriv_vars(self):
 
         inputs = ['above_yaw_mass', 'yawMass', 'lss_mass', 'main_bearing_mass', 'second_bearing_mass', 'gearbox_mass', 'hss_mass', 'generator_mass', 'mainframe_mass', \
                       'lss_cm', 'main_bearing_cm', 'second_bearing_cm', 'gearbox_cm', 'hss_cm', 'generator_cm', 'bedplate_cm', \
                       'lss_I', 'main_bearing_I', 'second_bearing_I', 'gearbox_I', 'hss_I', 'generator_I', 'bedplate_I']
-        outputs = ['mass', 'cm', 'I']
+        outputs = ['nacelle_mass', 'nacelle_cm', 'nacelle_I']
 
         return inputs, outputs
 

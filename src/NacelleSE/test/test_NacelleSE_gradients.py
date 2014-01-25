@@ -27,7 +27,7 @@ class Test_Hub(unittest.TestCase):
         hub.hub_diameter   = 3.542
         hub.rotor_bending_moment = 16665000.0 # y-direction
 
-        check_gradient_unit_test(self, hub,display=True)
+        check_gradient_unit_test(self, hub,display=False)
 
 class Test_PitchSystem(unittest.TestCase):
 

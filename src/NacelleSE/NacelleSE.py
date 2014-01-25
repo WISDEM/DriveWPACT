@@ -34,7 +34,7 @@ class NacelleBase(Assembly):
     gear_configuration = Str(iotype='in', desc='tring that represents the configuration of the gearbox (stage number and types)')
 
     # outputs
-    nacelle_mass = Float(0.0, iotype='out', units='kg', desc='nacelle mass')
+    nacelle_mass = Float(iotype='out', units='kg', desc='nacelle mass')
     nacelle_cm = Array(iotype='out', units='m', desc='center of mass of nacelle from tower top in yaw-aligned coordinate system')
     nacelle_I = Array(iotype='out', units='kg*m**2', desc='mass moments of inertia for nacelle [Ixx, Iyy, Izz, Ixy, Ixz, Iyz] about its center of mass')
     low_speed_shaft_mass = Float(iotype='out', units='kg', desc='component mass')
@@ -131,9 +131,9 @@ class NacelleSE(NacelleBase):
         self.connect('bedplate.I', ['nacelleSystem.bedplate_I'])
 
         # connect outputs
-        self.connect('nacelleSystem.mass', 'nacelle_mass')
-        self.connect('nacelleSystem.cm', 'nacelle_cm')
-        self.connect('nacelleSystem.I', 'nacelle_I')
+        self.connect('nacelleSystem.nacelle_mass', 'nacelle_mass')
+        self.connect('nacelleSystem.nacelle_cm', 'nacelle_cm')
+        self.connect('nacelleSystem.nacelle_I', 'nacelle_I')
         self.connect('lowSpeedShaft.mass', 'low_speed_shaft_mass')
         self.connect('mainBearing.mass', 'main_bearing_mass')
         self.connect('secondBearing.mass', 'second_bearing_mass')

@@ -33,20 +33,11 @@ class HubBase(Assembly):
     pitch_system_mass = Float(0.0, iotype='out', units='kg')
     spinner_mass = Float(0.0, iotype='out', units='kg')
 
-
 class HubSE(HubBase):
     '''
        HubSE class
           The HubSE class is used to represent the hub system of a wind turbine.
     '''
-
-    # # parameters
-    # hub_diameter = Float(0.0, iotype='in', units='m', desc='hub diameter')
-
-    # outputs
-    hub_mass = Float(iotype='out')
-    pitch_system_mass = Float(iotype='out')
-    spinner_mass = Float(iotype='out')
 
     def configure(self):
 
@@ -78,9 +69,9 @@ class HubSE(HubBase):
         self.connect('spinner.I', 'hubSystem.spinner_I')
 
         # connect outputs
-        self.connect('hubSystem.mass', 'hub_system_mass')
-        self.connect('hubSystem.cm', 'hub_system_cm')
-        self.connect('hubSystem.I', 'hub_system_I')
+        self.connect('hubSystem.hub_system_mass', 'hub_system_mass')
+        self.connect('hubSystem.hub_system_cm', 'hub_system_cm')
+        self.connect('hubSystem.hub_system_I', 'hub_system_I')
         self.connect('hub.mass', 'hub_mass')
         self.connect('pitchSystem.mass', 'pitch_system_mass')
         self.connect('spinner.mass', 'spinner_mass')

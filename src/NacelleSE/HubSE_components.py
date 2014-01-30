@@ -424,7 +424,7 @@ class HubSystemAdder(Component):
             # calculate center of mass
             cm[i] = (self.hub_mass * self.hub_cm[i] + self.pitch_system_mass * self.pitch_system_cm[i] + \
                     self.spinner_mass * self.spinner_cm[i] ) / (self.hub_system_mass)
-        self.hub_sytem_cm = cm
+        self.hub_system_cm = cm
 
         I = np.zeros(6)
         for i in range(3):                        # calculating MOI, at nacelle center of gravity with origin at tower top center / yaw mass center, ignoring masses of non-drivetrain components / auxiliary systems

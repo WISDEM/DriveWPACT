@@ -1497,7 +1497,7 @@ class NacelleSystemAdder(Component): # changed name to nacelle - need to rename,
                     self.gearbox_mass + self.hss_mass + self.generator_mass + self.mainframe_mass)
         self.nacelle_cm = cm
 
-        I = np.zeros(3)
+        I = np.zeros(6)
         for i in (range(0,3)):                        # calculating MOI, at nacelle center of gravity with origin at tower top center / yaw mass center, ignoring masses of non-drivetrain components / auxiliary systems
             # calculate moments around CM
             # sum moments around each components CM (adjust for mass of mainframe) # TODO: add yaw MMI
@@ -1772,8 +1772,10 @@ class NacelleSystemAdder(Component): # changed name to nacelle - need to rename,
                            [0, 0, self.d_I_d_lss_mass[2], self.d_I_d_main_bearing_mass[2], self.d_I_d_second_bearing_mass[2], self.d_I_d_gearbox_mass[2], self.d_I_d_hss_mass[2], self.d_I_d_generator_mass[2], self.d_I_d_mainframe_mass[2], \
                            self.d_I_d_lss_cm[2,0], self.d_I_d_lss_cm[2,1], self.d_I_d_lss_cm[2,2], self.d_I_d_main_bearing_cm[2,0], self.d_I_d_main_bearing_cm[2,1], self.d_I_d_main_bearing_cm[2,2], self.d_I_d_second_bearing_cm[2,0], self.d_I_d_second_bearing_cm[2,1], self.d_I_d_second_bearing_cm[2,2], \
                            self.d_I_d_gearbox_cm[2,0], self.d_I_d_gearbox_cm[2,1], self.d_I_d_gearbox_cm[2,2], self.d_I_d_hss_cm[2,0], self.d_I_d_hss_cm[2,1], self.d_I_d_hss_cm[2,2], self.d_I_d_generator_cm[2,0], self.d_I_d_generator_cm[2,1], self.d_I_d_generator_cm[2,2], self.d_I_d_mainframe_cm[2,0], self.d_I_d_mainframe_cm[2,1], self.d_I_d_mainframe_cm[2,2], \
-                           0, 0, self.d_I_d_lss_I, 0, 0, self.d_I_d_main_bearing_I, 0, 0, self.d_I_d_second_bearing_I, 0, 0, self.d_I_d_gearbox_I, 0, 0, self.d_I_d_hss_I, 0, 0, self.d_I_d_generator_I, 0, 0, self.d_I_d_mainframeI]])
-
+                           0, 0, self.d_I_d_lss_I, 0, 0, self.d_I_d_main_bearing_I, 0, 0, self.d_I_d_second_bearing_I, 0, 0, self.d_I_d_gearbox_I, 0, 0, self.d_I_d_hss_I, 0, 0, self.d_I_d_generator_I, 0, 0, self.d_I_d_mainframeI], \
+                           [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
+                           [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
+                           [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
         return self.J
 
 #--------------------------------------------------------------------------------------------------------

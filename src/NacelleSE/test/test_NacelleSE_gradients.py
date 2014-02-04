@@ -60,16 +60,16 @@ class Test_HubSystemAdder(unittest.TestCase):
 
         hub_system = HubSystemAdder()
         hub_system.hub_mass = 10000.
-        hub_system.pitch_mass = 10000.
+        hub_system.pitch_system_mass = 10000.
         hub_system.spinner_mass = 1000.
-        hub_system.hub_cm = [-2.,0., 1.0]
-        hub_system.pitch_cm = [-2., 0., 1.0]
-        hub_system.spinner_cm = [-2., 0., 1.0]
+        hub_system.hub_cm = [-2.,1.0, 1.0]
+        hub_system.pitch_cm = [-2., 1.0, 1.0]
+        hub_system.spinner_cm = [-2., 1.0, 1.0]
         hub_system.hub_I = [1000., 1000., 1000.]
         hub_system.pitch_I = [1000., 1000., 1000.]
         hub_system.spinner_I = [1000., 1000., 1000.]
 
-        check_gradient_unit_test(self, hub_system,display=False)
+        check_gradient_unit_test(self, hub_system,tol=5e-6, display=False)
 
 
 # Nacelle Components
@@ -246,6 +246,7 @@ class Test_NacelleSystemAdder(unittest.TestCase):
         nac.generator_mass = 5000.
         nac.bedplate_mass = 5000.
         nac.mainframe_mass = 5000.
+        nac.bedplate_mass = 5000.
         nac.lss_cm = np.array([1.0, 1.0, 1.0])
         nac.main_bearing_cm = np.array([1.0, 1.0, 1.0])
         nac.second_bearing_cm = np.array([1.0, 1.0, 1.0])
@@ -261,7 +262,7 @@ class Test_NacelleSystemAdder(unittest.TestCase):
         nac.generator_I = np.array([1.0, 1.0, 1.0])
         nac.bedplate_I = np.array([1.0, 1.0, 1.0])
 
-        check_gradient_unit_test(self, nac,display=False)
+        check_gradient_unit_test(self, nac, tol=5e-4, display=False)
 
 
 if __name__ == "__main__":

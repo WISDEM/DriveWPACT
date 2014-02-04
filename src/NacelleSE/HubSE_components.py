@@ -426,17 +426,17 @@ class HubSystemAdder(Component):
                     self.spinner_mass * self.spinner_cm[i] ) / (self.hub_system_mass)
         self.hub_system_cm = cm
 
-        I = np.zeros(6)
-        for i in range(3):                        # calculating MOI, at nacelle center of gravity with origin at tower top center / yaw mass center, ignoring masses of non-drivetrain components / auxiliary systems
+        I = np.zeros(3)
+        for i in range(len(I)):                        # calculating MOI, at nacelle center of gravity with origin at tower top center / yaw mass center, ignoring masses of non-drivetrain components / auxiliary systems
             # calculate moments around CM
             # sum moments around each components CM
             I[i]  =  self.hub_I[i] + self.pitch_system_I[i] + self.spinner_I[i]
             # translate to hub system CM using parallel axis theorem
-            for j in (range(0,3)):
+            for j in range(len(I)):
                 if i != j:
-                    I[i] +=  (self.hub_mass * (self.hub_cm[i] - self.hub_system_cm[i]) ** 2) + \
-                                  (self.pitch_system_mass * (self.pitch_system_cm[i] - self.hub_system_cm[i]) ** 2) + \
-                                  (self.spinner_mass * (self.spinner_cm[i] - self.hub_system_cm[i]) ** 2)
+                    I[i] +=  (self.hub_mass * (self.hub_cm[j] - self.hub_system_cm[j]) ** 2) + \
+                                  (self.pitch_system_mass * (self.pitch_system_cm[j] - self.hub_system_cm[j]) ** 2) + \
+                                  (self.spinner_mass * (self.spinner_cm[j] - self.hub_system_cm[j]) ** 2)
         self.hub_system_I = I
 
         # derivatives
@@ -466,25 +466,51 @@ class HubSystemAdder(Component):
         self.d_I_d_spinner_I = 1
 
         self.d_I_d_hub_mass = np.array([0.0, 0.0, 0.0])
-        for i in (range(0,3)):
-            self.d_I_d_hub_mass[i] = (self.hub_cm[i]-self.hub_system_cm[i])**2 + 2 * self.hub_mass * (self.hub_cm[i] - self.hub_system_cm[i]) * self.d_cm_d_hub_cm
+        for i in range(len(self.d_I_d_hub_mass)):
+            for j in range(len(self.d_I_d_hub_mass)):
+                if i != j:
+                  self.d_I_d_hub_mass[i] += (self.hub_cm[j]-self.hub_system_cm[j])**2 \
+                                           - 2 * self.hub_mass * (self.hub_cm[j] - self.hub_system_cm[j]) * (self.d_cm_d_hub_mass[j]) \
+                                           - 2 * self.pitch_system_mass * (self.pitch_system_cm[j] - self.hub_system_cm[j]) * (self.d_cm_d_hub_mass[j]) \
+                                           - 2 * self.spinner_mass * (self.spinner_cm[j] - self.hub_system_cm[j]) * (self.d_cm_d_hub_mass[j])
         self.d_I_d_pitch_system_mass = np.array([0.0, 0.0, 0.0])
-        for i in (range(0,3)):
-            self.d_I_d_pitch_system_mass[i] = (self.pitch_system_cm[i]-self.hub_system_cm[i])**2 + 2 * self.pitch_system_mass * (self.pitch_system_cm[i] - self.hub_system_cm[i]) * self.d_cm_d_pitch_system_cm
+        for i in range(len(self.d_I_d_pitch_system_mass)):
+            for j in range(len(self.d_I_d_pitch_system_mass)):
+                if i != j:
+                  self.d_I_d_pitch_system_mass[i] += (self.pitch_system_cm[j]-self.hub_system_cm[j])**2 \
+                                           - 2 * self.hub_mass * (self.hub_cm[j] - self.hub_system_cm[j]) * (self.d_cm_d_pitch_system_mass[j]) \
+                                           - 2 * self.pitch_system_mass * (self.pitch_system_cm[j] - self.hub_system_cm[j]) * (self.d_cm_d_pitch_system_mass[j]) \
+                                           - 2 * self.spinner_mass * (self.spinner_cm[j] - self.hub_system_cm[j]) * (self.d_cm_d_pitch_system_mass[j])
         self.d_I_d_spinner_mass = np.array([0.0, 0.0, 0.0])
-        for i in (range(0,3)):
-            self.d_I_d_spinner_mass[i] = (self.spinner_cm[i]-self.hub_system_cm[i])**2 + 2 * self.spinner_mass * (self.spinner_cm[i] - self.hub_system_cm[i]) * self.d_cm_d_spinner_cm
+        for i in range(len(self.d_I_d_spinner_mass)):
+            for j in range(len(self.d_I_d_spinner_mass)):
+                if i != j:
+                  self.d_I_d_spinner_mass[i] += (self.spinner_cm[j]-self.hub_system_cm[j])**2 \
+                                           - 2 * self.hub_mass * (self.hub_cm[j] - self.hub_system_cm[j]) * (self.d_cm_d_spinner_mass[j]) \
+                                           - 2 * self.pitch_system_mass * (self.pitch_system_cm[j] - self.hub_system_cm[j]) * (self.d_cm_d_spinner_mass[j]) \
+                                           - 2 * self.spinner_mass * (self.spinner_cm[j] - self.hub_system_cm[j]) * (self.d_cm_d_spinner_mass[j])
 
-        self.d_I_d_hub_cm = np.array([0.0, 0.0, 0.0])
-        for i in range(0,3):
-            self.d_I_d_hub_cm[i] = 2 * self.hub_mass * (self.hub_cm[i] - self.hub_system_cm[i]) * (1 - self.d_cm_d_hub_cm)
-        self.d_I_d_pitch_system_cm = np.array([0.0, 0.0, 0.0])
-        for i in range(0,3):
-            self.d_I_d_pitch_system_cm[i] = 2 * self.hub_mass * (self.pitch_system_cm[i] - self.hub_system_cm[i]) * (1 - self.d_cm_d_pitch_system_cm)
-        self.d_I_d_spinner_cm = np.array([0.0, 0.0, 0.0])
-        for i in range(0,3):
-            self.d_I_d_spinner_cm[i] = 2 * self.spinner_mass * (self.spinner_cm[i] - self.hub_system_cm[i]) * (1 - self.d_cm_d_spinner_cm)
-
+        self.d_I_d_hub_cm = np.zeros((3,3))
+        for i in range(len(self.d_I_d_hub_cm)):
+            for j in range(len(self.d_I_d_hub_cm)):
+                if i != j:
+                    self.d_I_d_hub_cm[i,j] = 2 * self.hub_mass * (self.hub_cm[j] - self.hub_system_cm[j]) * (1 - self.d_cm_d_hub_cm) \
+                                           - 2 * self.pitch_system_mass * (self.pitch_system_cm[j] - self.hub_system_cm[j]) * (self.d_cm_d_hub_cm) \
+                                           - 2 * self.spinner_mass * (self.spinner_cm[j] - self.hub_system_cm[j]) * (self.d_cm_d_hub_cm)
+        self.d_I_d_pitch_system_cm = np.zeros((3,3))
+        for i in range(len(self.d_I_d_pitch_system_cm)):
+            for j in (range(len(self.d_I_d_pitch_system_cm))):
+                if i != j:
+                    self.d_I_d_pitch_system_cm[i,j] = - 2 * self.hub_mass * (self.hub_cm[j] - self.hub_system_cm[j]) * (self.d_cm_d_pitch_system_cm) \
+                                           + 2 * self.pitch_system_mass * (self.pitch_system_cm[j] - self.hub_system_cm[j]) * (1 - self.d_cm_d_pitch_system_cm) \
+                                           - 2 * self.spinner_mass * (self.spinner_cm[j] - self.hub_system_cm[j]) * (self.d_cm_d_pitch_system_cm)
+        self.d_I_d_spinner_cm = np.zeros((3,3))
+        for i in range(len(self.d_I_d_spinner_cm)):
+            for j in (range(len(self.d_I_d_spinner_cm))):
+                if i != j:
+                    self.d_I_d_spinner_cm[i,j] = - 2 * self.hub_mass * (self.hub_cm[j] - self.hub_system_cm[j]) * (self.d_cm_d_spinner_cm) \
+                                           - 2 * self.pitch_system_mass * (self.pitch_system_cm[j] - self.hub_system_cm[j]) * (self.d_cm_d_spinner_cm) \
+                                           + 2 * self.spinner_mass * (self.spinner_cm[j] - self.hub_system_cm[j]) * (1 - self.d_cm_d_spinner_cm)
     def list_deriv_vars(self):
 
         inputs = ['hub_mass', 'pitch_system_mass', 'spinner_mass', 'hub_cm', 'pitch_system_cm', 'spinner_cm',  'hub_I', 'pitch_system_I', 'spinner_I']
@@ -499,9 +525,9 @@ class HubSystemAdder(Component):
                            [self.d_cm_d_hub_mass[0], self.d_cm_d_pitch_system_mass[0], self.d_cm_d_spinner_mass[0], self.d_cm_d_hub_cm, 0, 0, self.d_cm_d_pitch_system_cm, 0, 0, self.d_cm_d_spinner_cm, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
                            [self.d_cm_d_hub_mass[1], self.d_cm_d_pitch_system_mass[1], self.d_cm_d_spinner_mass[1], 0, self.d_cm_d_hub_cm, 0, 0, self.d_cm_d_pitch_system_cm, 0, 0, self.d_cm_d_spinner_cm, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
                            [self.d_cm_d_hub_mass[2], self.d_cm_d_pitch_system_mass[2], self.d_cm_d_spinner_mass[2], 0, 0, self.d_cm_d_hub_cm, 0, 0, self.d_cm_d_pitch_system_cm, 0, 0, self.d_cm_d_spinner_cm, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
-                           [self.d_I_d_hub_mass[0], self.d_I_d_pitch_system_mass[0], self.d_I_d_spinner_mass[0], self.d_I_d_hub_cm[0], 0, 0, self.d_I_d_pitch_system_cm[0], 0, 0, self.d_I_d_spinner_cm[0], 0, 0, self.d_I_d_hub_I, 0, 0, self.d_I_d_pitch_system_I, 0, 0, self.d_I_d_spinner_I, 0, 0], \
-                           [self.d_I_d_hub_mass[1], self.d_I_d_pitch_system_mass[1], self.d_I_d_spinner_mass[1], 0, self.d_I_d_hub_cm[1], 0, 0, self.d_I_d_pitch_system_cm[1], 0, 0, self.d_I_d_spinner_cm[1], 0, 0, self.d_I_d_hub_I, 0, 0, self.d_I_d_pitch_system_I, 0, 0, self.d_I_d_spinner_I, 0], \
-                           [self.d_I_d_hub_mass[2], self.d_I_d_pitch_system_mass[2], self.d_I_d_spinner_mass[2], 0, 0, self.d_I_d_hub_cm[2], 0, 0, self.d_I_d_pitch_system_cm[2], 0, 0, self.d_I_d_spinner_cm[2], 0, 0, self.d_I_d_hub_I, 0, 0, self.d_I_d_pitch_system_I, 0, 0, self.d_I_d_spinner_I]])
+                           [self.d_I_d_hub_mass[0], self.d_I_d_pitch_system_mass[0], self.d_I_d_spinner_mass[0], self.d_I_d_hub_cm[0,0], self.d_I_d_hub_cm[0,1], self.d_I_d_hub_cm[0,2], self.d_I_d_pitch_system_cm[0,0], self.d_I_d_pitch_system_cm[0,1], self.d_I_d_pitch_system_cm[0,2], self.d_I_d_spinner_cm[0,0], self.d_I_d_spinner_cm[0,1], self.d_I_d_spinner_cm[0,2], self.d_I_d_hub_I, 0, 0, self.d_I_d_pitch_system_I, 0, 0, self.d_I_d_spinner_I, 0, 0], \
+                           [self.d_I_d_hub_mass[1], self.d_I_d_pitch_system_mass[1], self.d_I_d_spinner_mass[1], self.d_I_d_hub_cm[1,0], self.d_I_d_hub_cm[1,1], self.d_I_d_hub_cm[1,2], self.d_I_d_pitch_system_cm[1,0], self.d_I_d_pitch_system_cm[1,1], self.d_I_d_pitch_system_cm[1,2], self.d_I_d_spinner_cm[1,0], self.d_I_d_spinner_cm[1,1], self.d_I_d_spinner_cm[1,2], 0, self.d_I_d_hub_I, 0, 0, self.d_I_d_pitch_system_I, 0, 0, self.d_I_d_spinner_I, 0], \
+                           [self.d_I_d_hub_mass[2], self.d_I_d_pitch_system_mass[2], self.d_I_d_spinner_mass[2], self.d_I_d_hub_cm[2,0], self.d_I_d_hub_cm[2,1], self.d_I_d_hub_cm[2,2], self.d_I_d_pitch_system_cm[2,0], self.d_I_d_pitch_system_cm[2,1], self.d_I_d_pitch_system_cm[2,2], self.d_I_d_spinner_cm[2,0], self.d_I_d_spinner_cm[2,1], self.d_I_d_spinner_cm[2,2], 0, 0, self.d_I_d_hub_I, 0, 0, self.d_I_d_pitch_system_I, 0, 0, self.d_I_d_spinner_I]])
 
         return self.J
 

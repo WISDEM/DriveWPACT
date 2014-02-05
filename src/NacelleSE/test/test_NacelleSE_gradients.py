@@ -247,22 +247,22 @@ class Test_NacelleSystemAdder(unittest.TestCase):
         nac.bedplate_mass = 5000.
         nac.mainframe_mass = 5000.
         nac.bedplate_mass = 5000.
-        nac.lss_cm = np.array([1.0, 1.0, 1.0])
-        nac.main_bearing_cm = np.array([1.0, 1.0, 1.0])
-        nac.second_bearing_cm = np.array([1.0, 1.0, 1.0])
-        nac.gearbox_cm = np.array([1.0, 1.0, 1.0])
-        nac.hss_cm = np.array([1.0, 1.0, 1.0])
-        nac.generator_cm = np.array([1.0, 1.0, 1.0])
-        nac.bedplate_cm = np.array([1.0, 1.0, 1.0])
-        nac.lss_I = np.array([1.0, 1.0, 1.0])
-        nac.main_bearing_I = np.array([1.0, 1.0, 1.0])
-        nac.second_bearing_I = np.array([1.0, 1.0, 1.0])
-        nac.gearbox_I = np.array([1.0, 1.0, 1.0])
-        nac.hss_I = np.array([1.0, 1.0, 1.0])
-        nac.generator_I = np.array([1.0, 1.0, 1.0])
-        nac.bedplate_I = np.array([1.0, 1.0, 1.0])
+        nac.lss_cm = np.array([-2.0, 1.0, 1.0])
+        nac.main_bearing_cm = np.array([-2.0, 1.0, 1.0])
+        nac.second_bearing_cm = np.array([-2.0, 1.0, 1.0])
+        nac.gearbox_cm = np.array([-2.0, 1.0, 1.0])
+        nac.hss_cm = np.array([-2.0, 1.0, 1.0])
+        nac.generator_cm = np.array([-2.0, 1.0, 1.0])
+        nac.bedplate_cm = np.array([-2.0, 1.0, 1.0])
+        nac.lss_I = np.array([1000., 1000., 1000.])
+        nac.main_bearing_I = np.array([1000., 1000., 1000.])
+        nac.second_bearing_I = np.array([1000., 1000., 1000.])
+        nac.gearbox_I = np.array([1000., 1000., 1000.])
+        nac.hss_I = np.array([1000., 1000., 1000.])
+        nac.generator_I = np.array([1000., 1000., 1000.])
+        nac.bedplate_I = np.array([1000., 1000., 1000.])
 
-        check_gradient_unit_test(self, nac, tol=5e-4, display=False)
+        check_gradient_unit_test(self, nac, display=False)
 
 
 if __name__ == "__main__":

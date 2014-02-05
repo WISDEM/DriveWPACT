@@ -1581,7 +1581,7 @@ class NacelleSystemAdder(Component): # changed name to nacelle - need to rename,
                                            - 2 * self.lss_mass * (self.lss_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_lss_mass[j]) \
                                            - 2 * self.main_bearing_mass * (self.main_bearing_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_lss_mass[j]) \
                                            - 2 * self.second_bearing_mass * (self.second_bearing_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_lss_mass[j]) \
-																					 - 2 * self.gearbox_mass * (self.gearbox_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_lss_mass[j]) \
+                                           - 2 * self.gearbox_mass * (self.gearbox_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_lss_mass[j]) \
                                            - 2 * self.hss_mass * (self.hss_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_lss_mass[j]) \
                                            - 2 * self.generator_mass * (self.generator_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_lss_mass[j]) \
                                            - 2 * self.mainframe_mass * (self.bedplate_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_lss_mass[j])
@@ -1593,7 +1593,7 @@ class NacelleSystemAdder(Component): # changed name to nacelle - need to rename,
                                            - 2 * self.lss_mass * (self.lss_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_main_bearing_mass[j]) \
                                            - 2 * self.main_bearing_mass * (self.main_bearing_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_main_bearing_mass[j]) \
                                            - 2 * self.second_bearing_mass * (self.second_bearing_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_main_bearing_mass[j]) \
-																					 - 2 * self.gearbox_mass * (self.gearbox_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_main_bearing_mass[j]) \
+                                           - 2 * self.gearbox_mass * (self.gearbox_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_main_bearing_mass[j]) \
                                            - 2 * self.hss_mass * (self.hss_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_main_bearing_mass[j]) \
                                            - 2 * self.generator_mass * (self.generator_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_main_bearing_mass[j]) \
                                            - 2 * self.mainframe_mass * (self.bedplate_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_main_bearing_mass[j])
@@ -1605,7 +1605,7 @@ class NacelleSystemAdder(Component): # changed name to nacelle - need to rename,
                                            - 2 * self.lss_mass * (self.lss_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_second_bearing_mass[j]) \
                                            - 2 * self.main_bearing_mass * (self.main_bearing_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_second_bearing_mass[j]) \
                                            - 2 * self.second_bearing_mass * (self.second_bearing_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_second_bearing_mass[j]) \
-																					 - 2 * self.gearbox_mass * (self.gearbox_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_second_bearing_mass[j]) \
+                                           - 2 * self.gearbox_mass * (self.gearbox_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_second_bearing_mass[j]) \
                                            - 2 * self.hss_mass * (self.hss_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_second_bearing_mass[j]) \
                                            - 2 * self.generator_mass * (self.generator_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_second_bearing_mass[j]) \
                                            - 2 * self.mainframe_mass * (self.bedplate_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_second_bearing_mass[j])
@@ -1617,7 +1617,7 @@ class NacelleSystemAdder(Component): # changed name to nacelle - need to rename,
                                            - 2 * self.lss_mass * (self.lss_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_gearbox_mass[j]) \
                                            - 2 * self.main_bearing_mass * (self.main_bearing_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_gearbox_mass[j]) \
                                            - 2 * self.second_bearing_mass * (self.second_bearing_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_gearbox_mass[j]) \
-																					 - 2 * self.gearbox_mass * (self.gearbox_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_gearbox_mass[j]) \
+                                           - 2 * self.gearbox_mass * (self.gearbox_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_gearbox_mass[j]) \
                                            - 2 * self.hss_mass * (self.hss_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_gearbox_mass[j]) \
                                            - 2 * self.generator_mass * (self.generator_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_gearbox_mass[j]) \
                                            - 2 * self.mainframe_mass * (self.bedplate_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_gearbox_mass[j])
@@ -1629,7 +1629,7 @@ class NacelleSystemAdder(Component): # changed name to nacelle - need to rename,
                                            - 2 * self.lss_mass * (self.lss_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_hss_mass[j]) \
                                            - 2 * self.main_bearing_mass * (self.main_bearing_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_hss_mass[j]) \
                                            - 2 * self.second_bearing_mass * (self.second_bearing_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_hss_mass[j]) \
-																					 - 2 * self.gearbox_mass * (self.gearbox_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_hss_mass[j]) \
+                                           - 2 * self.gearbox_mass * (self.gearbox_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_hss_mass[j]) \
                                            - 2 * self.hss_mass * (self.hss_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_hss_mass[j]) \
                                            - 2 * self.generator_mass * (self.generator_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_hss_mass[j]) \
                                            - 2 * self.mainframe_mass * (self.bedplate_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_hss_mass[j])
@@ -1641,19 +1641,20 @@ class NacelleSystemAdder(Component): # changed name to nacelle - need to rename,
                                            - 2 * self.lss_mass * (self.lss_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_generator_mass[j]) \
                                            - 2 * self.main_bearing_mass * (self.main_bearing_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_generator_mass[j]) \
                                            - 2 * self.second_bearing_mass * (self.second_bearing_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_generator_mass[j]) \
-																					 - 2 * self.gearbox_mass * (self.gearbox_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_generator_mass[j]) \
+                                           - 2 * self.gearbox_mass * (self.gearbox_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_generator_mass[j]) \
                                            - 2 * self.hss_mass * (self.hss_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_generator_mass[j]) \
                                            - 2 * self.generator_mass * (self.generator_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_generator_mass[j]) \
                                            - 2 * self.mainframe_mass * (self.bedplate_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_generator_mass[j])
         self.d_I_d_mainframe_mass = np.array([0.0, 0.0, 0.0])
         for i in range(len(self.d_I_d_mainframe_mass)):
+            self.d_I_d_mainframe_mass[i] += self.bedplate_I[i] * (1. / self.bedplate_mass)
             for j in range(len(self.d_I_d_mainframe_mass)):
                 if i != j:
                   self.d_I_d_mainframe_mass[i] += (self.bedplate_cm[j]-self.nacelle_cm[j])**2 \
                                            - 2 * self.lss_mass * (self.lss_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_mainframe_mass[j]) \
                                            - 2 * self.main_bearing_mass * (self.main_bearing_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_mainframe_mass[j]) \
                                            - 2 * self.second_bearing_mass * (self.second_bearing_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_mainframe_mass[j]) \
-																					 - 2 * self.gearbox_mass * (self.gearbox_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_mainframe_mass[j]) \
+                                           - 2 * self.gearbox_mass * (self.gearbox_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_mainframe_mass[j]) \
                                            - 2 * self.hss_mass * (self.hss_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_mainframe_mass[j]) \
                                            - 2 * self.generator_mass * (self.generator_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_mainframe_mass[j]) \
                                            - 2 * self.mainframe_mass * (self.bedplate_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_mainframe_mass[j])

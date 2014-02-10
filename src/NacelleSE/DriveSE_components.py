@@ -1933,12 +1933,12 @@ class Bedplate_drive(Component):
           rotorTipDefl = midDeflection(frontTotalLength,rotorLoc,self.rotor_mass*g/2.0,E,I)
           rotorFzTipDefl = midDeflection(frontTotalLength,rotorLoc,rotorFz/2.0,E,I)
           selfTipDefl = distDeflection(frontTotalLength,w*g,E,I)
-          rotorMyTipDefl = rotorMy*frontTotalLength**2/(2.0*E*I)
+          rotorMyTipDefl = rotorMy/2.0*frontTotalLength**2/(2.0*E*I)
 
           totalTipDefl = mb1TipDefl + mb2TipDefl + lssTipDefl  + rotorTipDefl + selfTipDefl +rotorMyTipDefl + rotorFzTipDefl
 
           #root stress
-          totalBendingMoment=(mb1_location*self.mb1_mass/2.0 + mb2_location*self.mb2_mass/2.0 + lss_location*self.lss_mass/2.0 + w*frontTotalLength**2/2.0 + rotorLoc*self.rotor_mass)*g + rotorLoc*rotorFz/2.0 +rotorMy/2.0
+          totalBendingMoment=(mb1_location*self.mb1_mass/2.0 + mb2_location*self.mb2_mass/2.0 + lss_location*self.lss_mass/2.0 + w*frontTotalLength**2/2.0 + rotorLoc*self.rotor_mass/2.0)*g + rotorLoc*rotorFz/2.0 +rotorMy/2.0
           rootStress = totalBendingMoment*h0/2/I
 
           #mass

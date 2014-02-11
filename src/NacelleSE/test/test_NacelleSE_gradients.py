@@ -86,7 +86,7 @@ class Test_LowSpeedShaft(unittest.TestCase):
         lss.rotor_speed = 21.830
         DrivetrainEfficiency = 0.95
         lss.machine_rating = 5000.0
-        lss.rotor_torque = (lss.machine_rating * 1000. / DrivetrainEfficiency) / (lss.rotor_speed * (np.pi / 30.)) 
+        lss.rotor_torque = (lss.machine_rating * 1000. / DrivetrainEfficiency) / (lss.rotor_speed * (np.pi / 30.))
             # rotor torque [Nm] calculated from max / rated rotor speed and machine rating
         lss.rotor_mass = 28560. # rotor mass [kg]
 
@@ -125,7 +125,7 @@ class Test_Gearbox(unittest.TestCase):
     def test1(self):
 
         gbx = Gearbox()
-        
+
         gbx.drivetrain_design = 1 # geared 3-stage Gearbox with induction generator machine
         gbx.machine_rating = 1500 # machine rating [kW]
         gbx.gear_ratio = 87.965
@@ -137,7 +137,7 @@ class Test_Gearbox(unittest.TestCase):
         gbx.rotor_diameter = 70. # rotor diameter [m]
         gbx.rotor_speed = 21.830
         DrivetrainEfficiency = 0.95
-        gbx.rotor_torque = (gbx.machine_rating * 1000. / DrivetrainEfficiency) / (gbx.rotor_speed * (np.pi / 30.)) 
+        gbx.rotor_torque = (gbx.machine_rating * 1000. / DrivetrainEfficiency) / (gbx.rotor_speed * (np.pi / 30.))
 
         check_gradient_unit_test(self, gbx,display=False)
 
@@ -155,9 +155,9 @@ class Test_HighSpeedSide(unittest.TestCase):
         hss.rotor_speed = 21.830
         DrivetrainEfficiency = 0.95
         hss.machine_rating = 1500.
-        hss.rotor_torque = (hss.machine_rating * 1000. / DrivetrainEfficiency) / (hss.rotor_speed * (np.pi / 30.)) 
+        hss.rotor_torque = (hss.machine_rating * 1000. / DrivetrainEfficiency) / (hss.rotor_speed * (np.pi / 30.))
             # rotor torque [Nm] calculated from max / rated rotor speed and machine rating
-        
+
         hss.lss_diameter = 1.5
 
         check_gradient_unit_test(self, hss,display=False)
@@ -189,9 +189,9 @@ class Test_Bedplate(unittest.TestCase):
         bpl.rotor_speed = 21.830
         DrivetrainEfficiency = 0.95
         bpl.machine_rating = 1500.
-        bpl.rotor_torque = (bpl.machine_rating * 1000. / DrivetrainEfficiency) / (bpl.rotor_speed * (np.pi / 30.)) 
+        bpl.rotor_torque = (bpl.machine_rating * 1000. / DrivetrainEfficiency) / (bpl.rotor_speed * (np.pi / 30.))
             # rotor torque [Nm] calculated from max / rated rotor speed and machine rating
-        bpl.rotor_thrust = 324000. 
+        bpl.rotor_thrust = 324000.
         bpl.rotor_mass = 28560. # rotor mass [kg]
         bpl.tower_top_diameter = 2.7 # tower top diameter [m]
 
@@ -224,7 +224,7 @@ class Test_YawSystem(unittest.TestCase):
         yaw = YawSystem()
 
         yaw.rotor_diameter = 70. # rotor diameter [m]
-        yaw.rotor_thrust = 324000. 
+        yaw.rotor_thrust = 324000.
         yaw.tower_top_diameter = 2.7 # tower top diameter [m]
         yaw.above_yaw_mass = 240000.
 
@@ -245,7 +245,7 @@ class Test_NacelleSystemAdder(unittest.TestCase):
         nac.hss_mass = 5000.
         nac.generator_mass = 5000.
         nac.bedplate_mass = 5000.
-        nac.mainframe_mass = 5000.
+        nac.mainframe_mass = 6000.
         nac.bedplate_mass = 5000.
         nac.lss_cm = np.array([-2.0, 1.0, 1.0])
         nac.main_bearing_cm = np.array([-2.0, 1.0, 1.0])
@@ -267,4 +267,4 @@ class Test_NacelleSystemAdder(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-    
+

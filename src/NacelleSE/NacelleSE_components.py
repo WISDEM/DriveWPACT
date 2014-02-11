@@ -1571,7 +1571,7 @@ class NacelleSystemAdder(Component): # changed name to nacelle - need to rename,
         self.d_I_d_gearbox_I = 1
         self.d_I_d_hss_I = 1
         self.d_I_d_generator_I = 1
-        self.d_I_d_mainframeI = 1
+        self.d_I_d_mainframeI = self.mainframe_mass / self.bedplate_mass
 
         self.d_I_d_lss_mass = np.array([0.0, 0.0, 0.0])
         for i in range(len(self.d_I_d_lss_mass)):

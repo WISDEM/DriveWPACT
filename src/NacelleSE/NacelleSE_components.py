@@ -156,7 +156,7 @@ class LowSpeedShaft(Component):
     def list_deriv_vars(self):
 
         inputs = ['rotor_diameter', 'rotor_torque', 'rotor_mass']
-        outputs = ['length', 'design_torque', 'design_bending_load', 'mass', 'cm', 'I']
+        outputs = ['length', 'design_torque', 'design_bending_load', 'diameter', 'mass', 'cm', 'I']
 
         return inputs, outputs
 
@@ -166,6 +166,7 @@ class LowSpeedShaft(Component):
         self.J = np.array([[self.d_length_d_rotor_diameter, 0, 0], \
                            [0, self.d_torque_d_rotor_torque, 0], \
                            [0, 0, self.d_bending_d_rotor_mass], \
+                           [self.d_diameter_d_rotor_diameter, self.d_diameter_d_rotor_torque, self.d_diameter_d_rotor_mass], \
                            [self.d_lss_mass_d_rotor_diameter, self.d_lss_mass_d_rotor_torque, self.d_lss_mass_d_rotor_mass], \
                            [self.d_cm_d_rotor_diameter[0], 0, 0], \
                            [self.d_cm_d_rotor_diameter[1], 0, 0], \

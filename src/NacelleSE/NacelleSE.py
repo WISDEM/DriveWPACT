@@ -55,14 +55,6 @@ class NacelleSE(NacelleBase):
           The NacelleSE class is used to represent the nacelle system of a wind turbine.
     '''
 
-    low_speed_shaft_mass = Float(iotype='out', units='kg', desc='component mass')
-    main_bearing_mass = Float(iotype='out', units='kg', desc='component mass')
-    second_bearing_mass = Float(iotype='out', units='kg', desc='component mass')
-    gearbox_mass = Float(iotype='out', units='kg', desc='component mass')
-    high_speed_side_mass = Float(iotype='out', units='kg', desc='component mass')
-    generator_mass = Float(iotype='out', units='kg', desc='component mass')
-    bedplate_mass = Float(iotype='out', units='kg', desc='component mass')
-    yaw_system_mass = Float(iotype='out', units='kg', desc='component mass')
 
     def configure(self):
 

@@ -1658,7 +1658,9 @@ class NacelleSystemAdder(Component): # changed name to nacelle - need to rename,
                                            - 2 * self.hss_mass * (self.hss_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_mainframe_mass[j]) \
                                            - 2 * self.generator_mass * (self.generator_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_mainframe_mass[j]) \
                                            - 2 * self.mainframe_mass * (self.bedplate_cm[j] - self.nacelle_cm[j]) * (self.d_cm_d_mainframe_mass[j])
-
+        self.d_I_d_bedplate_mass = np.array([0.0, 0.0, 0.0])
+        for i in range(len(self.d_I_d_mainframe_mass)):
+            self.d_I_d_bedplate_mass[i] += -self.bedplate_I[i] * (self.mainframe_mass / (self.bedplate_mass**2.))
 
         self.d_I_d_lss_cm = np.zeros((3,3))
         for i in range(len(self.d_I_d_lss_cm)):
@@ -1742,7 +1744,7 @@ class NacelleSystemAdder(Component): # changed name to nacelle - need to rename,
 
         inputs = ['above_yaw_mass', 'yawMass', 'lss_mass', 'main_bearing_mass', 'second_bearing_mass', 'gearbox_mass', 'hss_mass', 'generator_mass', 'mainframe_mass', \
                       'lss_cm', 'main_bearing_cm', 'second_bearing_cm', 'gearbox_cm', 'hss_cm', 'generator_cm', 'bedplate_cm', \
-                      'lss_I', 'main_bearing_I', 'second_bearing_I', 'gearbox_I', 'hss_I', 'generator_I', 'bedplate_I']
+                      'lss_I', 'main_bearing_I', 'second_bearing_I', 'gearbox_I', 'hss_I', 'generator_I', 'bedplate_I', 'bedplate_mass']
         outputs = ['nacelle_mass', 'nacelle_cm', 'nacelle_I']
 
         return inputs, outputs
@@ -1752,31 +1754,31 @@ class NacelleSystemAdder(Component): # changed name to nacelle - need to rename,
         # Jacobian
         self.J = np.array([[self.d_mass_d_above_yaw_mass, self.d_mass_d_yawMass, 0, 0, 0, 0, 0, 0, 0, \
                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
-                            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
+                            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
                            [0, 0, self.d_cm_d_lss_mass[0], self.d_cm_d_main_bearing_mass[0], self.d_cm_d_second_bearing_mass[0], self.d_cm_d_gearbox_mass[0], self.d_cm_d_hss_mass[0], self.d_cm_d_generator_mass[0], self.d_cm_d_mainframe_mass[0], \
                             self.d_cm_d_lss_cm, 0, 0, self.d_cm_d_main_bearing_cm, 0, 0, self.d_cm_d_second_bearing_cm, 0, 0, self.d_cm_d_gearbox_cm, 0, 0, self.d_cm_d_hss_cm, 0, 0, self.d_cm_d_generator_cm, 0, 0, self.d_cm_d_mainframe_cm, 0, 0, \
-                            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
+                            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
                            [0, 0, self.d_cm_d_lss_mass[1], self.d_cm_d_main_bearing_mass[1], self.d_cm_d_second_bearing_mass[1], self.d_cm_d_gearbox_mass[1], self.d_cm_d_hss_mass[1], self.d_cm_d_generator_mass[1], self.d_cm_d_mainframe_mass[1], \
                             0, self.d_cm_d_lss_cm, 0, 0, self.d_cm_d_main_bearing_cm, 0, 0, self.d_cm_d_second_bearing_cm, 0, 0, self.d_cm_d_gearbox_cm, 0, 0, self.d_cm_d_hss_cm, 0, 0, self.d_cm_d_generator_cm, 0, 0, self.d_cm_d_mainframe_cm, 0, \
-                            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
+                            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
                            [0, 0, self.d_cm_d_lss_mass[2], self.d_cm_d_main_bearing_mass[2], self.d_cm_d_second_bearing_mass[2], self.d_cm_d_gearbox_mass[2], self.d_cm_d_hss_mass[2], self.d_cm_d_generator_mass[2], self.d_cm_d_mainframe_mass[2], \
                             0, 0, self.d_cm_d_lss_cm, 0, 0, self.d_cm_d_main_bearing_cm, 0, 0, self.d_cm_d_second_bearing_cm, 0, 0, self.d_cm_d_gearbox_cm, 0, 0, self.d_cm_d_hss_cm, 0, 0, self.d_cm_d_generator_cm, 0, 0, self.d_cm_d_mainframe_cm, \
-                            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
+                            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
                            [0, 0, self.d_I_d_lss_mass[0], self.d_I_d_main_bearing_mass[0], self.d_I_d_second_bearing_mass[0], self.d_I_d_gearbox_mass[0], self.d_I_d_hss_mass[0], self.d_I_d_generator_mass[0], self.d_I_d_mainframe_mass[0], \
                            self.d_I_d_lss_cm[0,0], self.d_I_d_lss_cm[0,1], self.d_I_d_lss_cm[0,2], self.d_I_d_main_bearing_cm[0,0], self.d_I_d_main_bearing_cm[0,1], self.d_I_d_main_bearing_cm[0,2], self.d_I_d_second_bearing_cm[0,0], self.d_I_d_second_bearing_cm[0,1], self.d_I_d_second_bearing_cm[0,2], \
                            self.d_I_d_gearbox_cm[0,0], self.d_I_d_gearbox_cm[0,1], self.d_I_d_gearbox_cm[0,2], self.d_I_d_hss_cm[0,0], self.d_I_d_hss_cm[0,1], self.d_I_d_hss_cm[0,2], self.d_I_d_generator_cm[0,0], self.d_I_d_generator_cm[0,1], self.d_I_d_generator_cm[0,2], self.d_I_d_mainframe_cm[0,0], self.d_I_d_mainframe_cm[0,1], self.d_I_d_mainframe_cm[0,2], \
-                           self.d_I_d_lss_I, 0, 0, self.d_I_d_main_bearing_I, 0, 0, self.d_I_d_second_bearing_I, 0, 0, self.d_I_d_gearbox_I, 0, 0, self.d_I_d_hss_I, 0, 0, self.d_I_d_generator_I, 0, 0, self.d_I_d_mainframeI, 0, 0], \
+                           self.d_I_d_lss_I, 0, 0, self.d_I_d_main_bearing_I, 0, 0, self.d_I_d_second_bearing_I, 0, 0, self.d_I_d_gearbox_I, 0, 0, self.d_I_d_hss_I, 0, 0, self.d_I_d_generator_I, 0, 0, self.d_I_d_mainframeI, 0, 0, self.d_I_d_bedplate_mass[0]], \
                            [0, 0, self.d_I_d_lss_mass[1], self.d_I_d_main_bearing_mass[1], self.d_I_d_second_bearing_mass[1], self.d_I_d_gearbox_mass[1], self.d_I_d_hss_mass[1], self.d_I_d_generator_mass[1], self.d_I_d_mainframe_mass[1], \
                            self.d_I_d_lss_cm[1,0], self.d_I_d_lss_cm[1,1], self.d_I_d_lss_cm[1,2], self.d_I_d_main_bearing_cm[1,0], self.d_I_d_main_bearing_cm[1,1], self.d_I_d_main_bearing_cm[1,2], self.d_I_d_second_bearing_cm[1,0], self.d_I_d_second_bearing_cm[1,1], self.d_I_d_second_bearing_cm[1,2], \
                            self.d_I_d_gearbox_cm[1,0], self.d_I_d_gearbox_cm[1,1], self.d_I_d_gearbox_cm[1,2], self.d_I_d_hss_cm[1,0], self.d_I_d_hss_cm[1,1], self.d_I_d_hss_cm[1,2], self.d_I_d_generator_cm[1,0], self.d_I_d_generator_cm[1,1], self.d_I_d_generator_cm[1,2], self.d_I_d_mainframe_cm[1,0], self.d_I_d_mainframe_cm[1,1], self.d_I_d_mainframe_cm[1,2], \
-                           0, self.d_I_d_lss_I, 0, 0, self.d_I_d_main_bearing_I, 0, 0, self.d_I_d_second_bearing_I, 0, 0, self.d_I_d_gearbox_I, 0, 0, self.d_I_d_hss_I, 0, 0, self.d_I_d_generator_I, 0, 0, self.d_I_d_mainframeI, 0], \
+                           0, self.d_I_d_lss_I, 0, 0, self.d_I_d_main_bearing_I, 0, 0, self.d_I_d_second_bearing_I, 0, 0, self.d_I_d_gearbox_I, 0, 0, self.d_I_d_hss_I, 0, 0, self.d_I_d_generator_I, 0, 0, self.d_I_d_mainframeI, 0, self.d_I_d_bedplate_mass[1]], \
                            [0, 0, self.d_I_d_lss_mass[2], self.d_I_d_main_bearing_mass[2], self.d_I_d_second_bearing_mass[2], self.d_I_d_gearbox_mass[2], self.d_I_d_hss_mass[2], self.d_I_d_generator_mass[2], self.d_I_d_mainframe_mass[2], \
                            self.d_I_d_lss_cm[2,0], self.d_I_d_lss_cm[2,1], self.d_I_d_lss_cm[2,2], self.d_I_d_main_bearing_cm[2,0], self.d_I_d_main_bearing_cm[2,1], self.d_I_d_main_bearing_cm[2,2], self.d_I_d_second_bearing_cm[2,0], self.d_I_d_second_bearing_cm[2,1], self.d_I_d_second_bearing_cm[2,2], \
                            self.d_I_d_gearbox_cm[2,0], self.d_I_d_gearbox_cm[2,1], self.d_I_d_gearbox_cm[2,2], self.d_I_d_hss_cm[2,0], self.d_I_d_hss_cm[2,1], self.d_I_d_hss_cm[2,2], self.d_I_d_generator_cm[2,0], self.d_I_d_generator_cm[2,1], self.d_I_d_generator_cm[2,2], self.d_I_d_mainframe_cm[2,0], self.d_I_d_mainframe_cm[2,1], self.d_I_d_mainframe_cm[2,2], \
-                           0, 0, self.d_I_d_lss_I, 0, 0, self.d_I_d_main_bearing_I, 0, 0, self.d_I_d_second_bearing_I, 0, 0, self.d_I_d_gearbox_I, 0, 0, self.d_I_d_hss_I, 0, 0, self.d_I_d_generator_I, 0, 0, self.d_I_d_mainframeI], \
-                           [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
-                           [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
-                           [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
+                           0, 0, self.d_I_d_lss_I, 0, 0, self.d_I_d_main_bearing_I, 0, 0, self.d_I_d_second_bearing_I, 0, 0, self.d_I_d_gearbox_I, 0, 0, self.d_I_d_hss_I, 0, 0, self.d_I_d_generator_I, 0, 0, self.d_I_d_mainframeI, self.d_I_d_bedplate_mass[2]], \
+                           [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
+                           [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], \
+                           [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]])
         return self.J
 
 #--------------------------------------------------------------------------------------------------------

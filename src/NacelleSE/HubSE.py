@@ -151,9 +151,9 @@ def example():
     print '  hub         {0:8.1f} kg'.format(hub.hub.mass)  # 31644.47
     print '  pitch mech  {0:8.1f} kg'.format(hub.pitchSystem.mass) # 17003.98
     print '  nose cone   {0:8.1f} kg'.format(hub.spinner.mass) # 1810.50
-    print 'Hub system total {0:8.1f} kg'.format(hub.mass) # 50458.95
-    print '    cm {0:6.2f} {1:6.2f} {2:6.2f}'.format(hub.cm[0], hub.cm[1], hub.cm[2])
-    print '    I {0:6.1f} {1:6.1f} {2:6.1f}'.format(hub.I[0], hub.I[1], hub.I[2])
+    print 'Hub system total {0:8.1f} kg'.format(hub.hub_system_mass) # 50458.95
+    print '    cm {0:6.2f} {1:6.2f} {2:6.2f}'.format(hub.hub_system_cm[0], hub.hub_system_cm[1], hub.hub_system_cm[2])
+    print '    I {0:6.1f} {1:6.1f} {2:6.1f}'.format(hub.hub_system_I[0], hub.hub_system_I[1], hub.hub_system_I[2])
 
 def example2():
 

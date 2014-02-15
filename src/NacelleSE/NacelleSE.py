@@ -516,13 +516,13 @@ class NacelleSE_drive4pt(NacelleBase):
         # connect inputs
         self.connect('rotor_diameter', ['lowSpeedShaft.rotor_diameter', 'mainBearing.rotor_diameter', 'secondBearing.rotor_diameter', 'gearbox.rotor_diameter', 'highSpeedSide.rotor_diameter', \
                      'generator.rotor_diameter', 'bedplate.rotor_diameter', 'yawSystem.rotor_diameter'])
-        self.connect('rotor_bending_moment_x', 'lowSpeedShaft.rotor_bending_moment_x')
+        self.connect('rotor_bending_moment_x', ['lowSpeedShaft.rotor_bending_moment_x'])
         self.connect('rotor_bending_moment_y', ['bedplate.rotor_bending_moment_y','lowSpeedShaft.rotor_bending_moment_y'])
         self.connect('rotor_bending_moment_z', 'lowSpeedShaft.rotor_bending_moment_z')
         self.connect('rotor_force_x', 'lowSpeedShaft.rotor_force_x')
         self.connect('rotor_force_y', 'lowSpeedShaft.rotor_force_y')
         self.connect('rotor_force_z', ['bedplate.rotor_force_z','lowSpeedShaft.rotor_force_z'])
-        self.connect('rotor_torque', ['gearbox.rotor_torque', 'highSpeedSide.rotor_torque'])
+        self.connect('rotor_torque', ['gearbox.rotor_torque', 'highSpeedSide.rotor_torque']) # Need to address internal torque calculations...
         self.connect('rotor_mass', ['bedplate.rotor_mass','lowSpeedShaft.rotor_mass'])
         self.connect('rotor_thrust', 'yawSystem.rotor_thrust')
         self.connect('tower_top_diameter', ['bedplate.tower_top_diameter', 'yawSystem.tower_top_diameter'])
@@ -688,7 +688,7 @@ def example():
     # 9097.4 kg
     print 'Yaw system      %8.1f kg' % (nace.yawSystem.mass )
     # 11878.2 kg
-    print 'Overall nacelle:  %8.1f kg cm %6.2f %6.2f %6.2f I %6.2f %6.2f %6.2f' % (nace.mass, nace.cm[0], nace.cm[1], nace.cm[2], nace.I[0], nace.I[1], nace.I[2]  )
+    print 'Overall nacelle:  %8.1f kg cm %6.2f %6.2f %6.2f I %6.2f %6.2f %6.2f' % (nace.nacelle_mass, nace.nacelle_cm[0], nace.nacelle_cm[1], nace.nacelle_cm[2], nace.nacelle_I[0], nace.nacelle_I[1], nace.nacelle_I[2]  )
     # 207727.1
 
 

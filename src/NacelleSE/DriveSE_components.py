@@ -128,7 +128,7 @@ def resize_for_bearings(D_mb, mbtype):
         if mbtype == 'CARB':
               D_mb_a = 0.3 #m
               FW_mb = 0.2
-        elif self.bearing_type == 'SRB':
+        elif mbtype == 'SRB':
               D_mb_a = 0.3 #m
               FW_mb = 0.2
     elif D_mb <= 0.4:
@@ -582,10 +582,10 @@ class LowSpeedShaft_drive4pt(Component):
         lss_mass_new *= 1.3 # add flange and shrink disk mass
         self.length=L_mb_new + (FW_max+FW_med)/2 # TODO: create linear relationship based on power rating
         #print ("L_mb: {0}").format(L_mb)
-        print ("LSS length, m: {0}").format(self.length)
+        #print ("LSS length, m: {0}").format(self.length)
         self.D_outer=D_max
-        print ("Upwind MB OD, m: {0}").format(D_max_a)
-        print ("Dnwind MB OD, m: {0}").format(D_med_a)
+        #print ("Upwind MB OD, m: {0}").format(D_max_a)
+        #print ("Dnwind MB OD, m: {0}").format(D_med_a)
        # print ("D_min: {0}").format(D_min)
         self.D_inner=D_in
         self.mass=lss_mass_new
@@ -1266,7 +1266,7 @@ class Bearing_drive(Component):
 
         #print self.mass
         self.mass += self.mass*(8000.0/2700.0) # add housing weight
-        print ("MB Mass, kg: {0}").format(self.mass)
+        #print ("MB Mass, kg: {0}").format(self.mass)
 
 class MainBearing_drive(Bearing_drive): 
     ''' MainBearings class          
@@ -1960,7 +1960,7 @@ class Bedplate_drive(Component):
           frontCounter = counter
 
 
-        print 'steel rear bedplate length: '
+        '''print 'steel rear bedplate length: '
         print rearTotalLength
 
         print 'cast front bedplate length: '
@@ -1988,7 +1988,7 @@ class Bedplate_drive(Component):
         print totalSteelMass
 
         print 'total bedplate mass:'
-        print totalSteelMass+ totalCastMass
+        print totalSteelMass+ totalCastMass'''
         self.mass = totalCastMass+ totalSteelMass
         self.length = frontTotalLength + rearTotalLength
         self.width = b0 + self.tower_top_diameter

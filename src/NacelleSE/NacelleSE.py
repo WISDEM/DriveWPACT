@@ -275,9 +275,9 @@ class NacelleSE_drive(NacelleBase):
         self.connect('bedplate.I', ['nacelleSystem.bedplate_I'])
 
         # create passthroughs
-        self.create_passthrough('nacelleSystem.mass')
-        self.create_passthrough('nacelleSystem.cm')
-        self.create_passthrough('nacelleSystem.I')
+        self.connect('nacelleSystem.nacelle_mass', 'nacelle_mass')
+        self.connect('nacelleSystem.nacelle_cm', 'nacelle_cm')
+        self.connect('nacelleSystem.nacelle_I', 'nacelle_I')
 
 
     '''def getNacelleComponentMasses(self):
@@ -418,9 +418,9 @@ class NacelleSE_drive3pt(NacelleBase):
         self.connect('bedplate.I', ['nacelleSystem.bedplate_I'])
 
         # create passthroughs
-        self.create_passthrough('nacelleSystem.mass')
-        self.create_passthrough('nacelleSystem.cm')
-        self.create_passthrough('nacelleSystem.I')
+        self.connect('nacelleSystem.nacelle_mass', 'nacelle_mass')
+        self.connect('nacelleSystem.nacelle_cm', 'nacelle_cm')
+        self.connect('nacelleSystem.nacelle_I', 'nacelle_I')
 
 
     '''def getNacelleComponentMasses(self):
@@ -508,13 +508,13 @@ class NacelleSE_drive4pt(NacelleBase):
         # connect inputs
         self.connect('rotor_diameter', ['lowSpeedShaft.rotor_diameter', 'mainBearing.rotor_diameter', 'secondBearing.rotor_diameter', 'gearbox.rotor_diameter', 'highSpeedSide.rotor_diameter', \
                      'generator.rotor_diameter', 'bedplate.rotor_diameter', 'yawSystem.rotor_diameter'])
-        self.connect('rotor_bending_moment_x', 'lowSpeedShaft.rotor_bending_moment_x')
+        self.connect('rotor_bending_moment_x', ['lowSpeedShaft.rotor_bending_moment_x'])
         self.connect('rotor_bending_moment_y', ['bedplate.rotor_bending_moment_y','lowSpeedShaft.rotor_bending_moment_y'])
         self.connect('rotor_bending_moment_z', 'lowSpeedShaft.rotor_bending_moment_z')
         self.connect('rotor_force_x', 'lowSpeedShaft.rotor_force_x')
         self.connect('rotor_force_y', 'lowSpeedShaft.rotor_force_y')
         self.connect('rotor_force_z', ['bedplate.rotor_force_z','lowSpeedShaft.rotor_force_z'])
-        self.connect('rotor_torque', ['gearbox.rotor_torque', 'highSpeedSide.rotor_torque'])
+        self.connect('rotor_torque', ['gearbox.rotor_torque', 'highSpeedSide.rotor_torque']) # Need to address internal torque calculations...
         self.connect('rotor_mass', ['bedplate.rotor_mass','lowSpeedShaft.rotor_mass'])
         self.connect('rotor_thrust', 'yawSystem.rotor_thrust')
         self.connect('tower_top_diameter', ['bedplate.tower_top_diameter', 'yawSystem.tower_top_diameter'])
@@ -574,9 +574,9 @@ class NacelleSE_drive4pt(NacelleBase):
         self.connect('bedplate.I', ['nacelleSystem.bedplate_I'])
 
         # create passthroughs
-        self.create_passthrough('nacelleSystem.mass')
-        self.create_passthrough('nacelleSystem.cm')
-        self.create_passthrough('nacelleSystem.I')
+        self.connect('nacelleSystem.nacelle_mass', 'nacelle_mass')
+        self.connect('nacelleSystem.nacelle_cm', 'nacelle_cm')
+        self.connect('nacelleSystem.nacelle_I', 'nacelle_I')
 
 
     '''def getNacelleComponentMasses(self):
@@ -680,7 +680,7 @@ def example():
     # 9097.4 kg
     print 'Yaw system      %8.1f kg' % (nace.yawSystem.mass )
     # 11878.2 kg
-    print 'Overall nacelle:  %8.1f kg cm %6.2f %6.2f %6.2f I %6.2f %6.2f %6.2f' % (nace.mass, nace.cm[0], nace.cm[1], nace.cm[2], nace.I[0], nace.I[1], nace.I[2]  )
+    print 'Overall nacelle:  %8.1f kg cm %6.2f %6.2f %6.2f I %6.2f %6.2f %6.2f' % (nace.nacelle_mass, nace.nacelle_cm[0], nace.nacelle_cm[1], nace.nacelle_cm[2], nace.nacelle_I[0], nace.nacelle_I[1], nace.nacelle_I[2]  )
     # 207727.1
 
 
@@ -858,268 +858,10 @@ def example2():
     # 11878.2 kg
     print 'Overall nacelle:  %8.1f kg .cm %6.2f %6.2f %6.2f I %6.2f %6.2f %6.2f' % (nace.nacelle_mass, nace.nacelle_cm[0], nace.nacelle_cm[1], nace.nacelle_cm[2], nace.nacelle_I[0], nace.nacelle_I[1], nace.nacelle_I[2]  )
 
-def example_80_redesign():
-
-    # test of module for turbine data set
-
-    # NREL 5 MW Rotor Variables with Optimalized Blade Design
-    print '----- NREL 5 MW Turbine with Optimalized Blade Design at 80m/s-----'
-    nace = NacelleSE_drive4pt()
-    nace.rotor_diameter = 126.0 # m
-    nace.rotor_speed = 12.1 # m/s
-    DrivetrainEfficiency = 0.95
-    nace.machine_rating = 5000
-    nace.rotor_torque =  1.5 * (nace.machine_rating * 1000 / DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30)) # 6.35e6 #4365248.74 # Nm
-    #nace.rotor_torque = 6.37e6 #4365248.74 # Nm
-    nace.rotor_thrust = 560450 #500930.84 # N
-    nace.rotor_mass = 0.0 #142585.75 # kg
-    nace.rotorRatedRPM = 12.1 #rpm
-    nace.rotor_bending_moment = 14700000.0 #DLC 1.4
-    nace.rotor_bending_moment_x = 3.0151e5 #4365248.74
-    nace.rotor_bending_moment_y = -14619000 #14700000.0
-    nace.rotor_bending_moment_z = 1885400 #0.0
-    nace.rotor_force_x = 560450 #500930.84
-    nace.rotor_force_y = 165440 #0.0
-    nace.rotor_force_z = -804320 #1e6
-
-
-    # NREL 5 MW Drivetrain variables
-    nace.drivetrain_design = 1 # geared 3-stage Gearbox with induction generator machine
-    nace.machine_rating = 5000.0 # kW
-    nace.gear_ratio = 96.76 # 97:1 as listed in the 5 MW reference document
-    nace.gear_configuration = 'eep' # epicyclic-epicyclic-parallel
-    #nace.bevel = 0 # no bevel stage
-    nace.crane = True # onboard crane present
-    nace.shaft_angle = 5.0 #deg
-    nace.shaft_length = 3.383 #m
-    nace.shaftD1 = 0.25
-    nace.shaftD2 = 0.75
-    nace.shaft_ratio = 0.10
-    nace.Np = [3,3,1]
-    nace.ratio_type = 'optimal'
-    nace.shaft_type = 'normal'
-    nace.uptower_transformer=True
-    nace.shrink_disc_mass = 1000.0 # estimated
-    nace.carrier_mass = 8000.0 # estimated
-    nace.mb1Type = 'CARB'
-    nace.mb2Type = 'SRB'
-
-
-    # NREL 5 MW Tower Variables
-    nace.tower_top_diameter = 3.78 # m
-
-    nace.run()
-
-    print 'Nacelle system model results'
-    print 'Low speed shaft %8.1f kg %6.2f m Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
-          % (nace.lowSpeedShaft.mass , nace.lowSpeedShaft.I[0], nace.lowSpeedShaft.I[1], nace.lowSpeedShaft.I[2], nace.lowSpeedShaft.cm[0], nace.lowSpeedShaft.cm[1], nace.lowSpeedShaft.cm[2])
-    # 31257.3 kg
-    print 'Main bearings   %8.1f kg ' % (nace.mainBearing.mass + nace.secondBearing.mass)
-    # 9731.4 kg
-    print 'Gearbox         %8.1f kg %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
-          % (nace.gearbox.mass, nace.gearbox.I[0], nace.gearbox.I[1], nace.gearbox.I[2], nace.gearbox.cm[0], nace.gearbox.cm[1], nace.gearbox.cm[2] )
-    # 30237.6 kg
-    print '     gearbox stage masses: %8.1f kg  %8.1f kg %8.1f kg' % (nace.gearbox.stage_masses[0], nace.gearbox.stage_masses[1], nace.gearbox.stage_masses[2])
-    print 'High speed shaft & brakes  %8.1f kg %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
-          % (nace.highSpeedSide.mass, nace.highSpeedSide.I[0], nace.highSpeedSide.I[1], nace.highSpeedSide.I[2], nace.highSpeedSide.cm[0], nace.highSpeedSide.cm[1], nace.highSpeedSide.cm[2])
-    # 1492.4 kg
-    print 'Generator       %8.1f kg %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
-          % (nace.generator.mass, nace.generator.I[0], nace.generator.I[1], nace.generator.I[2], nace.generator.cm[0], nace.generator.cm[1], nace.generator.cm[2])
-    # 16699.9 kg
-    print 'Variable speed electronics %8.1f kg' % (nace.above_yaw_massAdder.vs_electronics_mass)
-    # 0.0 kg
-    print 'Overall mainframe %8.1f kg' % (nace.above_yaw_massAdder.mainframe_mass)
-    # 96932.9 kg
-    print '     Bedplate     %8.1f kg %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
-         % (nace.bedplate.mass, nace.bedplate.I[0], nace.bedplate.I[1], nace.bedplate.I[2], nace.bedplate.cm[0], nace.bedplate.cm[1], nace.bedplate.cm[2])
-    print 'electrical connections  %8.1f kg' % (nace.above_yaw_massAdder.electrical_mass)
-    # 0.0 kg
-    print 'HVAC system     %8.1f kg' % (nace.above_yaw_massAdder.hvac_mass )
-    # 400.0 kg
-    print 'Nacelle cover:   %8.1f kg %6.2f m Height %6.2f m Width %6.2f m Length' % (nace.above_yaw_massAdder.cover_mass , nace.above_yaw_massAdder.height, nace.above_yaw_massAdder.width, nace.above_yaw_massAdder.length)
-    # 9097.4 kg
-    print 'Yaw system      %8.1f kg' % (nace.yawSystem.mass )
-    # 11878.2 kg
-    print 'Overall nacelle:  %8.1f kg .cm %6.2f %6.2f %6.2f I %6.2f %6.2f %6.2f' % (nace.mass, nace.cm[0], nace.cm[1], nace.cm[2], nace.I[0], nace.I[1], nace.I[2]  )
-    # 207727.1
-
-
-def example_100_redesign():
-
-    # test of module for turbine data set
-
-    # NREL 5 MW Rotor Variables with Optimalized Blade Design
-    print '----- NREL 5 MW Turbine with Optimalized Blade Design at 100m/s-----'
-    nace = NacelleSE_drive4pt()
-    nace.rotor_diameter = 126.0 # m
-    nace.rotor_speed = 15.1 # m/s
-    DrivetrainEfficiency = 0.95
-    nace.machine_rating = 5000
-    nace.rotor_torque =  1.5 * (nace.machine_rating * 1000 / DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30)) # 6.35e6 #4365248.74 # Nm
-    #nace.rotor_torque = 6.37e6 #4365248.74 # Nm
-    nace.rotor_thrust = 875740 #500930.84 # N
-    nace.rotor_mass = 0.0 #142585.75 # kg
-    nace.rotorRatedRPM = 15.1 #rpm
-    nace.rotor_bending_moment = 15498000 #DLC 1.4
-    nace.rotor_bending_moment_x = 3933900 #4365248.74
-    nace.rotor_bending_moment_y = -15498000 #14700000.0
-    nace.rotor_bending_moment_z = -28998 #0.0
-    nace.rotor_force_x = 875740 #500930.84
-    nace.rotor_force_y = 23503 #0.0
-    nace.rotor_force_z = -1339300 #1e6
-
-
-    # NREL 5 MW Drivetrain variables
-    nace.drivetrain_design = 1 # geared 3-stage Gearbox with induction generator machine
-    nace.machine_rating = 5000.0 # kW
-    nace.gear_ratio = 77.4081 # 97:1 as listed in the 5 MW reference document
-    nace.gear_configuration = 'eep' # epicyclic-epicyclic-parallel
-    #nace.bevel = 0 # no bevel stage
-    nace.crane = True # onboard crane present
-    nace.shaft_angle = 5.0 #deg
-    nace.shaft_length = 3.383 #m
-    nace.shaftD1 = 0.25
-    nace.shaftD2 = 0.75
-    nace.shaft_ratio = 0.10
-    nace.Np = [4,4,1]
-    nace.ratio_type = 'optimal'
-    nace.shaft_type = 'normal'
-    nace.uptower_transformer=True
-    nace.shrink_disc_mass = 1000.0 # estimated
-    nace.carrier_mass = 8000.0 # estimated
-    nace.mb1Type = 'CARB'
-    nace.mb2Type = 'SRB'
-
-
-    # NREL 5 MW Tower Variables
-    nace.tower_top_diameter = 3.78 # m
-
-    nace.run()
-
-    print 'Nacelle system model results'
-    print 'Low speed shaft %8.1f kg %6.2f m Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
-          % (nace.lowSpeedShaft.mass , nace.lowSpeedShaft.I[0], nace.lowSpeedShaft.I[1], nace.lowSpeedShaft.I[2], nace.lowSpeedShaft.cm[0], nace.lowSpeedShaft.cm[1], nace.lowSpeedShaft.cm[2])
-    # 31257.3 kg
-    print 'Main bearings   %8.1f kg ' % (nace.mainBearing.mass + nace.secondBearing.mass)
-    # 9731.4 kg
-    print 'Gearbox         %8.1f kg %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
-          % (nace.gearbox.mass, nace.gearbox.I[0], nace.gearbox.I[1], nace.gearbox.I[2], nace.gearbox.cm[0], nace.gearbox.cm[1], nace.gearbox.cm[2] )
-    # 30237.6 kg
-    print '     gearbox stage masses: %8.1f kg  %8.1f kg %8.1f kg' % (nace.gearbox.stage_masses[0], nace.gearbox.stage_masses[1], nace.gearbox.stage_masses[2])
-    print 'High speed shaft & brakes  %8.1f kg %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
-          % (nace.highSpeedSide.mass, nace.highSpeedSide.I[0], nace.highSpeedSide.I[1], nace.highSpeedSide.I[2], nace.highSpeedSide.cm[0], nace.highSpeedSide.cm[1], nace.highSpeedSide.cm[2])
-    # 1492.4 kg
-    print 'Generator       %8.1f kg %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
-          % (nace.generator.mass, nace.generator.I[0], nace.generator.I[1], nace.generator.I[2], nace.generator.cm[0], nace.generator.cm[1], nace.generator.cm[2])
-    # 16699.9 kg
-    print 'Variable speed electronics %8.1f kg' % (nace.above_yaw_massAdder.vs_electronics_mass)
-    # 0.0 kg
-    print 'Overall mainframe %8.1f kg' % (nace.above_yaw_massAdder.mainframe_mass)
-    # 96932.9 kg
-    print '     Bedplate     %8.1f kg %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
-         % (nace.bedplate.mass, nace.bedplate.I[0], nace.bedplate.I[1], nace.bedplate.I[2], nace.bedplate.cm[0], nace.bedplate.cm[1], nace.bedplate.cm[2])
-    print 'electrical connections  %8.1f kg' % (nace.above_yaw_massAdder.electrical_mass)
-    # 0.0 kg
-    print 'HVAC system     %8.1f kg' % (nace.above_yaw_massAdder.hvac_mass )
-    # 400.0 kg
-    print 'Nacelle cover:   %8.1f kg %6.2f m Height %6.2f m Width %6.2f m Length' % (nace.above_yaw_massAdder.cover_mass , nace.above_yaw_massAdder.height, nace.above_yaw_massAdder.width, nace.above_yaw_massAdder.length)
-    # 9097.4 kg
-    print 'Yaw system      %8.1f kg' % (nace.yawSystem.mass )
-    # 11878.2 kg
-    print 'Overall nacelle:  %8.1f kg .cm %6.2f %6.2f %6.2f I %6.2f %6.2f %6.2f' % (nace.mass, nace.cm[0], nace.cm[1], nace.cm[2], nace.I[0], nace.I[1], nace.I[2]  )
-    # 207727.1
-
-
-def example_100_ideal():
-
-    # test of module for turbine data set
-
-    # NREL 5 MW Rotor Variables with Optimalized Blade Design
-    print '----- NREL 5 MW Turbine with Optimalized Blade Design Ideal Situation-----'
-    nace = NacelleSE_drive4pt()
-    nace.rotor_diameter = 126.0 # m
-    nace.rotor_speed = 15.1 # m/s
-    DrivetrainEfficiency = 0.95
-    nace.machine_rating = 5000
-    nace.rotor_torque =  1.5 * (nace.machine_rating * 1000 / DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30)) # 6.35e6 #4365248.74 # Nm
-    #nace.rotor_torque = 6.37e6 #4365248.74 # Nm
-    nace.rotor_thrust = 560450 #500930.84 # N
-    nace.rotor_mass = 0.0 #142585.75 # kg
-    nace.rotorRatedRPM = 15.1 #rpm
-    nace.rotor_bending_moment = 14700000.0 #DLC 1.4
-    nace.rotor_bending_moment_x = 3.0151e5 #4365248.74
-    nace.rotor_bending_moment_y = -14619000 #14700000.0
-    nace.rotor_bending_moment_z = 1885400 #0.0
-    nace.rotor_force_x = 560450 #500930.84
-    nace.rotor_force_y = 165440 #0.0
-    nace.rotor_force_z = -804320 #1e6
-
-
-    # NREL 5 MW Drivetrain variables
-    nace.drivetrain_design = 1 # geared 3-stage Gearbox with induction generator machine
-    nace.machine_rating = 5000.0 # kW
-    nace.gear_ratio = 77.4081 # 97:1 as listed in the 5 MW reference document
-    nace.gear_configuration = 'eep' # epicyclic-epicyclic-parallel
-    #nace.bevel = 0 # no bevel stage
-    nace.crane = True # onboard crane present
-    nace.shaft_angle = 5.0 #deg
-    nace.shaft_length = 3.383 #m
-    nace.shaftD1 = 0.25
-    nace.shaftD2 = 0.75
-    nace.shaft_ratio = 0.10
-    nace.Np = [4,4,1]
-    nace.ratio_type = 'optimal'
-    nace.shaft_type = 'normal'
-    nace.uptower_transformer=True
-    nace.shrink_disc_mass = 1000.0 # estimated
-    nace.carrier_mass = 8000.0 # estimated
-    nace.mb1Type = 'CARB'
-    nace.mb2Type = 'SRB'
-
-
-    # NREL 5 MW Tower Variables
-    nace.tower_top_diameter = 3.78 # m
-
-    nace.run()
-
-    print 'Nacelle system model results'
-    print 'Low speed shaft %8.1f kg %6.2f m Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
-          % (nace.lowSpeedShaft.mass , nace.lowSpeedShaft.I[0], nace.lowSpeedShaft.I[1], nace.lowSpeedShaft.I[2], nace.lowSpeedShaft.cm[0], nace.lowSpeedShaft.cm[1], nace.lowSpeedShaft.cm[2])
-    # 31257.3 kg
-    print 'Main bearings   %8.1f kg ' % (nace.mainBearing.mass + nace.secondBearing.mass)
-    # 9731.4 kg
-    print 'Gearbox         %8.1f kg %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
-          % (nace.gearbox.mass, nace.gearbox.I[0], nace.gearbox.I[1], nace.gearbox.I[2], nace.gearbox.cm[0], nace.gearbox.cm[1], nace.gearbox.cm[2] )
-    # 30237.6 kg
-    print '     gearbox stage masses: %8.1f kg  %8.1f kg %8.1f kg' % (nace.gearbox.stage_masses[0], nace.gearbox.stage_masses[1], nace.gearbox.stage_masses[2])
-    print 'High speed shaft & brakes  %8.1f kg %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
-          % (nace.highSpeedSide.mass, nace.highSpeedSide.I[0], nace.highSpeedSide.I[1], nace.highSpeedSide.I[2], nace.highSpeedSide.cm[0], nace.highSpeedSide.cm[1], nace.highSpeedSide.cm[2])
-    # 1492.4 kg
-    print 'Generator       %8.1f kg %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
-          % (nace.generator.mass, nace.generator.I[0], nace.generator.I[1], nace.generator.I[2], nace.generator.cm[0], nace.generator.cm[1], nace.generator.cm[2])
-    # 16699.9 kg
-    print 'Variable speed electronics %8.1f kg' % (nace.above_yaw_massAdder.vs_electronics_mass)
-    # 0.0 kg
-    print 'Overall mainframe %8.1f kg' % (nace.above_yaw_massAdder.mainframe_mass)
-    # 96932.9 kg
-    print '     Bedplate     %8.1f kg %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
-         % (nace.bedplate.mass, nace.bedplate.I[0], nace.bedplate.I[1], nace.bedplate.I[2], nace.bedplate.cm[0], nace.bedplate.cm[1], nace.bedplate.cm[2])
-    print 'electrical connections  %8.1f kg' % (nace.above_yaw_massAdder.electrical_mass)
-    # 0.0 kg
-    print 'HVAC system     %8.1f kg' % (nace.above_yaw_massAdder.hvac_mass )
-    # 400.0 kg
-    print 'Nacelle cover:   %8.1f kg %6.2f m Height %6.2f m Width %6.2f m Length' % (nace.above_yaw_massAdder.cover_mass , nace.above_yaw_massAdder.height, nace.above_yaw_massAdder.width, nace.above_yaw_massAdder.length)
-    # 9097.4 kg
-    print 'Yaw system      %8.1f kg' % (nace.yawSystem.mass )
-    # 11878.2 kg
-    print 'Overall nacelle:  %8.1f kg .cm %6.2f %6.2f %6.2f I %6.2f %6.2f %6.2f' % (nace.mass, nace.cm[0], nace.cm[1], nace.cm[2], nace.I[0], nace.I[1], nace.I[2]  )
-    # 207727.1
 
 if __name__ == '__main__':
     ''' Main runs through tests of several drivetrain configurations with known component masses and dimensions '''
 
-    #example()
-    #example_80_redesign()
-    #example_100_redesign()
-    #example_100_ideal()
+    example()
+
     example2()

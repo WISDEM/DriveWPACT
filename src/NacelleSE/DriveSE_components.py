@@ -178,7 +178,14 @@ def resize_for_bearings(D_mb, mbtype):
               D_mb_a = 1.0 #
               FW_mb = 0.375
       elif mbtype == 'SRB':
-              D_mb_a = 1 #
+              D_mb_a = 1.0 #
+              FW_mb = 0.5
+    elif D_mb <= 1.1:
+      if mbtype == 'CARB':
+              D_mb_a = 1.1 #
+              FW_mb = 0.4
+      elif mbtype == 'SRB':
+              D_mb_a = 1.1 #
               FW_mb = 0.5
     else:
       if mbtype == 'CARB':
@@ -1250,11 +1257,19 @@ class Bearing_drive(Component):
 
         elif self.lss_diameter <= 1.0:   # modified by Y.G. FOR TSS 
             if self.bearing_type == 'CARB':
-                self.mass = 1570 #13400 kN
+                self.mass = 1570. #13400 kN
             elif self.bearing_type == 'SRB':
-                self.mass = 1400 #14500 kN
+                self.mass = 1400. #14500 kN
             elif self.bearing_type == 'TRB':
-                self.mass = 1061.43 #7550 KN
+                self.mass = 1061.43 #7550 KN # need update
+
+        elif self.lss_diameter <= 1.1:   # modified by Y.G. FOR TSS # TODO: need updates
+            if self.bearing_type == 'CARB':
+                self.mass = 2000. #13400 kN
+            elif self.bearing_type == 'SRB':
+                self.mass = 2000. #14500 kN
+            elif self.bearing_type == 'TRB':
+                self.mass = 1061.43 #7550 KN # need update
 
         else:                              # modified by Y.G. FOR TSS 
             if self.bearing_type == 'CARB':
@@ -1262,7 +1277,7 @@ class Bearing_drive(Component):
             elif self.bearing_type == 'SRB':
                 self.mass = 2960 #21200 kN
             elif self.bearing_type == 'TRB':
-                self.mass = 1061.43 #7550 KN
+                self.mass = 1061.43 #7550 KN # need update
 
         #print self.mass
         self.mass += self.mass*(8000.0/2700.0) # add housing weight
@@ -1934,11 +1949,13 @@ class Bedplate_drive(Component):
           rotorFzTipDefl = midDeflection(frontTotalLength,rotorLoc,rotorFz/2.0,E,I)
           selfTipDefl = distDeflection(frontTotalLength,w*g,E,I)
           rotorMyTipDefl = rotorMy/2.0*frontTotalLength**2/(2.0*E*I)
+          #rotorMyTipDefl = rotorMy*frontTotalLength**2/(2.0*E*I)
 
           totalTipDefl = mb1TipDefl + mb2TipDefl + lssTipDefl  + rotorTipDefl + selfTipDefl +rotorMyTipDefl + rotorFzTipDefl
 
           #root stress
           totalBendingMoment=(mb1_location*self.mb1_mass/2.0 + mb2_location*self.mb2_mass/2.0 + lss_location*self.lss_mass/2.0 + w*frontTotalLength**2/2.0 + rotorLoc*self.rotor_mass/2.0)*g + rotorLoc*rotorFz/2.0 +rotorMy/2.0
+          #totalBendingMoment=(mb1_location*self.mb1_mass/2.0 + mb2_location*self.mb2_mass/2.0 + lss_location*self.lss_mass/2.0 + w*frontTotalLength**2/2.0 + rotorLoc*self.rotor_mass)*g + rotorLoc*rotorFz/2.0 +rotorMy/2.0
           rootStress = totalBendingMoment*h0/2/I
 
           #mass
@@ -1989,7 +2006,11 @@ class Bedplate_drive(Component):
 
         print 'total bedplate mass:'
         print totalSteelMass+ totalCastMass'''
+
+        front_frame_support_multiplier = 1.4
+        totalCastMass *= front_frame_support_multiplier
         self.mass = totalCastMass+ totalSteelMass
+        
         self.length = frontTotalLength + rearTotalLength
         self.width = b0 + self.tower_top_diameter
 

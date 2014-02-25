@@ -2007,7 +2007,7 @@ class Bedplate_drive(Component):
         print 'total bedplate mass:'
         print totalSteelMass+ totalCastMass'''
 
-        front_frame_support_multiplier = 1.4
+        front_frame_support_multiplier = 1.33 # based on solidworks estimate
         totalCastMass *= front_frame_support_multiplier
         self.mass = totalCastMass+ totalSteelMass
         

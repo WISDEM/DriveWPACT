@@ -148,23 +148,44 @@ def resize_for_bearings(D_mb, mbtype):
     elif D_mb <= 0.6:
       if mbtype == 'CARB':
               D_mb_a = 0.6 #
-              FW_mb = 0.375
+              FW_mb = 0.35
       elif mbtype == 'SRB':
               D_mb_a = 0.6 #
-              FW_mb = 0.375
-    elif D_mb <= 0.75:
+              FW_mb = 0.35
+    elif D_mb <= 0.65:
+      if mbtype == 'CARB':
+              D_mb_a = 0.63 #
+              FW_mb = 0.35
+      elif mbtype == 'SRB':
+              D_mb_a = 0.63 #
+              FW_mb = 0.35 
+    elif D_mb <= 0.70:
+      if mbtype == 'CARB':
+              D_mb_a = 0.67 #
+              FW_mb = 0.35
+      elif mbtype == 'SRB':
+              D_mb_a = 0.67 #
+              FW_mb = 0.375     
+    elif D_mb <= 0.73:
       if mbtype == 'CARB':
               D_mb_a = 0.71 #
-              FW_mb = 0.345
+              FW_mb = 0.35
+      elif mbtype == 'SRB':
+              D_mb_a = 0.71 #
+              FW_mb = 0.4        
+    elif D_mb <= 0.75:
+      if mbtype == 'CARB':
+              D_mb_a = 0.75 #
+              FW_mb = 0.375
       elif mbtype == 'SRB':
               D_mb_a = 0.75 #
               FW_mb = 0.44          
     elif D_mb <= 0.8:
       if mbtype == 'CARB':
-              D_mb_a = 0.8 #
+              D_mb_a = 0.78 #
               FW_mb = 0.375
       elif mbtype == 'SRB':
-              D_mb_a = 0.8 #
+              D_mb_a = 0.78 #
               FW_mb = 0.475
     elif D_mb <= 0.95:
       if mbtype == 'CARB':
@@ -173,19 +194,19 @@ def resize_for_bearings(D_mb, mbtype):
       elif mbtype == 'SRB':
               D_mb_a = 0.95 #
               FW_mb = 0.525           
-    elif D_mb <= 1.0:
+    elif D_mb <= 1.005:
       if mbtype == 'CARB':
               D_mb_a = 1.0 #
               FW_mb = 0.375
       elif mbtype == 'SRB':
               D_mb_a = 1.0 #
               FW_mb = 0.5
-    elif D_mb <= 1.1:
+    elif D_mb <= 1.25:
       if mbtype == 'CARB':
-              D_mb_a = 1.1 #
+              D_mb_a = 1.25 #
               FW_mb = 0.4
       elif mbtype == 'SRB':
-              D_mb_a = 1.1 #
+              D_mb_a = 1.25 #
               FW_mb = 0.5
     else:
       if mbtype == 'CARB':
@@ -194,7 +215,8 @@ def resize_for_bearings(D_mb, mbtype):
       elif mbtype == 'SRB':
               D_mb_a = 1.25 #
               FW_mb = 0.5   
-    
+    print D_mb_a
+    print FW_mb
     return [D_mb_a, FW_mb]
 
 #-------------------------------------------------------------------------------
@@ -588,12 +610,12 @@ class LowSpeedShaft_drive4pt(Component):
                          (pi/4)*(D_in**2)*density*(L_mb+(FW_max+FW_med)/2)
         lss_mass_new *= 1.3 # add flange and shrink disk mass
         self.length=L_mb_new + (FW_max+FW_med)/2 # TODO: create linear relationship based on power rating
-        #print ("L_mb: {0}").format(L_mb)
-        #print ("LSS length, m: {0}").format(self.length)
+        print ("L_mb: {0}").format(L_mb)
+        print ("LSS length, m: {0}").format(self.length)
         self.D_outer=D_max
-        #print ("Upwind MB OD, m: {0}").format(D_max_a)
-        #print ("Dnwind MB OD, m: {0}").format(D_med_a)
-       # print ("D_min: {0}").format(D_min)
+        print ("Upwind MB OD, m: {0}").format(D_max_a)
+        print ("Dnwind MB OD, m: {0}").format(D_med_a)
+        print ("D_min: {0}").format(D_min)
         self.D_inner=D_in
         self.mass=lss_mass_new
         self.diameter1= D_max_a
@@ -1197,7 +1219,7 @@ class Bearing_drive(Component):
         
         super(Bearing_drive, self).__init__()
     
-    def execute(self):
+    def execute(self):# TRB needs to be modified!! Y. Guo
 
         if self.lss_diameter <= 0.3:
             if self.bearing_type == 'CARB':
@@ -1211,7 +1233,7 @@ class Bearing_drive(Component):
             if self.bearing_type == 'CARB':
                 self.mass = 145 #3650 kN
             elif self.bearing_type == 'SRB':
-                self.mass = 148.7 #3310 kN
+                self.mass = 220 #3310 kN
             elif self.bearing_type == 'TRB':
                 self.mass = 162.55 #3210 KN
         
@@ -1219,18 +1241,23 @@ class Bearing_drive(Component):
             if self.bearing_type == 'CARB':
                 self.mass = 225 #4250 kN
             elif self.bearing_type == 'SRB':
-                self.mass = 220 #4290 kN
+                self.mass = 440 #4290 kN
             elif self.bearing_type == 'TRB':
                 self.mass = 220.08 #3460 KN
-
         elif self.lss_diameter <= 0.6:
             if self.bearing_type == 'CARB':
                 self.mass = 390 #6300 kN
             elif self.bearing_type == 'SRB':
-                self.mass = 390 #6040 kN
+                self.mass = 715 #6040 kN
             elif self.bearing_type == 'TRB':
                 self.mass = 323.6 #5730 KN
-
+        elif self.lss_diameter <= 0.65:
+            if self.bearing_type == 'CARB':
+                self.mass = 525 #6300 kN
+            elif self.bearing_type == 'SRB':
+                self.mass = 1050 #6040 kN
+            elif self.bearing_type == 'TRB':
+                self.mass = 323.6 #5730 KN
         elif self.lss_diameter <= 0.7:  # modified by Y.G. FOR TSS 
             if self.bearing_type == 'CARB':
                 self.mass = 645 #8800 kN
@@ -1238,20 +1265,19 @@ class Bearing_drive(Component):
                 self.mass = 1400 #8370 kN 
             elif self.bearing_type == 'TRB':
                 self.mass = 513.79 #8740 KN
-
         elif self.lss_diameter <= 0.8:
             if self.bearing_type == 'CARB':
-                self.mass = 860 #9150 kN
+                self.mass = 860. #9150 kN
             elif self.bearing_type == 'SRB':
-                self.mass = 875 #9780 kN
+                self.mass = 1700. #9780 kN
             elif self.bearing_type == 'TRB':
                 self.mass = 660.60 #8520 KN
 
         elif self.lss_diameter <= 0.9:
             if self.bearing_type == 'CARB':
-                self.mass = 1200 #12700 kN
+                self.mass = 1200. #12700 kN
             elif self.bearing_type == 'SRB':
-                self.mass = 1322 #12200 kN
+                self.mass = 2130. #12200 kN
             elif self.bearing_type == 'TRB':
                 self.mass = 1361.12 #12600 KN
 
@@ -1259,15 +1285,15 @@ class Bearing_drive(Component):
             if self.bearing_type == 'CARB':
                 self.mass = 1570. #13400 kN
             elif self.bearing_type == 'SRB':
-                self.mass = 1400. #14500 kN
+                self.mass = 2250. #14500 kN
             elif self.bearing_type == 'TRB':
                 self.mass = 1061.43 #7550 KN # need update
 
-        elif self.lss_diameter <= 1.1:   # modified by Y.G. FOR TSS # TODO: need updates
+        elif self.lss_diameter <= 1.1:   # modified by Y.G. 
             if self.bearing_type == 'CARB':
                 self.mass = 2000. #13400 kN
             elif self.bearing_type == 'SRB':
-                self.mass = 2000. #14500 kN
+                self.mass = 2500. #14500 kN
             elif self.bearing_type == 'TRB':
                 self.mass = 1061.43 #7550 KN # need update
 
@@ -1279,9 +1305,9 @@ class Bearing_drive(Component):
             elif self.bearing_type == 'TRB':
                 self.mass = 1061.43 #7550 KN # need update
 
-        #print self.mass
+        print self.mass
         self.mass += self.mass*(8000.0/2700.0) # add housing weight
-        #print ("MB Mass, kg: {0}").format(self.mass)
+        print ("MB Mass, kg: {0}").format(self.mass)
 
 class MainBearing_drive(Bearing_drive): 
     ''' MainBearings class          

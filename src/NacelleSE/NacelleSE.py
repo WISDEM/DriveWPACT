@@ -858,6 +858,180 @@ def example2():
     # 11878.2 kg
     print 'Overall nacelle:  %8.1f kg .cm %6.2f %6.2f %6.2f I %6.2f %6.2f %6.2f' % (nace.nacelle_mass, nace.nacelle_cm[0], nace.nacelle_cm[1], nace.nacelle_cm[2], nace.nacelle_I[0], nace.nacelle_I[1], nace.nacelle_I[2]  )
 
+def example3():
+
+    # WindPACT 1.5 MW Drivetrain variables
+    nace = NacelleSE()
+    nace.drivetrain_design = 1 # geared 3-stage Gearbox with induction generator machine
+    nace.machine_rating = 1500 # machine rating [kW]
+    nace.gear_ratio = 87.965
+    nace.gear_configuration = 'epp'
+    nace.bevel = 0
+    nace.crane = True
+
+    # WindPACT 1.5 MW Rotor Variables
+    airdensity = 1.225 # air density [kg / m^3]
+    MaxTipSpeed = 80 # max tip speed [m/s]
+    nace.rotor_diameter = 70 # rotor diameter [m]
+    nace.rotor_speed = 21.830
+    DrivetrainEfficiency = 0.95
+    nace.rotor_torque = (nace.machine_rating * 1000 / DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30))
+        # rotor torque [Nm] calculated from max / rated rotor speed and machine rating
+    nace.rotor_thrust = 324000.
+    nace.rotor_mass = 28560. # rotor mass [kg]
+
+    # WindPACT 1.5 MW Tower Variables
+    nace.tower_top_diameter = 2.7 # tower top diameter [m]
+
+    print '----- WindPACT 1.5 MW Turbine -----'
+    nace.run()
+
+    print 'Nacelle system model results'
+    print 'Low speed shaft %8.1f kg %6.2f m Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
+          % (nace.lowSpeedShaft.mass , nace.lowSpeedShaft.I[0], nace.lowSpeedShaft.I[1], nace.lowSpeedShaft.I[2], nace.lowSpeedShaft.cm[0], nace.lowSpeedShaft.cm[1], nace.lowSpeedShaft.cm[2])
+    # 31257.3 kg
+    print 'Main bearings   %8.1f kg ' % (nace.mainBearing.mass + nace.secondBearing.mass)
+    # 9731.4 kg
+    print 'Gearbox         %8.1f kg %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
+          % (nace.gearbox.mass, nace.gearbox.I[0], nace.gearbox.I[1], nace.gearbox.I[2], nace.gearbox.cm[0], nace.gearbox.cm[1], nace.gearbox.cm[2] )
+    # 30237.6 kg
+    #print '     gearbox stage masses: %8.1f kg  %8.1f kg %8.1f kg' % (nace.gearbox.stage_masses[1], nace.gearbox.stage_masses[2], nace.gearbox.stage_masses[3])
+    print 'High speed shaft & brakes  %8.1f kg %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
+          % (nace.highSpeedSide.mass, nace.highSpeedSide.I[0], nace.highSpeedSide.I[1], nace.highSpeedSide.I[2], nace.highSpeedSide.cm[0], nace.highSpeedSide.cm[1], nace.highSpeedSide.cm[2])
+    # 1492.4 kg
+    print 'Generator       %8.1f kg %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
+          % (nace.generator.mass, nace.generator.I[0], nace.generator.I[1], nace.generator.I[2], nace.generator.cm[0], nace.generator.cm[1], nace.generator.cm[2])
+    # 16699.9 kg
+    print 'Variable speed electronics %8.1f kg' % (nace.above_yaw_massAdder.vs_electronics_mass)
+    # 0.0 kg
+    print 'Overall mainframe %8.1f kg' % (nace.above_yaw_massAdder.mainframe_mass)
+    # 96932.9 kg
+    print '     Bedplate     %8.1f kg %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
+         % (nace.bedplate.mass, nace.bedplate.I[0], nace.bedplate.I[1], nace.bedplate.I[2], nace.bedplate.cm[0], nace.bedplate.cm[1], nace.bedplate.cm[2])
+    print 'electrical connections  %8.1f kg' % (nace.above_yaw_massAdder.electrical_mass)
+    # 0.0 kg
+    print 'HVAC system     %8.1f kg' % (nace.above_yaw_massAdder.hvac_mass )
+    # 400.0 kg
+    print 'Nacelle cover:   %8.1f kg %6.2f m Height %6.2f m Width %6.2f m Length' % (nace.above_yaw_massAdder.cover_mass , nace.above_yaw_massAdder.height, nace.above_yaw_massAdder.width, nace.above_yaw_massAdder.length)
+    # 9097.4 kg
+    print 'Yaw system      %8.1f kg' % (nace.yawSystem.mass )
+    # 11878.2 kg
+    print 'Overall nacelle:  %8.1f kg .cm %6.2f %6.2f %6.2f I %6.2f %6.2f %6.2f' % (nace.nacelle_mass, nace.nacelle_cm[0], nace.nacelle_cm[1], nace.nacelle_cm[2], nace.nacelle_I[0], nace.nacelle_I[1], nace.nacelle_I[2]  )
+    # 207727.1
+
+    # GRC Drivetrain variables
+    nace.drivetrain_design = 1 # geared 3-stage Gearbox with induction generator machine
+    nace.machine_rating = 750 # machine rating [kW]
+    nace.gear_ratio = 81.491
+    nace.gear_configuration = 'epp'
+    nace.bevel = 0
+
+    # GRC Rotor Variables
+    airdensity = 1.225 # air density [kg / m^3]
+    MaxTipSpeed = 8 # max tip speed [m/s]
+    nace.rotor_diameter = 48.2 # rotor diameter [m]
+    #rotor_speed = MaxTipSpeed / ((rotor_diameter / 2) * (pi / 30)) # max / rated rotor speed [rpm] calculated from max tip speed and rotor diamter
+    nace.rotor_speed = 22
+    DrivetrainEfficiency = 0.944
+    nace.rotor_torque = (nace.machine_rating * 1000 / DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30)) # rotor torque [Nm] calculated from max / rated rotor speed and machine rating
+    nace.rotor_thrust = 159000 # based on windpact 750 kW design (GRC information not available)
+    nace.rotor_mass = 13200 # rotor mass [kg]
+
+    # Tower Variables
+    nace.tower_top_diameter = 2 # tower top diameter [m] - not given
+
+    print '----- GRC 750 kW Turbine -----'
+    nace.run()
+
+    print 'Nacelle system model results'
+    print 'Low speed shaft %8.1f kg %6.2f m Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
+          % (nace.lowSpeedShaft.mass , nace.lowSpeedShaft.I[0], nace.lowSpeedShaft.I[1], nace.lowSpeedShaft.I[2], nace.lowSpeedShaft.cm[0], nace.lowSpeedShaft.cm[1], nace.lowSpeedShaft.cm[2])
+    # 31257.3 kg
+    print 'Main bearings   %8.1f kg ' % (nace.mainBearing.mass + nace.secondBearing.mass)
+    # 9731.4 kg
+    print 'Gearbox         %8.1f kg %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
+          % (nace.gearbox.mass, nace.gearbox.I[0], nace.gearbox.I[1], nace.gearbox.I[2], nace.gearbox.cm[0], nace.gearbox.cm[1], nace.gearbox.cm[2] )
+    # 30237.6 kg
+    #print '     gearbox stage masses: %8.1f kg  %8.1f kg %8.1f kg' % (nace.gearbox.stage_masses[1], nace.gearbox.stage_masses[2], nace.gearbox.stage_masses[3])
+    print 'High speed shaft & brakes  %8.1f kg %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
+          % (nace.highSpeedSide.mass, nace.highSpeedSide.I[0], nace.highSpeedSide.I[1], nace.highSpeedSide.I[2], nace.highSpeedSide.cm[0], nace.highSpeedSide.cm[1], nace.highSpeedSide.cm[2])
+    # 1492.4 kg
+    print 'Generator       %8.1f kg %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
+          % (nace.generator.mass, nace.generator.I[0], nace.generator.I[1], nace.generator.I[2], nace.generator.cm[0], nace.generator.cm[1], nace.generator.cm[2])
+    # 16699.9 kg
+    print 'Variable speed electronics %8.1f kg' % (nace.above_yaw_massAdder.vs_electronics_mass)
+    # 0.0 kg
+    print 'Overall mainframe %8.1f kg' % (nace.above_yaw_massAdder.mainframe_mass)
+    # 96932.9 kg
+    print '     Bedplate     %8.1f kg %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
+         % (nace.bedplate.mass, nace.bedplate.I[0], nace.bedplate.I[1], nace.bedplate.I[2], nace.bedplate.cm[0], nace.bedplate.cm[1], nace.bedplate.cm[2])
+    print 'electrical connections  %8.1f kg' % (nace.above_yaw_massAdder.electrical_mass)
+    # 0.0 kg
+    print 'HVAC system     %8.1f kg' % (nace.above_yaw_massAdder.hvac_mass )
+    # 400.0 kg
+    print 'Nacelle cover:   %8.1f kg %6.2f m Height %6.2f m Width %6.2f m Length' % (nace.above_yaw_massAdder.cover_mass , nace.above_yaw_massAdder.height, nace.above_yaw_massAdder.width, nace.above_yaw_massAdder.length)
+    # 9097.4 kg
+    print 'Yaw system      %8.1f kg' % (nace.yawSystem.mass )
+    # 11878.2 kg
+    print 'Overall nacelle:  %8.1f kg .cm %6.2f %6.2f %6.2f I %6.2f %6.2f %6.2f' % (nace.nacelle_mass, nace.nacelle_cm[0], nace.nacelle_cm[1], nace.nacelle_cm[2], nace.nacelle_I[0], nace.nacelle_I[1], nace.nacelle_I[2]  )
+    # 207727.1
+
+    # Alstom Drivetrain variables
+    nace.drivetrain_design = 1 # geared 3-stage Gearbox with induction generator machine
+    nace.machine_rating = 3000 # machine rating [kW]
+    nace.gear_ratio = 102.19 #
+    nace.gear_configuration = 'eep'
+    nace.bevel = 0
+
+    # Alstom Rotor Variables
+    airdensity = 1.225 # air density [kg / m^3]
+    MaxTipSpeed = 80 # max tip speed [m/s]
+    nace.rotor_diameter = 100.8 # rotor diameter [m]
+    #rotor_speed = MaxTipSpeed / ((rotor_diameter / 2) * (pi / 30)) # max / rated rotor speed [rpm] calculated from max tip speed and rotor diamter
+    nace.rotor_speed = 15.1 # based on windpact 3 MW
+    DrivetrainEfficiency = 0.95
+    nace.rotor_torque = (nace.machine_rating * 1000 / DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30)) # rotor torque [Nm] calculated from max / rated rotor speed and machine rating
+    nace.rotor_thrust = 797000. # based on windpact 3.0 MW - Alstom thrust not provided
+    nace.rotor_mass = 49498. # rotor mass [kg] - not given - using Windpact 3.0 MW
+
+    # Tower Variables
+    nace.tower_top_diameter = 3.5 # tower top diameter [m] - not given
+
+    print '----- Alstom 3.0 MW Turbine -----'
+    nace.run()
+
+    print 'Nacelle system model results'
+    print 'Low speed shaft %8.1f kg %6.2f m Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
+          % (nace.lowSpeedShaft.mass , nace.lowSpeedShaft.I[0], nace.lowSpeedShaft.I[1], nace.lowSpeedShaft.I[2], nace.lowSpeedShaft.cm[0], nace.lowSpeedShaft.cm[1], nace.lowSpeedShaft.cm[2])
+    # 31257.3 kg
+    print 'Main bearings   %8.1f kg ' % (nace.mainBearing.mass + nace.secondBearing.mass)
+    # 9731.4 kg
+    print 'Gearbox         %8.1f kg %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
+          % (nace.gearbox.mass, nace.gearbox.I[0], nace.gearbox.I[1], nace.gearbox.I[2], nace.gearbox.cm[0], nace.gearbox.cm[1], nace.gearbox.cm[2] )
+    # 30237.6 kg
+    #print '     gearbox stage masses: %8.1f kg  %8.1f kg %8.1f kg' % (nace.gearbox.stage_masses[1], nace.gearbox.stage_masses[2], nace.gearbox.stage_masses[3])
+    print 'High speed shaft & brakes  %8.1f kg %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
+          % (nace.highSpeedSide.mass, nace.highSpeedSide.I[0], nace.highSpeedSide.I[1], nace.highSpeedSide.I[2], nace.highSpeedSide.cm[0], nace.highSpeedSide.cm[1], nace.highSpeedSide.cm[2])
+    # 1492.4 kg
+    print 'Generator       %8.1f kg %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
+          % (nace.generator.mass, nace.generator.I[0], nace.generator.I[1], nace.generator.I[2], nace.generator.cm[0], nace.generator.cm[1], nace.generator.cm[2])
+    # 16699.9 kg
+    print 'Variable speed electronics %8.1f kg' % (nace.above_yaw_massAdder.vs_electronics_mass)
+    # 0.0 kg
+    print 'Overall mainframe %8.1f kg' % (nace.above_yaw_massAdder.mainframe_mass)
+    # 96932.9 kg
+    print '     Bedplate     %8.1f kg %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
+         % (nace.bedplate.mass, nace.bedplate.I[0], nace.bedplate.I[1], nace.bedplate.I[2], nace.bedplate.cm[0], nace.bedplate.cm[1], nace.bedplate.cm[2])
+    print 'electrical connections  %8.1f kg' % (nace.above_yaw_massAdder.electrical_mass)
+    # 0.0 kg
+    print 'HVAC system     %8.1f kg' % (nace.above_yaw_massAdder.hvac_mass )
+    # 400.0 kg
+    print 'Nacelle cover:   %8.1f kg %6.2f m Height %6.2f m Width %6.2f m Length' % (nace.above_yaw_massAdder.cover_mass , nace.above_yaw_massAdder.height, nace.above_yaw_massAdder.width, nace.above_yaw_massAdder.length)
+    # 9097.4 kg
+    print 'Yaw system      %8.1f kg' % (nace.yawSystem.mass )
+    # 11878.2 kg
+    print 'Overall nacelle:  %8.1f kg .cm %6.2f %6.2f %6.2f I %6.2f %6.2f %6.2f' % (nace.nacelle_mass, nace.nacelle_cm[0], nace.nacelle_cm[1], nace.nacelle_cm[2], nace.nacelle_I[0], nace.nacelle_I[1], nace.nacelle_I[2]  )
+
 
 if __name__ == '__main__':
     ''' Main runs through tests of several drivetrain configurations with known component masses and dimensions '''

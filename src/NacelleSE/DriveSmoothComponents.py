@@ -228,14 +228,13 @@ class BearingSmooth(Component):
     def execute(self):
 
         # setup spline for mass as function of diameter
-        dpt = [0.0, 0.1, 0.2, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95, 1.1, 1.2, 1.3, 1.4]
+        dpt = [0.0, 0.1, 0.2, 0.25, 0.35, 0.45, 0.55, 0.65, 0.75, 0.85, 0.95, 1.05, 1.15, 1.2, 1.3, 1.4]
 
         if self.bearing_type == 'CARB':
-            mpt = [120.0, 120.0, 120.0, 120.0, 145.0, 225.0, 390.0, 645.0, 860.0, 1200.0, 1570.0, 2740.0, 2740.0, 2740.0, 2740.0]
+            mpt = [120.0, 120.0, 120.0, 120.0, 145.0, 225.0, 390.0, 645.0, 860.0, 1200.0, 1570.0, 2000.0, 2740.0, 2740.0, 2740.0, 2740.0]
 
         elif self.bearing_type == 'SRB':
-            # mpt = [128.7, 128.7, 128.7, 128.7, 148.7, 220.0, 390.0, 1400.0, 875.0, 1322.0, 1400.0, 2960.0, 2960.0, 2960.0, 2960.0]
-            mpt = [128.7, 128.7, 128.7, 128.7, 148.7, 220.0, 390.0, 600.0, 875.0, 1100.0, 1400.0, 2960.0, 2960.0, 2960.0, 2960.0]
+            mpt = [128.7, 128.7, 128.7, 128.7, 220.0, 440.0, 715.0, 1200.0, 1600.0, 2000.0, 2350.0, 2700.0, 2960.0, 2960.0, 2960.0, 2960.0]
 
         # TODO: TRB bearing type
 
@@ -354,6 +353,8 @@ class BedplateSmooth(Component):
 
         # rootStress = 250e6
         # totalTipDefl = 1.0
+        # maxstress = 50e6
+        maxstress = 9e6
 
         def midDeflection(totalLength, loadLength, load, E, I):
             defl = load*loadLength**2.0*(3.0*totalLength - loadLength)/(6.0*E*I)
@@ -388,7 +389,7 @@ class BedplateSmooth(Component):
         totalBendingMoment = (self.hss_location*self.hss_mass + self.generator_location*self.generator_mass + convLoc*convMass + transLoc*transformer_mass + w*rearTotalLength**2/2.0)*g
         rootStress = totalBendingMoment*h0/2/I
 
-        self.rootStress_margin_rear = (rootStress - 50e6 - stressTol)/50e6
+        self.rootStress_margin_rear = (rootStress - maxstress - stressTol)/maxstress
 
         #mass
         steelVolume = A*rearTotalLength
@@ -439,7 +440,7 @@ class BedplateSmooth(Component):
         totalBendingMoment=(mb1_location*self.mb1_mass/2.0 + mb2_location*self.mb2_mass/2.0 + lss_location*self.lss_mass/2.0 + w*frontTotalLength**2/2.0 + rotorLoc*self.rotor_mass/2.0)*g + rotorLoc*rotorFz/2.0 +rotorMy/2.0
         rootStress = totalBendingMoment*h0/2/I
 
-        self.rootStress_margin_front = (rootStress - 50e6 - stressTol)/50e6
+        self.rootStress_margin_front = (rootStress - maxstress - stressTol)/maxstress
 
         #mass
         castVolume = A*frontTotalLength
@@ -448,6 +449,8 @@ class BedplateSmooth(Component):
         #2 parallel I-beams
         totalCastMass = 2.0*castMass
 
+        front_frame_support_multiplier = 1.33
+        totalCastMass *= front_frame_support_multiplier
         self.mass = totalCastMass + totalSteelMass
         self.length = frontTotalLength + rearTotalLength
         self.width = b0 + self.tower_top_diameter

@@ -718,17 +718,19 @@ class LowSpeedShaft_drive3pt(Component):
         gamma = self.shaft_angle #deg LSS angle wrt horizontal
 
         L_ms_new = 0.0
-        L_ms_0=1.732 # main shaft length downwind of main bearing
+        L_ms_0=1.0 # main shaft length downwind of main bearing
         L_ms=L_ms_0
         tol=1e-4 
         check_limit = 1.0
         dL=0.025
+        D_max = 1.0
+        D_min = 0.2
 
         T=M_r_x/1000.0
 
         #Main bearing defelection check
         MB_limit = 0.026
-        CB_limit = 4/60/180*pi
+        CB_limit = 0.0012
         n_safety_brg = 1.0
 
         while abs(check_limit) > tol:
@@ -738,21 +740,25 @@ class LowSpeedShaft_drive3pt(Component):
                 L_ms=L_ms_0
 
             #Distances
-            L_rb = 1.912/2.0    #distance from hub center to main bearing
+            L_rb = 1.912/*(machine_rating/5.0e3)   #distance from hub center to main bearing scaled off NREL 5MW
             L_bg = 6.11         #distance from hub center to gearbox yokes
             L_as = L_ms/2.0     #distance from main bearing to shaft center
             L_gb = 0.0          #distance to gbx center from trunnions in x-dir
             H_gb = 1.0          #distance to gbx center from trunnions in z-dir     
             L_gp = 0.825        #distance from gbx coupling to gbx trunnions
+            L_cu = L_ms + 0.5
+            L_cd = L_cu + 0.1
 
             #print L_rb
 
             #Weight properties
-            weightRotor=self.rotor_mass*g                             #rotor weight
-            massLSS = pi/4*(0.5**2 - 0.075**2)*L_ms*7800
+            weightRotor=self.rotor_mass*g*0                             #rotor weight accounted for in F_z
+            massLSS = pi/3*(D_max**2.0 + D_min**2.0 + D_max*D_min)*L_ms*density/4.0
             weightLSS = massLSS*g       #LSS weight
             weightShrinkDisc = self.shrink_disc_mass*g                #shrink disc weight
             weightGbx = self.gearbox_mass*g                              #gearbox weight
+            massCarrier = 8.03e3
+            weightCarrier = massCarrier*g
 
             len_pts=101;
             x_ms = np.linspace(L_rb, L_ms+L_rb, len_pts)
@@ -762,26 +768,33 @@ class LowSpeedShaft_drive3pt(Component):
             #len_my = np.arange(1,len(M_r_y)+1)
 
             F_mb_x = -F_r_x - weightRotor*sin(radians(g))
-            F_mb_y = M_r_z/L_bg
+            F_mb_y = M_r_z/L_bg - F_r_y*(L_bg + L_rb)/L_bg
             F_mb_z = (-M_r_y + weightRotor*(cos(radians(gamma))*(L_rb + L_bg)\
-             + sin(radians(gamma))*H_gb) + weightLSS*(L_bg - L_as)\
-             * cos(radians(gamma)) + weightShrinkDisc*cos(radians(gamma))\
-             *(L_bg - L_ms) - weightGbx*cos(radians(gamma))*L_gb)/L_bg
+            + sin(radians(gamma))*H_gb) + weightLSS*(L_bg - L_as)\
+            * cos(radians(gamma)) + weightShrinkDisc*cos(radians(gamma))\
+            *(L_bg - L_ms) - weightGbx*cos(radians(gamma))*L_gb - F_r_z*cos(radians(gamma))*(L_bg + L_rb))/L_bg
+
 
             F_gb_x = -(weightLSS+weightShrinkDisc+weightGbx)*sin(radians(gamma))
-            F_gb_y = -F_mb_y
-            F_gb_z = -F_mb_z + (weightLSS+weightShrinkDisc+weightGbx + weightRotor)*sin(radians(gamma))
+            F_gb_y = -F_mb_y - F_r_y
+            F_gb_z = -F_mb_z + (weightLSS+weightShrinkDisc+weightGbx + weightRotor)*cos(radians(gamma)) - F_r_z
+
+            F_cu_z = (weightLSS*cos(radians(gamma)) + weightShrinkDisc*cos(radians(gamma)) + weightGbx*cos(radians(gamma))) - F_mb_z - F_r_z \
+            - (-M_r_y - F_r_z*cos(radians(gamma))*L_rb + weightLSS*(L_bg - L_as)*cos(radians(gamma)) - weightCarrier*cos(radians(gamma))*L_gb)/(1 - L_cu/L_cd)
+
+            F_cd_z = (weightLSS*cos(radians(gamma)) + weightShrinkDisc*cos(radians(gamma)) + weightGbx*cos(radians(gamma))) - F_mb_z - F_r_z - F_cu_z 
+
 
             My_ms = np.zeros(2*len_pts)
             Mz_ms = np.zeros(2*len_pts)
 
             for k in range(len_pts):
-                My_ms[k] = -M_r_y + self.rotor_mass*cos(radians(gamma))*x_rb[k] + 0.5*weightLSS/L_ms*x_rb[k]**2
-                Mz_ms[k] = -M_r_z
+                My_ms[k] = -M_r_y + weightRotor*cos(radians(gamma))*x_rb[k] + 0.5*weightLSS/L_ms*x_rb[k]**2 - F_r_z*x_rb[k]
+                Mz_ms[k] = -M_r_z - F_r_y*x_rb[k]
 
             for j in range(len_pts):
-                My_ms[j+len_pts] = -M_r_y + weightRotor*cos(radians(gamma))*x_ms[j] - F_mb_z*(x_ms[j]-L_rb) + 0.5*weightLSS/L_ms*x_ms[j]**2
-                Mz_ms[j+len_pts] = -M_r_z - F_mb_y*(x_ms[j]-L_rb)
+                My_ms[j+len_pts] = -F_r_z*x_ms[j] - M_r_y + weightRotor*cos(radians(gamma))*x_ms[j] - F_mb_z*(x_ms[j]-L_rb) + 0.5*weightLSS/L_ms*x_ms[j]**2
+                Mz_ms[j+len_pts] = -M_r_z - F_mb_y*(x_ms[j]-L_rb) - F_r_y*x_ms[j]
 
             x_shaft = np.concatenate([x_rb, x_ms])
 
@@ -802,7 +815,7 @@ class LowSpeedShaft_drive3pt(Component):
 
             #Design shaft OD using distortion energy theory
             
-            n_safety=1.8
+            n_safety=2.5
             Sy = 66000.0 #psi
 
             #OD at Main Bearing
@@ -817,15 +830,16 @@ class LowSpeedShaft_drive3pt(Component):
 
             #Estimate ID
             D_in=self.shaft_ratio*D_max
-            D_max = D_max+D_in
-            D_min = D_min + D_in
+            D_max=(D_in**4.0 + D_max**4.0)**0.25
+            D_min=(D_in**4.0 + D_min**4.0)**0.25
             #print'Max shaft OD m:'
             #print D_max
             #print 'Min shaft OD m:'
             #print D_min
 
             density = 7800.0
-            weightLSS_new = (density*pi/12.0*L_ms*(D_max**2+D_min**2 + D_max*D_min) - density*pi/4.0*D_in**2*L_ms + density*pi/4.0*D_max**2*L_rb)*g
+            weightLSS_new = (density*pi/12.0*(L_ms - 0.2)*(D_max**2.0 + D_min**2.0 + D_max*D_min) - density*pi/4.0*D_in**2.0*(L_ms + 0.4) + \
+            density*pi/4.0*D_max**2*0.4 + density*pi/4.0*D_min**2*0.4)*g
             massLSS_new = weightLSS_new/g
 
             #print 'Old LSS mass kg:' 
@@ -858,11 +872,8 @@ class LowSpeedShaft_drive3pt(Component):
 
             check_limit = abs(theta_y[-1])-CB_limit/n_safety_brg
 
-            if check_limit < 0:
-                L_ms_new = L_ms + dL
+            L_ms_new = L_ms + dL
 
-            else:
-                L_ms_new = L_ms + dL
 
             #print 'new shaft length m:'
             #print L_ms_new

@@ -740,7 +740,7 @@ class LowSpeedShaft_drive3pt(Component):
                 L_ms=L_ms_0
 
             #Distances
-            L_rb = 1.912/*(machine_rating/5.0e3)   #distance from hub center to main bearing scaled off NREL 5MW
+            L_rb = 1.912*(machine_rating/5.0e3)   #distance from hub center to main bearing scaled off NREL 5MW
             L_bg = 6.11         #distance from hub center to gearbox yokes
             L_as = L_ms/2.0     #distance from main bearing to shaft center
             L_gb = 0.0          #distance to gbx center from trunnions in x-dir

@@ -317,6 +317,7 @@ class NacelleSE_drive3pt(NacelleBase):
     shaft_type = Str(iotype='in', desc = 'normal or short shaft length')
     uptower_transformer = Bool(iotype = 'in', desc = 'Boolean stating if transformer is uptower')
     shrink_disc_mass = Float(iotype='in', units='kg', desc='Mass of the shrink disc')
+    carrier_mass = Float(iotype='in', units='kg', desc='Carrier mass')
 
 
     # potential additional new parameters
@@ -600,22 +601,22 @@ def example():
 
     # NREL 5 MW Rotor Variables
     print '----- NREL 5 MW Turbine -----'
-    nace = NacelleSE_drive4pt()
+    nace = NacelleSE_drive3pt()
     nace.rotor_diameter = 126.0 # m
     nace.rotor_speed = 12.1 # m/s
     nace.machine_rating = 5000.0
     DrivetrainEfficiency = 0.95
     nace.rotor_torque =  1.5 * (nace.machine_rating * 1000 / DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30)) # 6.35e6 #4365248.74 # Nm
-    nace.rotor_thrust = 599610.0 #500930.84 # N
+    nace.rotor_thrust = 21670.00000
     nace.rotor_mass = 0.0 #142585.75 # kg
     nace.rotorRatedRPM = 12.1 #rpm
-    nace.rotor_bending_moment = -16665000.0 #DLC 1.4
-    nace.rotor_bending_moment_x = 3.3e5 #4365248.74
-    nace.rotor_bending_moment_y = -16665000.0 #14700000.0
-    nace.rotor_bending_moment_z = 2896300.0 #0.0
-    nace.rotor_force_x = 599610.0 #500930.84
-    nace.rotor_force_y = 186780.0 #0.0
-    nace.rotor_force_z = -842710.0 #1e6
+    nace.rotor_bending_moment = -1989900.00000
+    nace.rotor_bending_moment_x = -1482800.00000
+    nace.rotor_bending_moment_y = -1989900.00000
+    nace.rotor_bending_moment_z = -1678600.00000
+    nace.rotor_force_x = -687280.00000
+    nace.rotor_force_y = -21670.00000
+    nace.rotor_force_z = -1103300.00000
     # nace.rotor_bending_moment_x = 4.3268e6
     # nace.rotor_bending_moment_y = -1.0552e6
     # nace.rotor_bending_moment_z = -1.4607e7
@@ -659,7 +660,7 @@ def example():
     print 'Gearbox         %8.1f kg %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
           % (nace.gearbox.mass, nace.gearbox.I[0], nace.gearbox.I[1], nace.gearbox.I[2], nace.gearbox.cm[0], nace.gearbox.cm[1], nace.gearbox.cm[2] )
     # 30237.6 kg
-    print '     gearbox stage masses: %8.1f kg  %8.1f kg %8.1f kg' % (nace.gearbox.stage_masses[0], nace.gearbox.stage_masses[1], nace.gearbox.stage_masses[2])
+    #print '     gearbox stage masses: %8.1f kg  %8.1f kg %8.1f kg' % (nace.gearbox.stage_masses[0], nace.gearbox.stage_masses[1], nace.gearbox.stage_masses[2])
     print 'High speed shaft & brakes  %8.1f kg %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
           % (nace.highSpeedSide.mass, nace.highSpeedSide.I[0], nace.highSpeedSide.I[1], nace.highSpeedSide.I[2], nace.highSpeedSide.cm[0], nace.highSpeedSide.cm[1], nace.highSpeedSide.cm[2])
     # 1492.4 kg
@@ -1038,4 +1039,3 @@ if __name__ == '__main__':
 
     example()
 
-    example2()

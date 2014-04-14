@@ -880,11 +880,13 @@ class LowSpeedShaft_drive3pt(Component):
             #print L_ms_new
 
         self.length=L_ms_new
+        print self.length
         self.D_outer=D_max
         #print self.D_outer
         self.D_inner=D_in
         #print self.D_in
-        self.mass=massLSS_new
+        self.mass=massLSS
+        print self.mass
         self.diameter=D_max
 
         # calculate mass properties

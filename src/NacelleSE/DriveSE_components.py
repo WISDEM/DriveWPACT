@@ -716,6 +716,9 @@ class LowSpeedShaft_drive3pt(Component):
         M_r_z = self.rotor_bending_moment_z
         g = 9.81 #m/s
         gamma = self.shaft_angle #deg LSS angle wrt horizontal
+        PSF = 1.0
+        density = 7800.0
+
 
         L_ms_new = 0.0
         L_ms_0=1.0 # main shaft length downwind of main bearing
@@ -740,7 +743,7 @@ class LowSpeedShaft_drive3pt(Component):
                 L_ms=L_ms_0
 
             #Distances
-            L_rb = 1.912*(machine_rating/5.0e3)   #distance from hub center to main bearing scaled off NREL 5MW
+            L_rb = 1.912*(self.machine_rating/5.0e3)   #distance from hub center to main bearing scaled off NREL 5MW
             L_bg = 6.11         #distance from hub center to gearbox yokes
             L_as = L_ms/2.0     #distance from main bearing to shaft center
             L_gb = 0.0          #distance to gbx center from trunnions in x-dir
@@ -757,8 +760,7 @@ class LowSpeedShaft_drive3pt(Component):
             weightLSS = massLSS*g       #LSS weight
             weightShrinkDisc = self.shrink_disc_mass*g                #shrink disc weight
             weightGbx = self.gearbox_mass*g                              #gearbox weight
-            massCarrier = 8.03e3
-            weightCarrier = massCarrier*g
+            weightCarrier = self.carrier_mass*g
 
             len_pts=101;
             x_ms = np.linspace(L_rb, L_ms+L_rb, len_pts)
@@ -775,9 +777,9 @@ class LowSpeedShaft_drive3pt(Component):
             *(L_bg - L_ms) - weightGbx*cos(radians(gamma))*L_gb - F_r_z*cos(radians(gamma))*(L_bg + L_rb))/L_bg
 
 
-            F_gb_x = -(weightLSS+weightShrinkDisc+weightGbx)*sin(radians(gamma))
+            F_gb_x = -(weightLSS + weightShrinkDisc + weightGbx)*sin(radians(gamma))
             F_gb_y = -F_mb_y - F_r_y
-            F_gb_z = -F_mb_z + (weightLSS+weightShrinkDisc+weightGbx + weightRotor)*cos(radians(gamma)) - F_r_z
+            F_gb_z = -F_mb_z + (weightLSS + weightShrinkDisc + weightGbx + weightRotor)*cos(radians(gamma)) - F_r_z
 
             F_cu_z = (weightLSS*cos(radians(gamma)) + weightShrinkDisc*cos(radians(gamma)) + weightGbx*cos(radians(gamma))) - F_mb_z - F_r_z \
             - (-M_r_y - F_r_z*cos(radians(gamma))*L_rb + weightLSS*(L_bg - L_as)*cos(radians(gamma)) - weightCarrier*cos(radians(gamma))*L_gb)/(1 - L_cu/L_cd)
@@ -798,8 +800,8 @@ class LowSpeedShaft_drive3pt(Component):
 
             x_shaft = np.concatenate([x_rb, x_ms])
 
-            MM_max=np.amax((My_ms**2+Mz_ms**2)**0.5/1000.0)
-            Index=np.argmax((My_ms**2+Mz_ms**2)**0.5/1000.0)
+            MM_max=np.amax((My_ms**2 + Mz_ms**2)**0.5/1000.0)
+            Index=np.argmax((My_ms**2 + Mz_ms**2)**0.5/1000.0)
 
             #print 'Max Moment kNm:'
             #print MM_max
@@ -822,11 +824,11 @@ class LowSpeedShaft_drive3pt(Component):
             u_knm_inlb = 8850.745454036
             u_in_m = 0.0254000508001
             MM=MM_max
-            D_max=(16.0*n_safety/pi/Sy*(4.0*(MM*u_knm_inlb)**2+3.0*(T*u_knm_inlb)**2)**0.5)**(1.0/3.0)*u_in_m
+            D_max=(16.0*n_safety/pi/Sy*(4.0*(MM*u_knm_inlb)**2 + 3.0*(T*u_knm_inlb)**2)**0.5)**(1.0/3.0)*u_in_m
 
             #OD at end
             MM=MM_min
-            D_min=(16.0*n_safety/pi/Sy*(4.0*(MM*u_knm_inlb)**2+3.0*(T*u_knm_inlb)**2)**0.5)**(1.0/3.0)*u_in_m
+            D_min=(16.0*n_safety/pi/Sy*(4.0*(MM*u_knm_inlb)**2 + 3.0*(T*u_knm_inlb)**2)**0.5)**(1.0/3.0)*u_in_m
 
             #Estimate ID
             D_in=self.shaft_ratio*D_max
@@ -837,7 +839,6 @@ class LowSpeedShaft_drive3pt(Component):
             #print 'Min shaft OD m:'
             #print D_min
 
-            density = 7800.0
             weightLSS_new = (density*pi/12.0*(L_ms - 0.2)*(D_max**2.0 + D_min**2.0 + D_max*D_min) - density*pi/4.0*D_in**2.0*(L_ms + 0.4) + \
             density*pi/4.0*D_max**2*0.4 + density*pi/4.0*D_min**2*0.4)*g
             massLSS_new = weightLSS_new/g

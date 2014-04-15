@@ -351,7 +351,7 @@ class NacelleSE_drive3pt(NacelleBase):
         self.add('lowSpeedShaft', LowSpeedShaft_drive3pt())
         self.add('mainBearing', MainBearing())
         self.add('secondBearing',SecondBearing())
-        self.add('gearbox', Gearbox())
+        self.add('gearbox', Gearbox_drive())
         self.add('highSpeedSide', HighSpeedSide())
         self.add('generator', Generator())
         self.add('bedplate', Bedplate_drive())

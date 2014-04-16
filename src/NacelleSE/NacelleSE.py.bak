@@ -421,7 +421,7 @@ class NacelleSE_drive3pt(NacelleBase):
 
         self.connect('lowSpeedShaft.I', ['nacelleSystem.lss_I'])
         self.connect('mainBearing.I', 'nacelleSystem.main_bearing_I')
-        self.connect('secondBearing.I', 'nacelleSystem.second_bearing_I')
+        #self.connect('secondBearing.I', 'nacelleSystem.second_bearing_I')
         self.connect('gearbox.I', ['nacelleSystem.gearbox_I'])
         self.connect('highSpeedSide.I', ['nacelleSystem.hss_I'])
         self.connect('generator.I', ['nacelleSystem.generator_I'])

@@ -190,12 +190,9 @@ def resize_for_bearings(D_mb, mbtype):
       elif mbtype == 'SRB':
               D_mb_a = 0.67 #
               FW_mb = 0.375
-      elif mbtype == 'TRB':
-              D_mb_a = 0.3 #m
-              FW_mb = 0.2            
       elif mbtype == 'CRB':
               D_mb_a = 0.3 #m
-              FW_mb = 0.2            
+              FW_mb = 0.2             
     elif D_mb <= 0.73:
       if mbtype == 'CARB':
               D_mb_a = 0.71 #
@@ -203,12 +200,9 @@ def resize_for_bearings(D_mb, mbtype):
       elif mbtype == 'SRB':
               D_mb_a = 0.71 #
               FW_mb = 0.4
-      elif mbtype == 'TRB':
-              D_mb_a = 0.3 #m
-              FW_mb = 0.2       
       elif mbtype == 'CRB':
               D_mb_a = 0.3 #m
-              FW_mb = 0.2                    
+              FW_mb = 0.2                
     elif D_mb <= 0.75:
       if mbtype == 'CARB':
               D_mb_a = 0.75 #
@@ -216,12 +210,9 @@ def resize_for_bearings(D_mb, mbtype):
       elif mbtype == 'SRB':
               D_mb_a = 0.75 #
               FW_mb = 0.44
-      elif mbtype == 'TRB':
-              D_mb_a = 0.3 #m
-              FW_mb = 0.2            
       elif mbtype == 'CRB':
               D_mb_a = 0.3 #m
-              FW_mb = 0.2                 
+              FW_mb = 0.2                  
     elif D_mb <= 0.8:
       if mbtype == 'CARB':
               D_mb_a = 0.78 #
@@ -229,12 +220,9 @@ def resize_for_bearings(D_mb, mbtype):
       elif mbtype == 'SRB':
               D_mb_a = 0.78 #
               FW_mb = 0.475
-      elif mbtype == 'TRB':
-              D_mb_a = 0.3 #m
-              FW_mb = 0.2    
       elif mbtype == 'CRB':
               D_mb_a = 0.3 #m
-              FW_mb = 0.2              
+              FW_mb = 0.2        
     elif D_mb <= 0.95:
       if mbtype == 'CARB':
               D_mb_a = 0.95 #
@@ -242,12 +230,9 @@ def resize_for_bearings(D_mb, mbtype):
       elif mbtype == 'SRB':
               D_mb_a = 0.95 #
               FW_mb = 0.525
-      elif mbtype == 'TRB':
-              D_mb_a = 0.3 #m
-              FW_mb = 0.2        
       elif mbtype == 'CRB':
               D_mb_a = 0.3 #m
-              FW_mb = 0.2                    
+              FW_mb = 0.2                   
     elif D_mb <= 1.005:
       if mbtype == 'CARB':
               D_mb_a = 1.0 #
@@ -255,12 +240,9 @@ def resize_for_bearings(D_mb, mbtype):
       elif mbtype == 'SRB':
               D_mb_a = 1.0 #
               FW_mb = 0.5
-      elif mbtype == 'TRB':
-              D_mb_a = 0.3 #m
-              FW_mb = 0.2        
       elif mbtype == 'CRB':
               D_mb_a = 0.3 #m
-              FW_mb = 0.2           
+              FW_mb = 0.2        
     elif D_mb <= 1.25:
       if mbtype == 'CARB':
               D_mb_a = 1.25 #
@@ -268,12 +250,9 @@ def resize_for_bearings(D_mb, mbtype):
       elif mbtype == 'SRB':
               D_mb_a = 1.25 #
               FW_mb = 0.5
-      elif mbtype == 'TRB':
-              D_mb_a = 0.3 #m
-              FW_mb = 0.2   
       elif mbtype == 'CRB':
               D_mb_a = 0.3 #m
-              FW_mb = 0.2                
+              FW_mb = 0.2        
     else:
       if mbtype == 'CARB':
               D_mb_a = 1.25 #
@@ -281,9 +260,6 @@ def resize_for_bearings(D_mb, mbtype):
       elif mbtype == 'SRB':
               D_mb_a = 1.25 #
               FW_mb = 0.5
-      elif mbtype == 'TRB':
-              D_mb_a = 0.3 #m
-              FW_mb = 0.2          
       elif mbtype == 'CRB':
               D_mb_a = 0.3 #m
               FW_mb = 0.2           

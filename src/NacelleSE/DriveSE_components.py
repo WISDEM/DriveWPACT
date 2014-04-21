@@ -118,175 +118,373 @@ class Hub_drive(Component):
 def resize_for_bearings(D_mb, mbtype):
     # Internal function to resize shaft for bearings - for Yi to add content (using lookup table etc)   
     # To add bearing load capacity check later        
+
+    # Modified by TParsons 4/21/14
     if D_mb <= 0.3:
-        if mbtype == 'CARB':
+      if mbtype == 'CARB':
               D_mb_a = 0.3 #m
-              FW_mb = 0.2
-        elif mbtype == 'SRB':
+              FW_mb = 0.16
+      elif mbtype == 'SRB':
               D_mb_a = 0.3 #m
-              FW_mb = 0.2
-        elif mbtype == 'TRB':
+              FW_mb = 0.16
+      elif mbtype == 'TRB1':
               D_mb_a = 0.3 #m
-              FW_mb = 0.2      
-        elif mbtype == 'CRB':
+              FW_mb = 0.141      
+      elif mbtype == 'CRB':
               D_mb_a = 0.3 #m
-              FW_mb = 0.2         
+              FW_mb = 0.085 
+      elif mbtype == 'RB':
+              D_mb_a = 0.3 #m
+              FW_mb = 0.074        
+      elif mbtype == 'TRB2':
+              D_mb_a = 0.3 #m
+              FW_mb = 0.203  
+
+    elif D_mb <= 0.34:
+      if mbtype == 'CARB':
+              D_mb_a = 0.34 #m
+              FW_mb = 0.19
+      elif mbtype == 'SRB':
+              D_mb_a =  0.34 
+              FW_mb =0.19
+      elif mbtype == 'TRB1':
+              D_mb_a = 0.34 #m
+              FW_mb = 0.076    
+      elif mbtype == 'CRB':
+              D_mb_a = 0.34 #m
+              FW_mb = 0.082 
+      elif mbtype == 'RB':
+              D_mb_a = 0.34 #m
+              FW_mb = 0.082
+      elif mbtype == 'TRB2':
+            D_mb_a = 0.34 #m
+            FW_mb = 0.16
+
+    elif D_mb <= 0.38:
+      D_mb_a = 0.38
+      if mbtype == 'CARB': 
+              FW_mb = 0.194
+      elif mbtype == 'SRB':
+              FW_mb = 0.243
+      elif mbtype == 'TRB1':
+              FW_mb = 0.050     
+      elif mbtype == 'CRB':
+              FW_mb = 0.106 
+      elif mbtype == 'RB':
+              FW_mb = 0.057      
+      elif mbtype == 'TRB2':
+              FW_mb = 0.148  
+
     elif D_mb <= 0.4:
+      D_mb_a = 0.4
       if mbtype == 'CARB':
-              D_mb_a = 0.4 #m
               FW_mb = 0.2
       elif mbtype == 'SRB':
-              D_mb_a =  0.4 
-              FW_mb =0.25
-      elif mbtype == 'TRB':
-              D_mb_a = 0.3 #m
-              FW_mb = 0.2     
+              FW_mb =0.2
+      elif mbtype == 'TRB1':
+             D_mb_a = .4064
+             FW_mb = 0.181     
       elif mbtype == 'CRB':
-              D_mb_a = 0.3 #m
-              FW_mb = 0.2                    
+             FW_mb = 0.118    
+      elif mbtype == 'RB':
+             FW_mb = .044      
+      elif mbtype == 'TRB2':
+             D_mb_a = .4064
+             FW_mb = 0.1429
+
+    elif D_mb <= 0.44:
+      D_mb_a = 0.44
+      if mbtype == 'CARB':
+             FW_mb = 0.226
+      elif mbtype == 'SRB':
+             FW_mb =0.226
+      elif mbtype == 'TRB1':
+             D_mb_a = .4477
+             FW_mb = 0.12065     
+      elif mbtype == 'CRB':
+             FW_mb = 0.122    
+      elif mbtype == 'RB':
+             FW_mb = .080      
+      elif mbtype == 'TRB2':
+             D_mb_a = 0.440
+             FW_mb = 0.196
+
+    elif D_mb <= 0.48:
+      D_mb_a = 0.48
+      if mbtype == 'CARB':
+             FW_mb = 0.248
+      elif mbtype == 'SRB':
+             FW_mb =0.248
+      elif mbtype == 'TRB1':
+             D_mb_a = .4794
+             FW_mb = 0.1365    
+      elif mbtype == 'CRB':
+             FW_mb = 0.128    
+      elif mbtype == 'RB':
+             FW_mb = 0.078      
+      elif mbtype == 'TRB2':
+             D_mb_a = 0.4794
+             FW_mb = 0.2762
+
     elif D_mb <= 0.5:
+      D_mb_a = 0.5
       if mbtype == 'CARB':
-              D_mb_a = 0.5 #
-              FW_mb = 0.325
+             FW_mb = 0.167
       elif mbtype == 'SRB':
-              D_mb_a = 0.5 #
-              FW_mb = 0.325
-      elif mbtype == 'TRB':
-              D_mb_a = 0.3 #m
-              FW_mb = 0.2    
+             FW_mb = 0.167
+      elif mbtype == 'TRB1':
+             D_mb_a = .4985
+             FW_mb = 0.081    
       elif mbtype == 'CRB':
-              D_mb_a = 0.3 #m
-              FW_mb = 0.2                                          
-    elif D_mb <= 0.6:
+             FW_mb = 0.128    
+      elif mbtype == 'RB':
+             FW_mb = 0.078      
+      elif mbtype == 'TRB2':
+             D_mb_a = 0.50165
+             FW_mb = 0.2921
+
+    elif D_mb <= 0.56:
+      D_mb_a = 0.56
       if mbtype == 'CARB':
-              D_mb_a = 0.6 #
-              FW_mb = 0.35
+             FW_mb = 0.195
       elif mbtype == 'SRB':
-              D_mb_a = 0.6 #
-              FW_mb = 0.35
-      elif mbtype == 'TRB':
-              D_mb_a = 0.3 #m
-              FW_mb = 0.2  
+             FW_mb = 0.195
+      elif mbtype == 'TRB1':
+             D_mb_a = .5588
+             FW_mb = 0.1048   
       elif mbtype == 'CRB':
-              D_mb_a = 0.3 #m
-              FW_mb = 0.2               
-    elif D_mb <= 0.65:
+             FW_mb = 0.112   
+      elif mbtype == 'RB':
+             FW_mb = 0.085      
+      elif mbtype == 'TRB2':
+             D_mb_a = 0.5588
+             FW_mb = 0.2254
+
+    elif D_mb <= 0.60:
+      D_mb_a = 0.60
       if mbtype == 'CARB':
-              D_mb_a = 0.63 #
-              FW_mb = 0.35
+             FW_mb = 0.20
       elif mbtype == 'SRB':
-              D_mb_a = 0.63 #
-              FW_mb = 0.35
-      elif mbtype == 'TRB':
-              D_mb_a = 0.3 #m
-              FW_mb = 0.2         
+             FW_mb = 0.20
+      elif mbtype == 'TRB1':
+             D_mb_a = .60772
+             FW_mb = 0.0937 
       elif mbtype == 'CRB':
-              D_mb_a = 0.3 #m
-              FW_mb = 0.2          
-    elif D_mb <= 0.70:
+             FW_mb = 0.118   
+      elif mbtype == 'RB':
+             FW_mb = 0.090      
+      elif mbtype == 'TRB2':
+             D_mb_a = 0.6029
+             FW_mb = 0.2064
+
+    elif D_mb <= 0.67:
+      D_mb_a = 0.67
       if mbtype == 'CARB':
-              D_mb_a = 0.67 #
-              FW_mb = 0.35
+             FW_mb = 0.230
       elif mbtype == 'SRB':
-              D_mb_a = 0.67 #
-              FW_mb = 0.375
-      elif mbtype == 'TRB':
-              D_mb_a = 0.3 #m
-              FW_mb = 0.2            
+             FW_mb = 0.230
+      elif mbtype == 'TRB1':
+             D_mb_a = 0.6604
+             FW_mb = 0.1365
       elif mbtype == 'CRB':
-              D_mb_a = 0.3 #m
-              FW_mb = 0.2            
-    elif D_mb <= 0.73:
+             FW_mb = 0.136   
+      elif mbtype == 'RB':
+             FW_mb = 0.103      
+      elif mbtype == 'TRB2':
+             D_mb_a = 0.6858
+             FW_mb = 0.200025
+
+    elif D_mb <= 0.710:
+      D_mb_a = 0.710
       if mbtype == 'CARB':
-              D_mb_a = 0.71 #
-              FW_mb = 0.35
+             FW_mb = 0.236
       elif mbtype == 'SRB':
-              D_mb_a = 0.71 #
-              FW_mb = 0.4
-      elif mbtype == 'TRB':
-              D_mb_a = 0.3 #m
-              FW_mb = 0.2       
+             FW_mb = 0.236
+      elif mbtype == 'TRB1':
+             D_mb_a = .710
+             FW_mb = 0.113
       elif mbtype == 'CRB':
-              D_mb_a = 0.3 #m
-              FW_mb = 0.2                    
+             FW_mb = 0.140   
+      elif mbtype == 'RB':
+             FW_mb = 0.106      
+      elif mbtype == 'TRB2':
+             D_mb_a = 0.7112
+             FW_mb = 0.1905
+
     elif D_mb <= 0.75:
+      D_mb_a = 0.75
       if mbtype == 'CARB':
-              D_mb_a = 0.75 #
-              FW_mb = 0.375
+             FW_mb = 0.25
       elif mbtype == 'SRB':
-              D_mb_a = 0.75 #
-              FW_mb = 0.44
-      elif mbtype == 'TRB':
-              D_mb_a = 0.3 #m
-              FW_mb = 0.2            
+             FW_mb = 0.25
+      elif mbtype == 'TRB1':
+             D_mb_a = .7493
+             FW_mb = 0.1595
       elif mbtype == 'CRB':
-              D_mb_a = 0.3 #m
-              FW_mb = 0.2                 
-    elif D_mb <= 0.8:
+             FW_mb = 0.112   
+      elif mbtype == 'RB':
+             FW_mb = 0.112      
+      elif mbtype == 'TRB2':
+             D_mb_a = 0.762
+             FW_mb = 0.1873
+
+    elif D_mb <= 0.80:
+      D_mb_a = 0.80
       if mbtype == 'CARB':
-              D_mb_a = 0.78 #
-              FW_mb = 0.375
+             FW_mb = 0.258
       elif mbtype == 'SRB':
-              D_mb_a = 0.78 #
-              FW_mb = 0.475
-      elif mbtype == 'TRB':
-              D_mb_a = 0.3 #m
-              FW_mb = 0.2    
+             FW_mb = 0.258
+      elif mbtype == 'TRB1':
+             D_mb_a = .801688
+             FW_mb = 0.058738
       elif mbtype == 'CRB':
-              D_mb_a = 0.3 #m
-              FW_mb = 0.2              
+             FW_mb = 0.155   
+      elif mbtype == 'RB':
+             FW_mb = 0.115      
+      elif mbtype == 'TRB2':
+             D_mb_a = 0.8128
+             FW_mb = 0.1905  
+             
+    elif D_mb <= 0.85:
+      D_mb_a = 0.85
+      if mbtype == 'CARB':
+             FW_mb = 0.272
+      elif mbtype == 'SRB':
+             FW_mb = 0.272
+      elif mbtype == 'TRB1':
+             D_mb_a = .85725
+             FW_mb = 0.12065
+      elif mbtype == 'CRB':
+             FW_mb = 0.118   
+      elif mbtype == 'RB':
+             FW_mb = 0.118      
+      elif mbtype == 'TRB2':
+             D_mb_a = 0.8636
+             FW_mb = 0.4699                        
+
+    elif D_mb <= 0.90:
+      D_mb_a = 0.90
+      if mbtype == 'CARB':
+             FW_mb = 0.280
+      elif mbtype == 'SRB':
+             FW_mb = 0.280
+      elif mbtype == 'TRB1':
+             D_mb_a = .90
+             FW_mb = 0.122
+      elif mbtype == 'CRB':
+             FW_mb = 0.122   
+      elif mbtype == 'RB':
+             FW_mb = 0.122      
+      elif mbtype == 'TRB2':
+             D_mb_a = 0.9144
+             FW_mb = 0.1397
+
     elif D_mb <= 0.95:
+      D_mb_a = 0.95
       if mbtype == 'CARB':
-              D_mb_a = 0.95 #
-              FW_mb = 0.3
+             FW_mb = 0.300
       elif mbtype == 'SRB':
-              D_mb_a = 0.95 #
-              FW_mb = 0.525
-      elif mbtype == 'TRB':
-              D_mb_a = 0.3 #m
-              FW_mb = 0.2        
+             FW_mb = 0.300
+      elif mbtype == 'TRB1':
+             D_mb_a = .9779
+             FW_mb = 0.06675
       elif mbtype == 'CRB':
-              D_mb_a = 0.3 #m
-              FW_mb = 0.2                    
-    elif D_mb <= 1.005:
+             FW_mb = 0.175   
+      elif mbtype == 'RB':
+             FW_mb = 0.132      
+      elif mbtype == 'TRB2':
+             D_mb_a = 1.12
+             FW_mb = 0.4
+
+    elif D_mb <= 1.0:
+      D_mb_a = 1.0
       if mbtype == 'CARB':
-              D_mb_a = 1.0 #
-              FW_mb = 0.375
+             FW_mb = 0.315
       elif mbtype == 'SRB':
-              D_mb_a = 1.0 #
-              FW_mb = 0.5
-      elif mbtype == 'TRB':
-              D_mb_a = 0.3 #m
-              FW_mb = 0.2        
+             FW_mb = 0.315
+      elif mbtype == 'TRB1':
+             D_mb_a = 1.016
+             FW_mb = 0.1016
       elif mbtype == 'CRB':
-              D_mb_a = 0.3 #m
-              FW_mb = 0.2           
+             FW_mb = 0.128   
+      elif mbtype == 'RB':
+             FW_mb = 0.140      
+      elif mbtype == 'TRB2':
+             D_mb_a = 1.12
+             FW_mb = 0.4
+
+
+    elif D_mb <= 1.06:
+      D_mb_a = 1.06
+      if mbtype == 'CARB':
+             FW_mb = 0.25
+      elif mbtype == 'SRB':
+             FW_mb = 0.25
+      elif mbtype == 'TRB1':
+             D_mb_a = 1.270
+             FW_mb = 0.10
+      elif mbtype == 'CRB':
+             FW_mb = 0.195   
+      elif mbtype == 'RB':
+             FW_mb = 0.150      
+      elif mbtype == 'TRB2':
+             D_mb_a = 1.12
+             FW_mb = 0.4
+
+    elif D_mb <= 1.18:
+      D_mb_a = 1.18
+      if mbtype == 'CARB':
+             FW_mb = 0.272
+      elif mbtype == 'SRB':
+             FW_mb = 0.272
+      elif mbtype == 'TRB1':
+             D_mb_a = 1.270
+             FW_mb = 0.10
+      elif mbtype == 'CRB':
+             FW_mb = 0.206   
+      elif mbtype == 'RB':
+             FW_mb = 0.160      
+      elif mbtype == 'TRB2':
+             D_mb_a = 1.25
+             FW_mb = 0.25
+
     elif D_mb <= 1.25:
+      D_mb_a = 1.25
       if mbtype == 'CARB':
-              D_mb_a = 1.25 #
-              FW_mb = 0.4
+             FW_mb = 0.375
       elif mbtype == 'SRB':
-              D_mb_a = 1.25 #
-              FW_mb = 0.5
-      elif mbtype == 'TRB':
-              D_mb_a = 0.3 #m
-              FW_mb = 0.2   
+             FW_mb = 0.375
+      elif mbtype == 'TRB1':
+             D_mb_a = 1.270
+             FW_mb = 0.10
       elif mbtype == 'CRB':
-              D_mb_a = 0.3 #m
-              FW_mb = 0.2                
+             FW_mb = 0.29   
+      elif mbtype == 'RB':
+             FW_mb = 0.112     
+      elif mbtype == 'TRB2':
+             D_mb_a = 1.25
+             FW_mb = 0.25
+
     else:
       if mbtype == 'CARB':
-              D_mb_a = 1.25 #
-              FW_mb = 0.45
+             D_mb_a =1.25
+             FW_mb = 0.375
       elif mbtype == 'SRB':
-              D_mb_a = 1.25 #
-              FW_mb = 0.5
-      elif mbtype == 'TRB':
-              D_mb_a = 0.3 #m
-              FW_mb = 0.2          
+             D_mb_a =1.80      
+             FW_mb = 0.375
+      elif mbtype == 'TRB1':
+             D_mb_a = 1.270
+             FW_mb = 0.10
       elif mbtype == 'CRB':
-              D_mb_a = 0.3 #m
-              FW_mb = 0.2           
+             D_mb_a =1.40
+             FW_mb = 0.175  
+      elif mbtype == 'RB':
+             D_mb_a =1.7      
+             FW_mb = 0.212    
+      elif mbtype == 'TRB2':
+             D_mb_a = 1.778
+             FW_mb = 0.3937             
+
     return [D_mb_a, FW_mb]
 
 #-------------------------------------------------------------------------------
@@ -314,8 +512,8 @@ class LowSpeedShaft_drive4pt(Component):
     shrink_disc_mass = Float(iotype='in', units='kg', desc='Mass of the shrink disc')# shrink disk or flange addtional mass
     shaft_angle = Float(iotype='in', units='deg', desc='Angle of the LSS inclindation with respect to the horizontal')
     shaft_ratio = Float(iotype='in', desc='Ratio of inner diameter to outer diameter.  Leave zero for solid LSS')
-    mb1Type = Str(iotype='in',desc='Main bearing type: CARB, TRB or SRB')
-    mb2Type = Str(iotype='in',desc='Second bearing type: CARB, TRB or SRB')
+    mb1Type = Str(iotype='in',desc='Main bearing type: CARB, TRB1 or SRB')
+    mb2Type = Str(iotype='in',desc='Second bearing type: CARB, TRB1 or SRB')
     
     # outputs
     design_torque = Float(iotype='out', units='N*m', desc='lss design torque')
@@ -418,7 +616,7 @@ class LowSpeedShaft_drive4pt(Component):
         #bearing deflection limits
         MB_limit = 0.026
         CB_limit = 4.0/60.0/180.0*pi
-        TRB_limit = 3.0/60.0/180.0*pi
+        TRB1_limit = 3.0/60.0/180.0*pi
         n_safety_brg = 1.0
 
         while abs(check_limit) > tol and counter <N_count:
@@ -510,7 +708,7 @@ class LowSpeedShaft_drive4pt(Component):
                 theta_y[kk]=gx(F_r_z,rotorWeight,gamma,M_r_y,F_mb_z,L_rb,lssWeight_new,L_ms,C1,x_ms[kk])/E/I_2
                 d_y[kk]=(deflection(F_r_z,rotorWeight,gamma,M_r_y,F_mb_z,L_rb,lssWeight_new,L_ms,x_ms[kk])+C1*x_ms[kk]+C2)/E/I_2
 
-            check_limit = abs(abs(theta_y[-1])-TRB_limit/n_safety_brg)
+            check_limit = abs(abs(theta_y[-1])-TRB1_limit/n_safety_brg)
 
             if check_limit < 0:
                 L_ms_new = L_ms + dL
@@ -656,14 +854,14 @@ class LowSpeedShaft_drive4pt(Component):
                     theta_y[kk + len_pts]=(gx2(F_r_z,rotorWeight,gamma,M_r_y,F_mb1_z,F_mb2_z,L_rb,lssWeight_new,L_ms,L_mb,x_ms[kk]) + C12)/E/I_2
                     d_y[kk + len_pts]=(deflection2(F_r_z,rotorWeight,gamma,M_r_y,F_mb1_z,F_mb2_z,L_rb,lssWeight_new,L_ms,L_mb,x_ms[kk])+C12*x_ms[kk]+C22)/E/I_2
 
-                check_limit = abs(abs(theta_y[-1])-TRB_limit/n_safety_brg)
+                check_limit = abs(abs(theta_y[-1])-TRB1_limit/n_safety_brg)
 
                 if check_limit < 0:
                     L_ms__gb_new = L_ms_gb + dL
                 else:
                     L_ms__gb_new = L_ms_gb + dL
 
-                check_limit_ms = abs(abs(theta_y[-1]) - TRB_limit/n_safety_brg)
+                check_limit_ms = abs(abs(theta_y[-1]) - TRB1_limit/n_safety_brg)
 
                 if check_limit_ms < 0:
                     L_mb_new = L_mb + dL_ms
@@ -729,8 +927,8 @@ class LowSpeedShaft_drive3pt(Component):
     shrink_disc_mass = Float(iotype='in', units='kg', desc='Mass of the shrink disc')
     shaft_angle = Float(iotype='in', units='deg', desc='Angle of the LSS inclindation with respect to the horizontal')
     shaft_ratio = Float(iotype='in', desc='Ratio of inner diameter to outer diameter.  Leave zero for solid LSS')
-    mb1Type = Str(iotype='in',desc='Main bearing type: CARB, TRB or SRB')
-    mb2Type = Str(iotype='in',desc='Second bearing type: CARB, TRB or SRB')    
+    mb1Type = Str(iotype='in',desc='Main bearing type: CARB, TRB1 or SRB')
+    mb2Type = Str(iotype='in',desc='Second bearing type: CARB, TRB1 or SRB')    
     # outputs
     design_torque = Float(iotype='out', units='N*m', desc='lss design torque')
     design_bending_load = Float(iotype='out', units='N', desc='lss design bending load')
@@ -807,7 +1005,7 @@ class LowSpeedShaft_drive3pt(Component):
         #Main bearing defelection check
         MB_limit=0.026;
         CB_limit=4.0/60.0/180.0*pi;
-        TRB_limit=3.0/60.0/180.0*pi;
+        TRB1_limit=3.0/60.0/180.0*pi;
         n_safety_brg = 1.0
         n_safety=2.5
         Sy = 66000.0 #psi
@@ -951,9 +1149,9 @@ class LowSpeedShaft_drive3pt(Component):
                 theta_y[kk]=gx(F_r_z,weightRotor,gamma,M_r_y,F_mb_z,L_rb,weightLSS_new,L_ms,C1,x_ms[kk])/E/I_2
                 d_y[kk]=(fx(F_r_z,weightRotor,gamma,M_r_y,F_mb_z,L_rb,weightLSS_new,L_ms,x_ms[kk])+C1*x_ms[kk]+C2)/E/I_2
 
-            check_limit = abs(abs(theta_y[-1])-TRB_limit/n_safety_brg)
+            check_limit = abs(abs(theta_y[-1])-TRB1_limit/n_safety_brg)
             #print 'deflection slope'
-            #print TRB_limit
+            #print TRB1_limit
             #print 'threshold'
             #print theta_y[-1]
             L_ms_new = L_ms + dL        
@@ -1315,7 +1513,7 @@ class Bearing_drive(Component):
           It contains an update method to determine the mass, mass properties, and dimensions of the component.           
     '''
     # variables
-    bearing_type = Str(iotype='in',desc='Main bearing type: CARB, TRB or SRB')
+    bearing_type = Str(iotype='in',desc='Main bearing type: CARB, TRB1 or SRB')
     lss_diameter = Float(iotype='in', units='m', desc='lss outer diameter at main bearing')
     lss_design_torque = Float(iotype='in', units='N*m', desc='lss design torque')
     rotor_diameter = Float(iotype='in', units='m', desc='rotor diameter')
@@ -1329,91 +1527,300 @@ class Bearing_drive(Component):
         
         super(Bearing_drive, self).__init__()
     
-    def execute(self):# TRB needs to be modified!! Y. Guo
+    def execute(self): #Modified by TParsons 4/21/14
 
         if self.lss_diameter <= 0.3:
             if self.bearing_type == 'CARB':
-                self.mass = 120 #3250 kN
+                self.mass = 120. #3250 kN
             elif self.bearing_type == 'SRB':
                 self.mass = 128.7 #3070 kN
-            elif self.bearing_type == 'TRB':
-                self.mass = 128.48 #2940 KN
+            elif self.bearing_type == 'TRB1':
+                self.mass = 107.
+            elif self.bearing_type == 'CRB':
+                self.mass = 89.5
+            elif self.bearing_type == 'RB':
+                self.mass = 44
+            elif self.bearing_type == 'TRB2':
+                self.mass = 140
+        if self.lss_diameter <= 0.34 :
+            if self.bearing_type == 'CARB':
+                self.mass = 205
+            elif self.bearing_type == 'SRB':
+                self.mass = 205
+            elif self.bearing_type == 'TRB1':
+                self.mass = 35
+            elif self.bearing_type == 'CRB':
+                self.mass = 65
+            elif self.bearing_type == 'RB':
+                self.mass = 62
+            elif self.bearing_type == 'TRB2':
+                self.mass = 71
+
+        elif self.lss_diameter <= 0.38:
+            if self.bearing_type == 'CARB':
+                self.mass = 243
+            elif self.bearing_type == 'SRB':
+                self.mass = 300
+            elif self.bearing_type == 'TRB1':
+                self.mass = 20.5
+            elif self.bearing_type == 'CRB':
+                self.mass = 92.5
+            elif self.bearing_type == 'RB':
+                self.mass = 51
+            elif self.bearing_type == 'TRB2':
+                self.mass = 80.2
 
         elif self.lss_diameter <= 0.4:
             if self.bearing_type == 'CARB':
-                self.mass = 145 #3650 kN
+                self.mass = 258.
             elif self.bearing_type == 'SRB':
-                self.mass = 220 #3310 kN
-            elif self.bearing_type == 'TRB':
-                self.mass = 162.55 #3210 KN
-        
+                self.mass = 265.
+            elif self.bearing_type == 'TRB1':
+                self.mass = 320
+            elif self.bearing_type == 'CRB':
+                self.mass = 120
+            elif self.bearing_type == 'RB':
+                self.mass = 27.5
+            elif self.bearing_type == 'TRB2':
+                self.mass = 82.4
+
+        elif self.lss_diameter <= 0.44:
+            if self.bearing_type == 'CARB':
+                self.mass = 385.
+            elif self.bearing_type == 'SRB':
+                self.mass = 360.
+            elif self.bearing_type == 'TRB1':
+                self.mass = 120.
+            elif self.bearing_type == 'CRB':
+                self.mass = 145.
+            elif self.bearing_type == 'RB':
+                self.mass = 66.
+            elif self.bearing_type == 'TRB2':
+                self.mass = 203.
+
+        elif self.lss_diameter <= 0.48:
+            if self.bearing_type == 'CARB':
+                self.mass = 523.
+            elif self.bearing_type == 'SRB':
+                self.mass = 470
+            elif self.bearing_type == 'TRB1':
+                self.mass = 190.
+            elif self.bearing_type == 'CRB':
+                self.mass = 170.
+            elif self.bearing_type == 'RB':
+                self.mass = 74.
+            elif self.bearing_type == 'TRB2':
+                self.mass = 302. 
+
         elif self.lss_diameter <= 0.5:
             if self.bearing_type == 'CARB':
-                self.mass = 225 #4250 kN
+                self.mass = 225.
             elif self.bearing_type == 'SRB':
-                self.mass = 440 #4290 kN
-            elif self.bearing_type == 'TRB':
-                self.mass = 220.08 #3460 KN
-        elif self.lss_diameter <= 0.6:
-            if self.bearing_type == 'CARB':
-                self.mass = 390 #6300 kN
-            elif self.bearing_type == 'SRB':
-                self.mass = 715 #6040 kN
-            elif self.bearing_type == 'TRB':
-                self.mass = 323.6 #5730 KN
-        elif self.lss_diameter <= 0.65:
-            if self.bearing_type == 'CARB':
-                self.mass = 525 #6300 kN
-            elif self.bearing_type == 'SRB':
-                self.mass = 1050 #6040 kN
-            elif self.bearing_type == 'TRB':
-                self.mass = 323.6 #5730 KN
-        elif self.lss_diameter <= 0.7:  # modified by Y.G. FOR TSS 
-            if self.bearing_type == 'CARB':
-                self.mass = 645 #8800 kN
-            elif self.bearing_type == 'SRB':
-                self.mass = 1400 #8370 kN 
-            elif self.bearing_type == 'TRB':
-                self.mass = 513.79 #8740 KN
-        elif self.lss_diameter <= 0.8:
-            if self.bearing_type == 'CARB':
-                self.mass = 860. #9150 kN
-            elif self.bearing_type == 'SRB':
-                self.mass = 1700. #9780 kN
-            elif self.bearing_type == 'TRB':
-                self.mass = 660.60 #8520 KN
+                self.mass = 225.
+            elif self.bearing_type == 'TRB1':
+                self.mass = 59.5
+            elif self.bearing_type == 'CRB':
+                self.mass = 130.
+            elif self.bearing_type == 'RB':
+                self.mass = 77.
+            elif self.bearing_type == 'TRB2':
+                self.mass = 343.
 
-        elif self.lss_diameter <= 0.9:
+        elif self.lss_diameter <= 0.56:
             if self.bearing_type == 'CARB':
-                self.mass = 1200. #12700 kN
+                self.mass = 345.
             elif self.bearing_type == 'SRB':
-                self.mass = 2130. #12200 kN
-            elif self.bearing_type == 'TRB':
-                self.mass = 1361.12 #12600 KN
+                self.mass = 345.
+            elif self.bearing_type == 'TRB1':
+                self.mass = 115.
+            elif self.bearing_type == 'CRB':
+                self.mass = 145.
+            elif self.bearing_type == 'RB':
+                self.mass = 105.
+            elif self.bearing_type == 'TRB2':
+                self.mass = 150.
 
-        elif self.lss_diameter <= 1.0:   # modified by Y.G. FOR TSS 
+        elif self.lss_diameter <= 0.60:
             if self.bearing_type == 'CARB':
-                self.mass = 1570. #13400 kN
+                self.mass = 390.
             elif self.bearing_type == 'SRB':
-                self.mass = 2250. #14500 kN
-            elif self.bearing_type == 'TRB':
-                self.mass = 1061.43 #7550 KN # need update
+                self.mass = 405.
+            elif self.bearing_type == 'TRB1':
+                self.mass = 110.
+            elif self.bearing_type == 'CRB':
+                self.mass = 165.
+            elif self.bearing_type == 'RB':
+                self.mass = 125.
+            elif self.bearing_type == 'TRB2':
+                self.mass = 180.
 
-        elif self.lss_diameter <= 1.1:   # modified by Y.G. 
+        elif self.lss_diameter <= 0.67:
             if self.bearing_type == 'CARB':
-                self.mass = 2000. #13400 kN
+                self.mass = 580.
             elif self.bearing_type == 'SRB':
-                self.mass = 2500. #14500 kN
-            elif self.bearing_type == 'TRB':
-                self.mass = 1061.43 #7550 KN # need update
+                self.mass = 580.
+            elif self.bearing_type == 'TRB1':
+                self.mass = 287.
+            elif self.bearing_type == 'CRB':
+                self.mass = 360.
+            elif self.bearing_type == 'RB':
+                self.mass = 185.
+            elif self.bearing_type == 'TRB2':
+                self.mass = 270.                
 
-        else:                              # modified by Y.G. FOR TSS 
+        elif self.lss_diameter <= 0.710:
             if self.bearing_type == 'CARB':
-                self.mass = 2740 #20400 kN
+                self.mass = 645.
             elif self.bearing_type == 'SRB':
-                self.mass = 2960 #21200 kN
-            elif self.bearing_type == 'TRB':
-                self.mass = 1061.43 #7550 KN # need update
+                self.mass = 670.
+            elif self.bearing_type == 'TRB1':
+                self.mass = 200.
+            elif self.bearing_type == 'CRB':
+                self.mass = 300.
+            elif self.bearing_type == 'RB':
+                self.mass = 220.
+            elif self.bearing_type == 'TRB2':
+                self.mass = 265.
+
+        elif self.lss_diameter <= 0.75:
+            if self.bearing_type == 'CARB':
+                self.mass = 838.
+            elif self.bearing_type == 'SRB':
+                self.mass = 770.
+            elif self.bearing_type == 'TRB1':
+                self.mass = 330.
+            elif self.bearing_type == 'CRB':
+                self.mass = 265.
+            elif self.bearing_type == 'RB':
+                self.mass = 225.
+            elif self.bearing_type == 'TRB2':
+                self.mass = 290.
+
+        elif self.lss_diameter <= 0.80:
+            if self.bearing_type == 'CARB':
+                self.mass = 860.
+            elif self.bearing_type == 'SRB':
+                self.mass = 640.
+            elif self.bearing_type == 'TRB1':
+                self.mass = 53.5
+            elif self.bearing_type == 'CRB':
+                self.mass = 560.
+            elif self.bearing_type == 'RB':
+                self.mass = 320.
+            elif self.bearing_type == 'TRB2':
+                self.mass = 350.
+
+        elif self.lss_diameter <= 0.85:
+            if self.bearing_type == 'CARB':
+                self.mass = 1105
+            elif self.bearing_type == 'SRB':
+                self.mass = 1050
+            elif self.bearing_type == 'TRB1':
+                self.mass = 245
+            elif self.bearing_type == 'CRB':
+                self.mass = 335.
+            elif self.bearing_type == 'RB':
+                self.mass = 310.
+            elif self.bearing_type == 'TRB2':
+                self.mass = 2250. #note: seems extremely high but is only TRB2 of this diameter on SKF site. Similar problems from here on
+
+        elif self.lss_diameter <= 0.90:
+            if self.bearing_type == 'CARB':
+                self.mass = 1200.
+            elif self.bearing_type == 'SRB':
+                self.mass = 1200.
+            elif self.bearing_type == 'TRB1':
+                self.mass = 340.
+            elif self.bearing_type == 'CRB':
+                self.mass = 380.
+            elif self.bearing_type == 'RB':
+                self.mass = 350.
+            elif self.bearing_type == 'TRB2':
+                self.mass = 190.
+
+        elif self.lss_diameter <= 0.95:
+            if self.bearing_type == 'CARB':
+                self.mass = 1410.
+            elif self.bearing_type == 'SRB':
+                self.mass = 1450.
+            elif self.bearing_type == 'TRB1':
+                self.mass = 100.
+            elif self.bearing_type == 'CRB':
+                self.mass = 745.
+            elif self.bearing_type == 'RB':
+                self.mass = 390.
+            elif self.bearing_type == 'TRB2':
+                self.mass = 1760.
+
+        elif self.lss_diameter <= 1.0:
+            if self.bearing_type == 'CARB':
+                self.mass = 1570.
+            elif self.bearing_type == 'SRB':
+                self.mass = 2250.
+            elif self.bearing_type == 'TRB1':
+                self.mass = 275.
+            elif self.bearing_type == 'CRB':
+                self.mass = 350.
+            elif self.bearing_type == 'RB':
+                self.mass = 515.
+            elif self.bearing_type == 'TRB2':
+                self.mass = 1760.
+
+        elif self.lss_diameter <= 1.06:
+            if self.bearing_type == 'CARB':
+                self.mass = 1120.
+            elif self.bearing_type == 'SRB':
+                self.mass = 1100.
+            elif self.bearing_type == 'TRB1':
+                self.mass = 265.
+            elif self.bearing_type == 'CRB':
+                self.mass = 870.
+            elif self.bearing_type == 'RB':
+                self.mass = 620.
+            elif self.bearing_type == 'TRB2':
+                self.mass = 1760.
+
+        elif self.lss_diameter <= 1.18:
+            if self.bearing_type == 'CARB':
+                self.mass = 1400.
+            elif self.bearing_type == 'SRB':
+                self.mass = 1400.
+            elif self.bearing_type == 'TRB1':
+                self.mass = 265.
+            elif self.bearing_type == 'CRB':
+                self.mass = 1090.
+            elif self.bearing_type == 'RB':
+                self.mass = 775.
+            elif self.bearing_type == 'TRB2':
+                self.mass = 795.
+
+        elif self.lss_diameter <= 1.25:
+            if self.bearing_type == 'CARB':
+                self.mass = 2740
+            elif self.bearing_type == 'SRB':
+                self.mass = 2840.
+            elif self.bearing_type == 'TRB1':
+                self.mass = 265.
+            elif self.bearing_type == 'CRB':
+                self.mass = 2320.
+            elif self.bearing_type == 'RB':
+                self.mass = 385.
+            elif self.bearing_type == 'TRB2':
+                self.mass = 795.
+
+        else:
+            if self.bearing_type == 'CARB':
+                self.mass = 2740.
+            elif self.bearing_type == 'SRB':
+                self.mass = 2850.
+            elif self.bearing_type == 'TRB1':
+                self.mass = 265.
+            elif self.bearing_type == 'CRB':
+                self.mass = 860.
+            elif self.bearing_type == 'RB':
+                self.mass = 1950.
+            elif self.bearing_type == 'TRB2':
+                self.mass = 2750.                
 
         print self.mass
         self.mass += self.mass*(8000.0/2700.0) # add housing weight

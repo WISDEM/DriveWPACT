@@ -1178,7 +1178,7 @@ class LowSpeedShaft_drive3pt(Component):
         self.mass=lss_mass_new
         self.diameter1= D_max_a
         self.diameter2= D_min_a 
-        self.length=L_ms
+        #self.length=L_ms
         #print self.length
         self.D_outer=D_max_a
         self.diameter=D_max_a
@@ -2018,6 +2018,9 @@ class Gearbox_drive(Component):
     rotor_speed = Float(iotype='in', desc='rotor rpm at rated power')
     rotor_diameter = Float(iotype='in', desc='rotor diameter')
     rotor_torque = Float(iotype='in', units='N*m', desc='rotor torque at rated power')
+    length = Float(iotype='out', units='m', desc='gearbox length')
+    height = Float(iotype='out', units='m', desc='gearbox height')
+    diameter = Float(iotype='out', units='m', desc='gearbox diameter')
 
     #parameters
     #name = Str(iotype='in', desc='gearbox name')
@@ -2085,12 +2088,12 @@ class Gearbox_drive(Component):
         cm2   = 0.025 * self.rotor_diameter
         self.cm = np.array([cm0, cm1, cm2])
 
-        length = (0.012 * self.rotor_diameter)
-        height = (0.015 * self.rotor_diameter)
-        diameter = (0.75 * height)
+        self.length = (0.012 * self.rotor_diameter)
+        self.height = (0.015 * self.rotor_diameter)
+        self.diameter = (0.75 * self.height)
 
-        I0 = self.mass * (diameter ** 2 ) / 8 + (self.mass / 2) * (height ** 2) / 8
-        I1 = self.mass * (0.5 * (diameter ** 2) + (2 / 3) * (length ** 2) + 0.25 * (height ** 2)) / 8
+        I0 = self.mass * (self.diameter ** 2 ) / 8 + (self.mass / 2) * (self.height ** 2) / 8
+        I1 = self.mass * (0.5 * (self.diameter ** 2) + (2 / 3) * (self.length ** 2) + 0.25 * (self.height ** 2)) / 8
         I2 = I1
         self.I = np.array([I0, I1, I2])
 
@@ -2331,12 +2334,14 @@ class Bedplate_drive(Component):
     '''
 
     #variables
+    gbx_length = Float(iotype = 'in', units = 'm', desc = 'gearbox length')
     hss_location = Float(iotype ='in', units = 'm', desc='HSS CM location')
     hss_mass = Float(iotype ='in', units = 'kg', desc='HSS mass')
     generator_location = Float(iotype ='in', units = 'm', desc='generator CM location')
     generator_mass = Float(iotype ='in', units = 'kg', desc='generator mass')
     lss_location = Float(iotype ='in', units = 'm', desc='LSS CM location')
     lss_mass = Float(iotype ='in', units = 'kg', desc='LSS mass')
+    lss_length = Float(iotype = 'in', units = 'm', desc = 'LSS length')
     mb1_location = Float(iotype ='in', units = 'm', desc='Upwind main bearing CM location')
     mb1_mass = Float(iotype ='in', units = 'kg', desc='Upwind main bearing mass')
     mb2_location = Float(iotype ='in', units = 'm', desc='Downwind main bearing CM location')
@@ -2349,6 +2354,8 @@ class Bedplate_drive(Component):
     rotor_mass = Float(iotype='in', units='kg', desc='rotor mass')
     rotor_bending_moment_y = Float(iotype='in', units='N*m', desc='The bending moment about the y axis')
     rotor_force_z = Float(iotype='in', units='N', desc='The force along the z axis applied at hub center')
+    flange_length = Float(iotype='in', units='kg', desc='flange length')
+
 
     #parameters
     #check openmdao syntax for boolean
@@ -2395,7 +2402,7 @@ class Bedplate_drive(Component):
         E = 2.1e11
         density = 7800
 
-        #rear component weights and locations
+                #rear component weights and locations
         transLoc = 3.0*self.generator_location
         self.transformer_mass = 2.4445*(self.machine_rating) + 1599.0
         convLoc = 2.0*self.generator_location
@@ -2408,12 +2415,13 @@ class Bedplate_drive(Component):
         else:
           rearTotalLength = self.generator_location + 1.0
 
+
         #component masses and locations
-        mb1_location = abs(self.mb1_location)
-        mb2_location = abs(self.mb2_location)
+        mb1_location = abs(self.gbx_length/2.0) + abs(self.lss_length)
+        mb2_location = abs(self.gbx_length/2.0)
         lss_location= abs(self.lss_location)
 
-        frontTotalLength = mb1_location + 0.2
+        frontTotalLength = mb1_location + self.flange_length
 
         #rotor weights and loads
         rotorLoc = frontTotalLength
@@ -2428,7 +2436,7 @@ class Bedplate_drive(Component):
         b0 = h0/2.0
 
         stressTol = 1e6
-        deflTol = 3.5e-3 # todo: model SUPER sensitive to this parameter... modified to achieve agreement with 5 MW turbine for now
+        deflTol = 2.0e-3 # todo: model SUPER sensitive to this parameter... modified to achieve agreement with 5 MW turbine for now
 
         rootStress = 250e6
         totalTipDefl = 1.0
@@ -2442,9 +2450,10 @@ class Bedplate_drive(Component):
           defl = distWeight*totalLength**4.0/(8.0*E*I)
           return defl
 
+        
+        #Rear Steel Frame:
         counter = 0
-
-        while rootStress - 50e6 >  stressTol or totalTipDefl - 0.0001 >  deflTol:
+        while rootStress - 40.0e6 >  stressTol or totalTipDefl - 0.00001 >  deflTol:
           counter += 1
           bi = (b0-tw)/2.0
           hi = h0-2.0*tf
@@ -2483,7 +2492,7 @@ class Bedplate_drive(Component):
 
           rearCounter = counter
 
-        #front cast section
+        #Front cast section:
 
         E=169e9 #EN-GJS-400-18-LT http://www.claasguss.de/html_e/pdf/THBl2_engl.pdf
         castDensity = 7100
@@ -2498,7 +2507,7 @@ class Bedplate_drive(Component):
         totalTipDefl = 1.0
         counter = 0
 
-        while rootStress - 50e6 >  stressTol or totalTipDefl - 0.0001 >  deflTol:
+        while rootStress - 40.0e6 >  stressTol or totalTipDefl - 0.00001 >  deflTol:
           counter += 1
           bi = (b0-tw)/2.0
           hi = h0-2.0*tf
@@ -2543,7 +2552,18 @@ class Bedplate_drive(Component):
           frontCounter = counter
 
 
-        '''print 'steel rear bedplate length: '
+        
+        print 'rotor mass'
+        print self.rotor_mass
+
+        print 'rotor bending moment_y'
+        print self.rotor_bending_moment_y
+    
+
+    	print 'rotor fz'
+    	print self.rotor_force_z 
+
+        print 'steel rear bedplate length: '
         print rearTotalLength
 
         print 'cast front bedplate length: '
@@ -2571,8 +2591,11 @@ class Bedplate_drive(Component):
         print totalSteelMass
 
         print 'total bedplate mass:'
-        print totalSteelMass+ totalCastMass'''
+        print totalSteelMass+ totalCastMass
+        
 
+
+        #frame multiplier for front support
         front_frame_support_multiplier = 1.33 # based on solidworks estimate
         totalCastMass *= front_frame_support_multiplier
         self.mass = totalCastMass+ totalSteelMass

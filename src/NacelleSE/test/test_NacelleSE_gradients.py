@@ -14,6 +14,7 @@ from commonse.utilities import check_gradient_unit_test
 
 from NacelleSE.HubSE_components import Hub, PitchSystem, Spinner, HubSystemAdder
 from NacelleSE.NacelleSE_components import LowSpeedShaft, MainBearing, SecondBearing, Gearbox, HighSpeedSide, Generator, Bedplate, AboveYawMassAdder, YawSystem, NacelleSystemAdder
+from NacelleSE.DriveSmoothComponents import BearingSmooth, YawSystemSmooth, BedplateSmooth
 
 # Hub Components
 class Test_Hub(unittest.TestCase):
@@ -195,7 +196,7 @@ class Test_Bedplate(unittest.TestCase):
         bpl.rotor_mass = 28560. # rotor mass [kg]
         bpl.tower_top_diameter = 2.7 # tower top diameter [m]
 
-        check_gradient_unit_test(self, bpl,display=False)
+        check_gradient_unit_test(self, bpl, display=False)
 
 class Test_AboveYawMassAdder(unittest.TestCase):
 
@@ -206,7 +207,7 @@ class Test_AboveYawMassAdder(unittest.TestCase):
         yawadder.machine_rating = 1500.
         yawadder.lss_mass = 8000.
         yawadder.main_bearing_mass = 2000.
-        yawadder.second_bearing_mass = 2000.
+        yawadder.second_bearing_mass = 3000.
         yawadder.gearbox_mass = 60000.
         yawadder.hss_mass = 1000.
         yawadder.generator_mass = 20000.
@@ -228,7 +229,8 @@ class Test_YawSystem(unittest.TestCase):
         yaw.tower_top_diameter = 2.7 # tower top diameter [m]
         yaw.above_yaw_mass = 240000.
 
-        check_gradient_unit_test(self, yaw,display=False)
+        check_gradient_unit_test(self, yaw, display=False)
+
 
 class Test_NacelleSystemAdder(unittest.TestCase):
 
@@ -236,33 +238,82 @@ class Test_NacelleSystemAdder(unittest.TestCase):
 
         nac = NacelleSystemAdder()
 
-        nac.above_yaw_mass = 5000.
-        nac.yawMass = 5000.
-        nac.lss_mass = 5000.
-        nac.main_bearing_mass = 5000.
-        nac.second_bearing_mass = 5000.
-        nac.gearbox_mass = 5000.
-        nac.hss_mass = 5000.
-        nac.generator_mass = 5000.
-        nac.bedplate_mass = 5000.
-        nac.mainframe_mass = 6000.
-        nac.bedplate_mass = 5000.
-        nac.lss_cm = np.array([-2.0, 1.0, 1.0])
-        nac.main_bearing_cm = np.array([-2.0, 1.0, 1.0])
-        nac.second_bearing_cm = np.array([-2.0, 1.0, 1.0])
-        nac.gearbox_cm = np.array([-2.0, 1.0, 1.0])
-        nac.hss_cm = np.array([-2.0, 1.0, 1.0])
-        nac.generator_cm = np.array([-2.0, 1.0, 1.0])
-        nac.bedplate_cm = np.array([-2.0, 1.0, 1.0])
-        nac.lss_I = np.array([1000., 1000., 1000.])
-        nac.main_bearing_I = np.array([1000., 1000., 1000.])
-        nac.second_bearing_I = np.array([1000., 1000., 1000.])
-        nac.gearbox_I = np.array([1000., 1000., 1000.])
-        nac.hss_I = np.array([1000., 1000., 1000.])
-        nac.generator_I = np.array([1000., 1000., 1000.])
-        nac.bedplate_I = np.array([1000., 1000., 1000.])
+        nac.above_yaw_mass = np.random.rand(1)[0]  # 5000.
+        nac.yawMass = np.random.rand(1)[0]  # 5000.
+        nac.lss_mass = np.random.rand(1)[0]  # 5000.
+        nac.main_bearing_mass = np.random.rand(1)[0]  # 5000.
+        nac.second_bearing_mass = np.random.rand(1)[0]  # 5000.
+        nac.gearbox_mass = np.random.rand(1)[0]  # 5000.
+        nac.hss_mass = np.random.rand(1)[0]  # 5000.
+        nac.generator_mass = np.random.rand(1)[0]  # 5000.
+        nac.bedplate_mass = np.random.rand(1)[0]  # 5000.
+        nac.mainframe_mass = np.random.rand(1)[0]  # 6000.
+        nac.lss_cm = np.random.rand(3)  # np.array([-2.0, 1.0, 1.0])
+        nac.main_bearing_cm = np.random.rand(3)  # np.array([-2.0, 1.0, 1.0])
+        nac.second_bearing_cm = np.random.rand(3)  # np.array([-2.0, 1.0, 1.0])
+        nac.gearbox_cm = np.random.rand(3)  # np.array([-2.0, 1.0, 1.0])
+        nac.hss_cm = np.random.rand(3)  # np.array([-2.0, 1.0, 1.0])
+        nac.generator_cm = np.random.rand(3)  # np.array([-2.0, 1.0, 1.0])
+        nac.bedplate_cm = np.random.rand(3)  # np.array([-2.0, 1.0, 1.0])
+        nac.lss_I = np.random.rand(3)  # np.array([1000., 1000., 1000.])
+        nac.main_bearing_I = np.random.rand(3)  # np.array([1000., 1000., 1000.])
+        nac.second_bearing_I = np.random.rand(3)  # np.array([1000., 1000., 1000.])
+        nac.gearbox_I = np.random.rand(3)  # np.array([1000., 1000., 1000.])
+        nac.hss_I = np.random.rand(3)  # np.array([1000., 1000., 1000.])
+        nac.generator_I = np.random.rand(3)  # np.array([1000., 1000., 1000.])
+        nac.bedplate_I = np.random.rand(3)  # np.array([1000., 1000., 1000.])
 
         check_gradient_unit_test(self, nac, display=False)
+
+
+class TestBearingSmooth(unittest.TestCase):
+
+    def test1(self):
+        comp = BearingSmooth()
+        comp.bearing_type = 'SRB'
+        comp.lss_diameter = 0.721049014299
+        comp.rotor_diameter = 125.740528176
+        comp.bearing_switch = 'main'
+
+        check_gradient_unit_test(self, comp)
+
+
+class TestYawSystemSmooth(unittest.TestCase):
+
+    def test1(self):
+        comp = YawSystemSmooth()
+        comp.rotor_diameter = 125.740528176
+        comp.tower_top_diameter = 3.87
+
+        check_gradient_unit_test(self, comp)
+
+
+class TestBedplateSmooth(unittest.TestCase):
+
+    def test1(self):
+        comp = BedplateSmooth()
+        comp.hss_location = 0.785878301101
+        comp.hss_mass = 2288.26758514
+        comp.generator_location = 1.5717566022
+        comp.generator_mass = 16699.851325
+        comp.lss_location = -3.14351320441
+        comp.lss_mass = 12546.3193435
+        comp.mb1_location = -1.25740528176
+        comp.mb1_mass = 3522.06734168
+        comp.mb2_location = -4.40091848617
+        comp.mb2_mass = 5881.81400444
+        comp.tower_top_diameter = 3.87
+        comp.rotor_diameter = 125.740528176
+        comp.machine_rating = 5000.0
+        comp.rotor_mass = 93910.5225629
+        comp.rotor_bending_moment_y = -2325000.0
+        comp.rotor_force_z = -921262.226342
+        comp.h0_rear = 1.35
+        comp.h0_front = 1.7
+
+        check_gradient_unit_test(self, comp)
+
+
 
 
 if __name__ == "__main__":

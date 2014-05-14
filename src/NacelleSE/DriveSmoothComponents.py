@@ -12,9 +12,10 @@ from openmdao.main.datatypes.api import Float, Array, Enum, Str
 import numpy as np
 from math import pi, sin, cos, radians
 from scipy.optimize import fmin_cobyla
+import algopy
 
 from akima import Akima
-from commonse.utilities import smooth_abs
+from commonse.utilities import smooth_abs, vstack
 from NacelleSE import NacelleBase
 from NacelleSE_components import HighSpeedSide, Generator, AboveYawMassAdder, NacelleSystemAdder
 
@@ -161,10 +162,10 @@ class NacelleTS(NacelleBase):
 
         # connections to yawSystem
         self.connect('rotor_diameter', 'yawSystem.rotor_diameter')
-        self.connect('rotor_thrust', 'yawSystem.rotor_thrust')
+        # self.connect('rotor_thrust', 'yawSystem.rotor_thrust')
         self.connect('tower_top_diameter', 'yawSystem.tower_top_diameter')
         self.connect('yaw_motors_number', 'yawSystem.yaw_motors_number')
-        self.connect('above_yaw_massAdder.above_yaw_mass', 'yawSystem.above_yaw_mass')
+        # self.connect('above_yaw_massAdder.above_yaw_mass', 'yawSystem.above_yaw_mass')
 
         # connections to nacelle system
         self.connect('lowSpeedShaft.mass', 'nacelleSystem.lss_mass')
@@ -239,7 +240,7 @@ class BearingSmooth(Component):
         # TODO: TRB bearing type
 
         spline = Akima(dpt, mpt, delta_x=0.0)
-        self.mass, dmass_dd = spline.interp(self.lss_diameter)
+        self.mass, self.dmass_dd = spline.interp(self.lss_diameter)
 
         # add housing weight
         self.mass += self.mass*(8000.0/2700.0)
@@ -250,10 +251,28 @@ class BearingSmooth(Component):
         elif self.bearing_switch == 'second':
             c1 = 0.01
         self.cm = np.array([- (c1 * self.rotor_diameter), 0.0, 0.025 * self.rotor_diameter])
+        self.c1 = c1
 
         b1I0 = (self.mass * self.lss_diameter** 2) / 4.0
         self.I = np.array([b1I0, b1I0 / 2.0, b1I0 / 2.0])
 
+
+    def list_deriv_vars(self):
+
+        inputs = ('lss_diameter', 'rotor_diameter')
+        outputs = ('mass', 'cm', 'I')
+
+        return inputs, outputs
+
+    def provideJ(self):
+
+        dmass = np.array([self.dmass_dd*(1 + 8000.0/2700.0), 0.0])
+        dcm = np.array([[0.0, -self.c1], [0.0, 0.0], [0.0, 0.025]])
+        db1I0 = (self.mass*2*self.lss_diameter + dmass[0]*self.lss_diameter**2)/4.0
+        dI = np.array([[db1I0, 0.0], [db1I0/2.0, 0.0], [db1I0/2.0, 0.0]])
+        J = vstack([dmass, dcm, dI])
+
+        return J
 
 
 class BedplateSmooth(Component):
@@ -307,19 +326,39 @@ class BedplateSmooth(Component):
 
 
 
-    def execute(self):
+    def myexec(self, x):
+
         #Model bedplate as 2 parallel I-beams with a rear steel frame and a front cast frame
         #Deflection constraints applied at each bedplate end
         #Stress constraint checked at root of front and rear bedplate sections
 
+        hss_location = x[0]
+        hss_mass = x[1]
+        generator_location = x[2]
+        generator_mass = x[3]
+        lss_location = x[4]
+        lss_mass = x[5]
+        mb1_location = x[6]
+        mb1_mass = x[7]
+        mb2_location = x[8]
+        mb2_mass = x[9]
+        tower_top_diameter = x[10]
+        rotor_diameter = x[11]
+        machine_rating = x[12]
+        rotor_mass = x[13]
+        rotor_bending_moment_y = x[14]
+        rotor_force_z = x[15]
+        h0_rear = x[16]
+        h0_front = x[17]
+
         g = 9.81
-        E = 2.1e11
+        E_rear = 2.1e11
         density = 7800.0
 
         #rear component weights and locations
-        transLoc = 3.0*self.generator_location
-        transformer_mass = 2.4445*(self.machine_rating) + 1599.0
-        convLoc = 2.0*self.generator_location
+        transLoc = 3.0*generator_location
+        transformer_mass = 2.4445*(machine_rating) + 1599.0
+        convLoc = 2.0*generator_location
         convMass = 0.3*transformer_mass
 
         rearTotalLength = 0.0
@@ -327,26 +366,28 @@ class BedplateSmooth(Component):
         if transLoc > 0:
             rearTotalLength = transLoc + 1.0
         else:
-            rearTotalLength = self.generator_location + 1.0
+            rearTotalLength = generator_location + 1.0
 
         #component masses and locations
-        mb1_location, _ = smooth_abs(self.mb1_location)
-        mb2_location, _ = smooth_abs(self.mb2_location)
-        lss_location, _ = smooth_abs(self.lss_location)
+        # mb1_location, _ = smooth_abs(mb1_location)
+        # mb2_location, _ = smooth_abs(mb2_location)
+        # lss_location, _ = smooth_abs(lss_location)
 
         frontTotalLength = mb1_location + 0.2
 
         #rotor weights and loads
         rotorLoc = frontTotalLength
-        rotorFz, _ = smooth_abs(self.rotor_force_z)
-        rotorMy, _ = smooth_abs(self.rotor_bending_moment_y)
+        # rotorFz, _ = smooth_abs(rotor_force_z)
+        # rotorMy, _ = smooth_abs(rotor_bending_moment_y)
+        rotorFz = rotor_force_z
+        rotorMy = rotor_bending_moment_y
         rotorLoc=frontTotalLength
 
         #initial I-beam dimensions
-        h0 = self.h0_rear
-        b0 = h0/2.0
-        tw = h0/5.0  # /48.0
-        tf = h0/5.0  # /32.0
+        # h0 = h0_rear
+        b0_rear = h0_rear/2.0
+        tw_rear = h0_rear/5.0  # /48.0
+        tf_rear = h0_rear/5.0  # /32.0
 
         stressTol = 1e6
         deflTol = 3.5e-3  # todo: model SUPER sensitive to this parameter... modified to achieve agreement with 5 MW turbine for now
@@ -367,32 +408,32 @@ class BedplateSmooth(Component):
 
 
         # while rootStress - 50e6 > stressTol or totalTipDefl - 0.0001 > deflTol:
-        bi = (b0-tw)/2.0
-        hi = h0-2.0*tf
-        I = b0*h0**3/12.0 - 2*bi*hi**3/12.0
-        A = b0*h0 - 2.0*bi*hi
-        w = A*density
+        bi_rear = (b0_rear-tw_rear)/2.0
+        hi_rear = h0_rear-2.0*tf_rear
+        I_rear = b0_rear*h0_rear**3/12.0 - 2*bi_rear*hi_rear**3/12.0
+        A_rear = b0_rear*h0_rear - 2.0*bi_rear*hi_rear
+        w_rear = A_rear*density
         #Tip Deflection for load not at end
 
 
-        hssTipDefl = midDeflection(rearTotalLength, self.hss_location, self.hss_mass*g/2, E, I)
-        genTipDefl = midDeflection(rearTotalLength, self.generator_location, self.generator_mass*g/2, E, I)
-        convTipDefl = midDeflection(rearTotalLength, convLoc, convMass*g/2, E, I)
-        transTipDefl = midDeflection(rearTotalLength, transLoc, transformer_mass*g/2, E, I)
-        selfTipDefl = distDeflection(rearTotalLength, w*g, E, I)
+        hssTipDefl = midDeflection(rearTotalLength, hss_location, hss_mass*g/2, E_rear, I_rear)
+        genTipDefl = midDeflection(rearTotalLength, generator_location, generator_mass*g/2, E_rear, I_rear)
+        convTipDefl = midDeflection(rearTotalLength, convLoc, convMass*g/2, E_rear, I_rear)
+        transTipDefl = midDeflection(rearTotalLength, transLoc, transformer_mass*g/2, E_rear, I_rear)
+        selfTipDefl_rear = distDeflection(rearTotalLength, w_rear*g, E_rear, I_rear)
 
-        totalTipDefl = hssTipDefl + genTipDefl + convTipDefl + transTipDefl + selfTipDefl
+        totalTipDefl_rear = hssTipDefl + genTipDefl + convTipDefl + transTipDefl + selfTipDefl_rear
 
-        self.totalTipDefl_margin_rear = (totalTipDefl - 0.0001 - deflTol)/0.0001
+        totalTipDefl_margin_rear = (totalTipDefl_rear - 0.0001 - deflTol)/0.0001
 
         #root stress
-        totalBendingMoment = (self.hss_location*self.hss_mass + self.generator_location*self.generator_mass + convLoc*convMass + transLoc*transformer_mass + w*rearTotalLength**2/2.0)*g
-        rootStress = totalBendingMoment*h0/2/I
+        totalBendingMoment_rear = (hss_location*hss_mass + generator_location*generator_mass + convLoc*convMass + transLoc*transformer_mass + w_rear*rearTotalLength**2/2.0)*g
+        rootStress_rear = totalBendingMoment_rear*h0_rear/2/I_rear
 
-        self.rootStress_margin_rear = (rootStress - maxstress - stressTol)/maxstress
+        rootStress_margin_rear = (rootStress_rear - maxstress - stressTol)/maxstress
 
         #mass
-        steelVolume = A*rearTotalLength
+        steelVolume = A_rear*rearTotalLength
         steelMass = steelVolume*density
 
         #2 parallel I beams
@@ -401,13 +442,13 @@ class BedplateSmooth(Component):
 
         #front cast section
 
-        E = 169e9  # EN-GJS-400-18-LT http://www.claasguss.de/html_e/pdf/THBl2_engl.pdf
+        E_front = 169e9  # EN-GJS-400-18-LT http://www.claasguss.de/html_e/pdf/THBl2_engl.pdf
         castDensity = 7100.0
 
-        h0 = self.h0_front
-        b0 = h0/2.0
-        tw = h0/5.0  # /48.0
-        tf = h0/5.0  # /32.0
+        # h0 = h0_front
+        b0_front = h0_front/2.0
+        tw_front = h0_front/5.0  # /48.0
+        tf_front = h0_front/5.0  # /32.0
 
 
         # rootStress = 250e6
@@ -416,34 +457,34 @@ class BedplateSmooth(Component):
 
         # while rootStress - 50e6 > stressTol or totalTipDefl - 0.0001 > deflTol:
 
-        bi = (b0-tw)/2.0
-        hi = h0-2.0*tf
-        I = b0*h0**3/12.0 - 2*bi*hi**3/12.0
-        A = b0*h0 - 2.0*bi*hi
-        w = A*castDensity
+        bi_front = (b0_front-tw_front)/2.0
+        hi_front = h0_front-2.0*tf_front
+        I_front = b0_front*h0_front**3/12.0 - 2*bi_front*hi_front**3/12.0
+        A_front = b0_front*h0_front - 2.0*bi_front*hi_front
+        w_front = A_front*castDensity
         #Tip Deflection for load not at end
 
 
-        mb1TipDefl = midDeflection(frontTotalLength, mb1_location, self.mb1_mass*g/2.0, E, I)
-        mb2TipDefl = midDeflection(frontTotalLength, mb2_location, self.mb2_mass*g/2.0, E, I)
-        lssTipDefl = midDeflection(frontTotalLength, lss_location, self.lss_mass*g/2.0, E, I)
-        rotorTipDefl = midDeflection(frontTotalLength, rotorLoc, self.rotor_mass*g/2.0, E, I)
-        rotorFzTipDefl = midDeflection(frontTotalLength, rotorLoc, rotorFz/2.0, E, I)
-        selfTipDefl = distDeflection(frontTotalLength, w*g, E, I)
-        rotorMyTipDefl = rotorMy/2.0*frontTotalLength**2/(2.0*E*I)
+        mb1TipDefl = midDeflection(frontTotalLength, mb1_location, mb1_mass*g/2.0, E_front, I_front)
+        mb2TipDefl = midDeflection(frontTotalLength, mb2_location, mb2_mass*g/2.0, E_front, I_front)
+        lssTipDefl = midDeflection(frontTotalLength, lss_location, lss_mass*g/2.0, E_front, I_front)
+        rotorTipDefl = midDeflection(frontTotalLength, rotorLoc, rotor_mass*g/2.0, E_front, I_front)
+        rotorFzTipDefl = midDeflection(frontTotalLength, rotorLoc, rotorFz/2.0, E_front, I_front)
+        selfTipDefl_front = distDeflection(frontTotalLength, w_front*g, E_front, I_front)
+        rotorMyTipDefl = rotorMy/2.0*frontTotalLength**2/(2.0*E_front*I_front)
 
-        totalTipDefl = mb1TipDefl + mb2TipDefl + lssTipDefl + rotorTipDefl + selfTipDefl + rotorMyTipDefl + rotorFzTipDefl
+        totalTipDefl_front = mb1TipDefl + mb2TipDefl + lssTipDefl + rotorTipDefl + selfTipDefl_front + rotorMyTipDefl + rotorFzTipDefl
 
-        self.totalTipDefl_margin_front = (totalTipDefl - 0.0001 - deflTol)/0.0001
+        totalTipDefl_margin_front = (totalTipDefl_front - 0.0001 - deflTol)/0.0001
 
         #root stress
-        totalBendingMoment=(mb1_location*self.mb1_mass/2.0 + mb2_location*self.mb2_mass/2.0 + lss_location*self.lss_mass/2.0 + w*frontTotalLength**2/2.0 + rotorLoc*self.rotor_mass/2.0)*g + rotorLoc*rotorFz/2.0 +rotorMy/2.0
-        rootStress = totalBendingMoment*h0/2/I
+        totalBendingMoment_front=(mb1_location*mb1_mass/2.0 + mb2_location*mb2_mass/2.0 + lss_location*lss_mass/2.0 + w_front*frontTotalLength**2/2.0 + rotorLoc*rotor_mass/2.0)*g + rotorLoc*rotorFz/2.0 +rotorMy/2.0
+        rootStress_front = totalBendingMoment_front*h0_front/2.0/I_front
 
-        self.rootStress_margin_front = (rootStress - maxstress - stressTol)/maxstress
+        rootStress_margin_front = (rootStress_front - maxstress - stressTol)/maxstress
 
         #mass
-        castVolume = A*frontTotalLength
+        castVolume = A_front*frontTotalLength
         castMass = castVolume*castDensity
 
         #2 parallel I-beams
@@ -451,23 +492,101 @@ class BedplateSmooth(Component):
 
         front_frame_support_multiplier = 1.33
         totalCastMass *= front_frame_support_multiplier
-        self.mass = totalCastMass + totalSteelMass
-        self.length = frontTotalLength + rearTotalLength
-        self.width = b0 + self.tower_top_diameter
+        mass = totalCastMass + totalSteelMass
+        length = frontTotalLength + rearTotalLength
+        width = b0_front + tower_top_diameter
 
 
         # calculate mass properties
-        cm = np.array([0.0, 0.0, 0.0])
-        cm[2] = 0.0122 * self.rotor_diameter                             # half distance from shaft to yaw axis
-        self.cm = cm
+        # cm = np.array([0.0, 0.0, 0.0])
+        cm0 = 0.0
+        cm1 = 0.0
+        cm2 = 0.0122 * rotor_diameter                             # half distance from shaft to yaw axis
+        # self.cm = cm
 
-        self.depth = (self.length / 2.0)
+        depth = (length / 2.0)
 
-        I = np.array([0.0, 0.0, 0.0])
-        I[0] = self.mass * (self.width ** 2 + self.depth ** 2) / 8
-        I[1] = self.mass * (self.depth ** 2 + self.width ** 2 + (4/3) * self.length ** 2) / 16
-        I[2] = I[1]
-        self.I = I
+        # I = np.array([0.0, 0.0, 0.0])
+        I0 = mass * (width**2 + depth**2) / 8.0
+        I1 = mass * (depth**2 + width**2 + (4.0/3) * length**2) / 16.0
+        I2 = I1
+        # self.I = I
+
+        out = algopy.zeros(13, dtype=x)
+        out[0] = mass
+        out[1] = cm0
+        out[2] = cm1
+        out[3] = cm2
+        out[4] = I0
+        out[5] = I1
+        out[6] = I2
+        out[7] = length
+        out[8] = width
+        out[9] = rootStress_margin_rear
+        out[10] = totalTipDefl_margin_rear
+        out[11] = rootStress_margin_front
+        out[12] = totalTipDefl_margin_front
+
+        return out
+
+
+
+    def execute(self):
+
+        mb1_location, _ = smooth_abs(self.mb1_location)
+        mb2_location, _ = smooth_abs(self.mb2_location)
+        lss_location, _ = smooth_abs(self.lss_location)
+        rotor_force_z, _ = smooth_abs(self.rotor_force_z)
+        rotor_bending_moment_y, _ = smooth_abs(self.rotor_bending_moment_y)
+
+        x = [self.hss_location, self.hss_mass, self.generator_location, self.generator_mass,
+            lss_location, self.lss_mass, mb1_location, self.mb1_mass, mb2_location,
+            self.mb2_mass, self.tower_top_diameter, self.rotor_diameter, self.machine_rating,
+            self.rotor_mass, rotor_bending_moment_y, rotor_force_z, self.h0_rear, self.h0_front]
+        out = self.myexec(x)
+        self.mass = out[0]
+        self.cm = out[1:4]
+        self.I = out[4:7]
+        self.length = out[7]
+        self.width = out[8]
+        self.rootStress_margin_rear = out[9]
+        self.totalTipDefl_margin_rear = out[10]
+        self.rootStress_margin_front = out[11]
+        self.totalTipDefl_margin_front = out[12]
+
+
+
+    def list_deriv_vars(self):
+
+        inputs = ('hss_location', 'hss_mass', 'generator_location', 'generator_mass', 'lss_location', 'lss_mass', 'mb1_location', 'mb1_mass', 'mb2_location', 'mb2_mass', 'tower_top_diameter', 'rotor_diameter', 'machine_rating', 'rotor_mass', 'rotor_bending_moment_y', 'rotor_force_z', 'h0_rear', 'h0_front')
+        outputs = ('mass', 'cm', 'I', 'length', 'width', 'rootStress_margin_rear', 'totalTipDefl_margin_rear', 'rootStress_margin_front', 'totalTipDefl_margin_front')
+
+        return inputs, outputs
+
+    def provideJ(self):
+
+        mb1_location, dmb1_dmb1 = smooth_abs(self.mb1_location)
+        mb2_location, dmb2_dmb2 = smooth_abs(self.mb2_location)
+        lss_location, dlss_dlss = smooth_abs(self.lss_location)
+        rotor_force_z, drfz_drfz = smooth_abs(self.rotor_force_z)
+        rotor_bending_moment_y, drbmy_drbmy = smooth_abs(self.rotor_bending_moment_y)
+
+        x = algopy.UTPM.init_jacobian([self.hss_location, self.hss_mass, self.generator_location, self.generator_mass,
+            lss_location, self.lss_mass, mb1_location, self.mb1_mass, mb2_location,
+            self.mb2_mass, self.tower_top_diameter, self.rotor_diameter, self.machine_rating,
+            self.rotor_mass, rotor_bending_moment_y, rotor_force_z, self.h0_rear, self.h0_front])
+
+        J = algopy.UTPM.extract_jacobian(self.myexec(x))
+
+        J[:, 6] *= dmb1_dmb1
+        J[:, 8] *= dmb2_dmb2
+        J[:, 4] *= dlss_dlss
+        J[:, 15] *= drfz_drfz
+        J[:, 14] *= drbmy_drbmy
+
+        return J
+
+
 
 
 
@@ -479,9 +598,9 @@ class YawSystemSmooth(Component):
     '''
     #variables
     rotor_diameter = Float(iotype='in', units='m', desc='rotor diameter')
-    rotor_thrust = Float(iotype='in', units='N', desc='maximum rotor thrust')
+    # rotor_thrust = Float(iotype='in', units='N', desc='maximum rotor thrust')
     tower_top_diameter = Float(iotype='in', units='m', desc='tower top diameter')
-    above_yaw_mass = Float(iotype='in', units='kg', desc='above yaw mass')
+    # above_yaw_mass = Float(iotype='in', units='kg', desc='above yaw mass')
 
     #parameters
     yaw_motors_number = Float(iotype='in', desc='number of yaw motors')
@@ -505,8 +624,8 @@ class YawSystemSmooth(Component):
         #assume friction plate surface width is 1/10 the diameter
         #assume friction plate thickness scales with rotor diameter
         frictionPlateVol = pi*self.tower_top_diameter*(self.tower_top_diameter*0.10)*(self.rotor_diameter/1000.0)
-        steelDensity = 8000.0
-        frictionPlateMass = frictionPlateVol*steelDensity
+        self.steelDensity = 8000.0
+        frictionPlateMass = frictionPlateVol*self.steelDensity
 
         #Assume same yaw motors as Vestas V80 for now: Bonfiglioli 709T2M
         yawMotorMass = 190.0
@@ -521,6 +640,23 @@ class YawSystemSmooth(Component):
         # assuming 0 MOI for yaw system (ie mass is nonrotating)
         self.I = np.array([0.0, 0.0, 0.0])
 
+
+    def list_deriv_vars(self):
+
+        inputs = ('rotor_diameter', 'tower_top_diameter')
+        outputs = ('mass', 'cm', 'I')
+
+        return inputs, outputs
+
+    def provideJ(self):
+
+        dfpm_drotord = pi*self.tower_top_diameter*self.tower_top_diameter*0.10/1000.0*self.steelDensity
+        dfpm_dtowertd = pi*2*self.tower_top_diameter*0.10*self.rotor_diameter/1000.0*self.steelDensity
+
+        J = np.zeros((7, 2))
+        J[0, :] = [dfpm_drotord, dfpm_dtowertd]
+
+        return J
 
 
 class GearboxSmooth(Component):

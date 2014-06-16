@@ -924,6 +924,8 @@ class LowSpeedShaft_drive3pt(Component):
     machine_rating = Float(iotype='in', units='kW', desc='machine_rating machine rating of the turbine')
     gearbox_mass = Float(iotype='in', units='kg', desc='Gearbox mass')
     carrier_mass = Float(iotype='in', units='kg', desc='Carrier mass')
+    overhang = Float(iotype='in', units='m', desc='Overhang distance')
+
 
     # parameters
     shrink_disc_mass = Float(iotype='in', units='kg', desc='Mass of the shrink disc')
@@ -1017,7 +1019,7 @@ class LowSpeedShaft_drive3pt(Component):
         u_knm_inlb = 8850.745454036
         u_in_m = 0.0254000508001
         counter=0
-        while abs(check_limit) > tol and counter <N_count:
+        while abs(check_limit) > tol and L_ms_new < 0.5*self.overhang:
             counter = counter+1
             if L_ms_new > 0:
                	 L_ms=L_ms_new

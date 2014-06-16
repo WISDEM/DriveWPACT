@@ -321,6 +321,8 @@ class NacelleSE_drive3pt(NacelleBase):
     mb1Type = Str(iotype='in',desc='Main bearing type: CARB, TRB or SRB')
     mb2Type = Str(iotype='in',desc= 'Carrier bearing type: CRB, TRB or RB (Not coded)')
     flange_length = Float(iotype='in', units='kg', desc='flange length')
+    overhang = Float(iotype='in', units='m', desc='Overhang distance')
+
 
 
     # potential additional new parameters
@@ -391,6 +393,8 @@ class NacelleSE_drive3pt(NacelleBase):
         self.connect('ratio_type', 'gearbox.ratio_type')
         self.connect('shaft_type', 'gearbox.shaft_type')
         self.connect('flange_length', 'bedplate.flange_length')
+        self.connect('overhang','lowSpeedShaft.overhang')
+
 
 
         # connect components
@@ -673,6 +677,7 @@ def example():
     nace.carrier_mass = 8000.0 # estimated
     nace.mb1Type = 'CARB'
     nace.mb2Type = 'SRB'
+    nace.overhang = 5.0
 
 
     # NREL 5 MW Tower Variables
@@ -740,6 +745,7 @@ def example2():
         # rotor torque [Nm] calculated from max / rated rotor speed and machine rating
     nace.rotor_thrust = 324000.
     nace.rotor_mass = 28560. # rotor mass [kg]
+    nace.overhang = 3.3
 
     # WindPACT 1.5 MW Tower Variables
     nace.tower_top_diameter = 2.7 # tower top diameter [m]
@@ -914,6 +920,7 @@ def example3():
         # rotor torque [Nm] calculated from max / rated rotor speed and machine rating
     nace.rotor_thrust = 324000.
     nace.rotor_mass = 28560. # rotor mass [kg]
+    nace.overhang = 3.3
 
     # WindPACT 1.5 MW Tower Variables
     nace.tower_top_diameter = 2.7 # tower top diameter [m]
@@ -1113,6 +1120,8 @@ def nacelle_example_80m_baseline_3pt():
     nace.mb1Type = 'CARB'
     nace.mb2Type = 'SRB'
     nace.flange_length = 0.5
+    nace.overhang = 5.0
+
 
 
 

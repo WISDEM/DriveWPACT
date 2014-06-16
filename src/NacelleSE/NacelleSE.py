@@ -470,6 +470,8 @@ class NacelleSE_drive4pt(NacelleBase):
     shaft_ratio = Float(iotype='in', desc='Ratio of inner diameter to outer diameter.  Leave zero for solid LSS')
     rotorRatedRPM = Float(iotype='in', units='rpm', desc='Speed of rotor at rated power')
     flange_length = Float(iotype='in', units='kg', desc='flange length')
+    overhang = Float(iotype='in', units='m', desc='Overhang distance')
+
 
 
     # parameters
@@ -549,6 +551,8 @@ class NacelleSE_drive4pt(NacelleBase):
         self.connect('ratio_type', 'gearbox.ratio_type')
         self.connect('shaft_type', 'gearbox.shaft_type')
         self.connect('flange_length', 'bedplate.flange_length')
+        self.connect('overhang','lowSpeedShaft.overhang')
+
 
 
         # connect components
@@ -1111,6 +1115,7 @@ def nacelle_example_80m_baseline_3pt():
     nace.flange_length = 0.5
 
 
+
     # NREL 5 MW Tower Variables
     nace.tower_top_diameter = 3.78 # m
 
@@ -1194,6 +1199,7 @@ def nacelle_example_80m_baseline_4pt():
     nace.mb1Type = 'CARB'
     nace.mb2Type = 'SRB'
     nace.flange_length = 0.5 #m
+    nace.overhang = 5.0
 
 
     # NREL 5 MW Tower Variables
@@ -1574,10 +1580,10 @@ def nacelle_example_GRC_4pt():
 if __name__ == '__main__':
     ''' Main runs through tests of several drivetrain configurations with known component masses and dimensions '''
 
-    nacelle_example_80m_baseline_3pt()
+    # nacelle_example_80m_baseline_3pt()
     nacelle_example_80m_baseline_4pt()
-    nacelle_example_GE_3pt()
-    nacelle_example_GE_4pt()
-    nacelle_example_GRC_3pt()
-    # nacelle_example_GRC_4pt()
+    # nacelle_example_GE_3pt()
+    # nacelle_example_GE_4pt()
+    # nacelle_example_GRC_3pt()
+    # # nacelle_example_GRC_4pt()
 

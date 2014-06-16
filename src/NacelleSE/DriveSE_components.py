@@ -728,7 +728,7 @@ class LowSpeedShaft_drive4pt(Component):
         dL_ms = 0.05
         dL = 0.0025
 
-        while abs(check_limit_ms)>tol and L_mb_new < 0.6*self.overhang:
+        while abs(check_limit_ms)>tol and L_mb_new < 0.5*self.overhang:
             counter_ms = counter_ms + 1
             if L_mb_new > 0:
                 L_mb=L_mb_new

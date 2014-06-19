@@ -11,7 +11,7 @@ from math import pi
 import numpy as np
 
 from NacelleSE_components import LowSpeedShaft, MainBearing, SecondBearing, Gearbox, HighSpeedSide, Generator, Bedplate, AboveYawMassAdder, YawSystem, NacelleSystemAdder
-from DriveSE_components import LowSpeedShaft_drive, Gearbox_drive, MainBearing_drive, MainBearings_drive, SecondBearing_drive, Bedplate_drive, YawSystem_drive, LowSpeedShaft_drive3pt, LowSpeedShaft_drive4pt
+from DriveSE_components import LowSpeedShaft_drive, Gearbox_drive, MainBearing_drive, SecondBearing_drive, Bedplate_drive, YawSystem_drive, LowSpeedShaft_drive3pt, LowSpeedShaft_drive4pt
 
 
 class NacelleBase(Assembly):
@@ -32,6 +32,18 @@ class NacelleBase(Assembly):
     crane = Bool(iotype='in', desc='flag for presence of crane', deriv_ignore=True)
     bevel = Int(0, iotype='in', desc='Flag for the presence of a bevel stage - 1 if present, 0 if not')
     gear_configuration = Str(iotype='in', desc='tring that represents the configuration of the gearbox (stage number and types)')
+    L_rb = Float(iotype='in', units='m', desc='distance between hub center and upwind main bearing')
+    overhang = Float(iotype='in', units='m', desc='Overhang distance')
+    check_fatigue = Bool(iotype = 'in', desc = 'turns on and off fatigue check')
+    weibull_A = Float(iotype = 'in', desc = 'weibull scale parameter "A" of 10-minute windspeed probability distribution')
+    weibull_k = Float(iotype = 'in', desc = 'weibull shape parameter "k" of 10-minute windspeed probability distribution')
+    blade_number = Float(iotype = 'in', desc = 'number of blades on rotor, 2 or 3')
+    cut_in = Float(iotype = 'in', units = 'm/s', desc = 'cut-in windspeed')
+    cut_out = Float(iotype = 'in', units = 'm/s', desc = 'cut-out windspeed')
+    Vrated = Float(iotype = 'in', units = 'm/s', desc = 'rated windspeed')
+    T_life = Float(iotype = 'in', units = 'yr', desc = 'cut-in windspeed')
+    IEC_Class = Str(iotype='in',desc='IEC class letter: A, B, or C')
+    DrivetrainEfficiency = Float(iotype = 'in', desc = 'overall drivettrain efficiency')
 
     # outputs
     nacelle_mass = Float(iotype='out', units='kg', desc='nacelle mass')
@@ -171,6 +183,7 @@ class NacelleSE_drive(NacelleBase):
     ratio_type=Str(iotype='in', desc='optimal or empirical stage ratios')
     shaft_type = Str(iotype='in', desc = 'normal or short shaft length')
     uptower_transformer = Bool(iotype = 'in', desc = 'Boolean stating if transformer is uptower')
+
 
 
 
@@ -319,8 +332,21 @@ class NacelleSE_drive3pt(NacelleBase):
     shrink_disc_mass = Float(iotype='in', units='kg', desc='Mass of the shrink disc')
     carrier_mass = Float(iotype='in', units='kg', desc='Carrier mass')
     mb1Type = Str(iotype='in',desc='Main bearing type: CARB, TRB or SRB')
-    mb2Type = Str(iotype='in',desc= 'Carrier bearing type: CRB, TRB or RB (Not coded)')
-    flange_length = Float(iotype='in', units='kg', desc='flange length')
+    mb2Type = Str(iotype='in',desc= 'Carrier bearing type: CRB, TRB or RB')
+    flange_length = Float(iotype='in', units='kg', desc='flange length')    
+    L_rb = Float(iotype='in', units='m', desc='distance between hub center and upwind main bearing')
+    check_fatigue = Bool(iotype = 'in', desc = 'turns on and off fatigue check')
+    weibull_A = Float(iotype = 'in', desc = 'weibull scale parameter "A" of 10-minute windspeed probability distribution')
+    weibull_k = Float(iotype = 'in', desc = 'weibull shape parameter "k" of 10-minute windspeed probability distribution')
+    blade_number = Float(iotype = 'in', desc = 'number of blades on rotor, 2 or 3')
+    cut_in = Float(iotype = 'in', units = 'm/s', desc = 'cut-in windspeed')
+    cut_out = Float(iotype = 'in', units = 'm/s', desc = 'cut-out windspeed')
+    Vrated = Float(iotype = 'in', units = 'm/s', desc = 'rated windspeed')
+    T_life = Float(iotype = 'in', units = 'yr', desc = 'cut-in windspeed')
+    IEC_Class = Str(iotype='in',desc='IEC class letter: A, B, or C')
+    DrivetrainEfficiency = Float(iotype = 'in', desc = 'overall drivettrain efficiency')
+    overhang = Float(iotype='in', units='m', desc='Overhang distance')
+
 
 
     # potential additional new parameters
@@ -391,7 +417,20 @@ class NacelleSE_drive3pt(NacelleBase):
         self.connect('ratio_type', 'gearbox.ratio_type')
         self.connect('shaft_type', 'gearbox.shaft_type')
         self.connect('flange_length', 'bedplate.flange_length')
+        self.connect('overhang','lowSpeedShaft.overhang')
 
+        self.connect('L_rb', 'lowSpeedShaft.L_rb')
+        self.connect('check_fatigue', 'lowSpeedShaft.check_fatigue')
+        self.connect('weibull_A', 'lowSpeedShaft.weibull_A')
+        self.connect('weibull_k', 'lowSpeedShaft.weibull_k')
+        self.connect('blade_number', 'lowSpeedShaft.blade_number')
+        self.connect('cut_in', 'lowSpeedShaft.cut_in')
+        self.connect('cut_out', 'lowSpeedShaft.cut_out')
+        self.connect('Vrated', 'lowSpeedShaft.Vrated')
+        self.connect('T_life', 'lowSpeedShaft.T_life')
+        self.connect('IEC_Class', 'lowSpeedShaft.IEC_Class')
+        self.connect('DrivetrainEfficiency', 'lowSpeedShaft.DrivetrainEfficiency')
+        self.connect('rotorRatedRPM', 'lowSpeedShaft.rotor_freq')
 
         # connect components
         self.connect('lowSpeedShaft.design_torque', ['mainBearing.lss_design_torque', 'secondBearing.lss_design_torque'])
@@ -402,6 +441,8 @@ class NacelleSE_drive3pt(NacelleBase):
         self.connect('bedplate.length', 'above_yaw_massAdder.bedplate_length')
         self.connect('bedplate.width', 'above_yaw_massAdder.bedplate_width')
 
+        self.connect('lowSpeedShaft.bearing_mass1',['mainBearing.bearing_mass'])
+        self.connect('lowSpeedShaft.bearing_mass2',['secondBearing.bearing_mass'])
         self.connect('lowSpeedShaft.mass', ['bedplate.lss_mass','above_yaw_massAdder.lss_mass', 'nacelleSystem.lss_mass'])
         self.connect('mainBearing.mass', ['bedplate.mb1_mass','above_yaw_massAdder.main_bearing_mass', 'nacelleSystem.main_bearing_mass'])
         self.connect('secondBearing.mass', ['bedplate.mb2_mass','above_yaw_massAdder.second_bearing_mass', 'nacelleSystem.second_bearing_mass'])
@@ -481,7 +522,17 @@ class NacelleSE_drive4pt(NacelleBase):
     carrier_mass = Float(iotype='in', units='kg', desc='Carrier mass')
     mb1Type = Str(iotype='in',desc='Main bearing type: CARB, TRB or SRB')
     mb2Type = Str(iotype='in',desc='Second bearing type: CARB, TRB or SRB')
-
+    L_rb = Float(iotype='in', units='m', desc='distance between hub center and upwind main bearing')
+    check_fatigue = Bool(iotype = 'in', desc = 'turns on and off fatigue check')
+    weibull_A = Float(iotype = 'in', desc = 'weibull scale parameter "A" of 10-minute windspeed probability distribution')
+    weibull_k = Float(iotype = 'in', desc = 'weibull shape parameter "k" of 10-minute windspeed probability distribution')
+    blade_number = Float(iotype = 'in', desc = 'number of blades on rotor, 2 or 3')
+    cut_in = Float(iotype = 'in', units = 'm/s', desc = 'cut-in windspeed')
+    cut_out = Float(iotype = 'in', units = 'm/s', desc = 'cut-out windspeed')
+    Vrated = Float(iotype = 'in', units = 'm/s', desc = 'rated windspeed')
+    T_life = Float(iotype = 'in', units = 'yr', desc = 'cut-in windspeed')
+    IEC_Class = Str(iotype='in',desc='IEC class letter: A, B, or C')
+    DrivetrainEfficiency = Float(iotype = 'in', desc = 'overall drivettrain efficiency')
 
     '''        name : str
           Name of the gearbox.
@@ -549,7 +600,18 @@ class NacelleSE_drive4pt(NacelleBase):
         self.connect('ratio_type', 'gearbox.ratio_type')
         self.connect('shaft_type', 'gearbox.shaft_type')
         self.connect('flange_length', 'bedplate.flange_length')
-
+        self.connect('L_rb', 'lowSpeedShaft.L_rb')
+        self.connect('check_fatigue', 'lowSpeedShaft.check_fatigue')
+        self.connect('weibull_A', 'lowSpeedShaft.weibull_A')
+        self.connect('weibull_k', 'lowSpeedShaft.weibull_k')
+        self.connect('blade_number', 'lowSpeedShaft.blade_number')
+        self.connect('cut_in', 'lowSpeedShaft.cut_in')
+        self.connect('cut_out', 'lowSpeedShaft.cut_out')
+        self.connect('Vrated', 'lowSpeedShaft.Vrated')
+        self.connect('T_life', 'lowSpeedShaft.T_life')
+        self.connect('IEC_Class', 'lowSpeedShaft.IEC_Class')
+        self.connect('DrivetrainEfficiency', 'lowSpeedShaft.DrivetrainEfficiency')
+        self.connect('rotorRatedRPM', 'lowSpeedShaft.rotor_freq')
 
         # connect components
         self.connect('lowSpeedShaft.design_torque', ['mainBearing.lss_design_torque', 'secondBearing.lss_design_torque'])
@@ -559,7 +621,10 @@ class NacelleSE_drive4pt(NacelleBase):
         self.connect('gearbox.length', 'bedplate.gbx_length')
         self.connect('bedplate.length', 'above_yaw_massAdder.bedplate_length')
         self.connect('bedplate.width', 'above_yaw_massAdder.bedplate_width')
+        self.connect('overhang','lowSpeedShaft.overhang')
 
+        self.connect('lowSpeedShaft.bearing_mass1',['mainBearing.bearing_mass'])
+        self.connect('lowSpeedShaft.bearing_mass2',['secondBearing.bearing_mass'])
         self.connect('lowSpeedShaft.mass', ['bedplate.lss_mass','above_yaw_massAdder.lss_mass', 'nacelleSystem.lss_mass'])
         self.connect('mainBearing.mass', ['bedplate.mb1_mass','above_yaw_massAdder.main_bearing_mass', 'nacelleSystem.main_bearing_mass'])
         self.connect('secondBearing.mass', ['bedplate.mb2_mass','above_yaw_massAdder.second_bearing_mass', 'nacelleSystem.second_bearing_mass'])
@@ -621,10 +686,10 @@ def example():
     print '----- NREL 5 MW Turbine -----'
     nace = NacelleSE_drive3pt()
     nace.rotor_diameter = 126.0 # m
-    nace.rotor_speed = 12.1 # m/s
+    nace.rotor_speed = 12.1 # #rpm m/s
     nace.machine_rating = 5000.0
-    DrivetrainEfficiency = 0.95
-    nace.rotor_torque =  1.5 * (nace.machine_rating * 1000 / DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30)) # 6.35e6 #4365248.74 # Nm
+    nace.DrivetrainEfficiency = 0.95
+    nace.rotor_torque =  1.5 * (nace.machine_rating * 1000 / nace.DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30)) # 6.35e6 #4365248.74 # Nm
     nace.rotor_thrust = 2.5448e5
     nace.rotor_mass = 0.0 #142585.75 # kg
     nace.rotorRatedRPM = 12.1 #rpm
@@ -669,6 +734,7 @@ def example():
     nace.carrier_mass = 8000.0 # estimated
     nace.mb1Type = 'CARB'
     nace.mb2Type = 'SRB'
+    nace.overhang = 5.0
 
 
     # NREL 5 MW Tower Variables
@@ -730,12 +796,13 @@ def example2():
     airdensity = 1.225 # air density [kg / m^3]
     MaxTipSpeed = 80 # max tip speed [m/s]
     nace.rotor_diameter = 70 # rotor diameter [m]
-    nace.rotor_speed = 21.830
-    DrivetrainEfficiency = 0.95
-    nace.rotor_torque = (nace.machine_rating * 1000 / DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30))
+    nace.rotor_speed = 21.830 #rpm
+    nace.DrivetrainEfficiency = 0.95
+    nace.rotor_torque = (nace.machine_rating * 1000 / nace.DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30))
         # rotor torque [Nm] calculated from max / rated rotor speed and machine rating
     nace.rotor_thrust = 324000.
     nace.rotor_mass = 28560. # rotor mass [kg]
+    nace.overhang = 3.3
 
     # WindPACT 1.5 MW Tower Variables
     nace.tower_top_diameter = 2.7 # tower top diameter [m]
@@ -789,8 +856,8 @@ def example2():
     nace.rotor_diameter = 48.2 # rotor diameter [m]
     #rotor_speed = MaxTipSpeed / ((rotor_diameter / 2) * (pi / 30)) # max / rated rotor speed [rpm] calculated from max tip speed and rotor diamter
     nace.rotor_speed = 22
-    DrivetrainEfficiency = 0.944
-    nace.rotor_torque = (nace.machine_rating * 1000 / DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30)) # rotor torque [Nm] calculated from max / rated rotor speed and machine rating
+    #rpm nace.DrivetrainEfficiency = 0.944
+    nace.rotor_torque = (nace.machine_rating * 1000 / nace.DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30)) # rotor torque [Nm] calculated from max / rated rotor speed and machine rating
     nace.rotor_thrust = 159000 # based on windpact 750 kW design (GRC information not available)
     nace.rotor_mass = 13200 # rotor mass [kg]
 
@@ -845,9 +912,9 @@ def example2():
     MaxTipSpeed = 80 # max tip speed [m/s]
     nace.rotor_diameter = 100.8 # rotor diameter [m]
     #rotor_speed = MaxTipSpeed / ((rotor_diameter / 2) * (pi / 30)) # max / rated rotor speed [rpm] calculated from max tip speed and rotor diamter
-    nace.rotor_speed = 15.1 # based on windpact 3 MW
-    DrivetrainEfficiency = 0.95
-    nace.rotor_torque = (nace.machine_rating * 1000 / DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30)) # rotor torque [Nm] calculated from max / rated rotor speed and machine rating
+    nace.rotor_speed = 15.1 # #rpm based on windpact 3 MW
+    nace.DrivetrainEfficiency = 0.95
+    nace.rotor_torque = (nace.machine_rating * 1000 / nace.DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30)) # rotor torque [Nm] calculated from max / rated rotor speed and machine rating
     nace.rotor_thrust = 797000. # based on windpact 3.0 MW - Alstom thrust not provided
     nace.rotor_mass = 49498. # rotor mass [kg] - not given - using Windpact 3.0 MW
 
@@ -904,12 +971,13 @@ def example3():
     airdensity = 1.225 # air density [kg / m^3]
     MaxTipSpeed = 80 # max tip speed [m/s]
     nace.rotor_diameter = 70 # rotor diameter [m]
-    nace.rotor_speed = 21.830
-    DrivetrainEfficiency = 0.95
-    nace.rotor_torque = (nace.machine_rating * 1000 / DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30))
+    nace.rotor_speed = 21.830 #rpm
+    nace.DrivetrainEfficiency = 0.95
+    nace.rotor_torque = (nace.machine_rating * 1000 / nace.DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30))
         # rotor torque [Nm] calculated from max / rated rotor speed and machine rating
     nace.rotor_thrust = 324000.
     nace.rotor_mass = 28560. # rotor mass [kg]
+    nace.overhang = 3.3
 
     # WindPACT 1.5 MW Tower Variables
     nace.tower_top_diameter = 2.7 # tower top diameter [m]
@@ -963,8 +1031,8 @@ def example3():
     nace.rotor_diameter = 48.2 # rotor diameter [m]
     #rotor_speed = MaxTipSpeed / ((rotor_diameter / 2) * (pi / 30)) # max / rated rotor speed [rpm] calculated from max tip speed and rotor diamter
     nace.rotor_speed = 22
-    DrivetrainEfficiency = 0.944
-    nace.rotor_torque = (nace.machine_rating * 1000 / DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30)) # rotor torque [Nm] calculated from max / rated rotor speed and machine rating
+    #rpm nace.DrivetrainEfficiency = 0.944
+    nace.rotor_torque = (nace.machine_rating * 1000 / nace.DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30)) # rotor torque [Nm] calculated from max / rated rotor speed and machine rating
     nace.rotor_thrust = 159000 # based on windpact 750 kW design (GRC information not available)
     nace.rotor_mass = 13200 # rotor mass [kg]
 
@@ -1019,9 +1087,9 @@ def example3():
     MaxTipSpeed = 80 # max tip speed [m/s]
     nace.rotor_diameter = 100.8 # rotor diameter [m]
     #rotor_speed = MaxTipSpeed / ((rotor_diameter / 2) * (pi / 30)) # max / rated rotor speed [rpm] calculated from max tip speed and rotor diamter
-    nace.rotor_speed = 15.1 # based on windpact 3 MW
-    DrivetrainEfficiency = 0.95
-    nace.rotor_torque = (nace.machine_rating * 1000 / DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30)) # rotor torque [Nm] calculated from max / rated rotor speed and machine rating
+    nace.rotor_speed = 15.1 # #rpm based on windpact 3 MW
+    nace.DrivetrainEfficiency = 0.95
+    nace.rotor_torque = (nace.machine_rating * 1000 / nace.DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30)) # rotor torque [Nm] calculated from max / rated rotor speed and machine rating
     nace.rotor_thrust = 797000. # based on windpact 3.0 MW - Alstom thrust not provided
     nace.rotor_mass = 49498. # rotor mass [kg] - not given - using Windpact 3.0 MW
 
@@ -1072,10 +1140,10 @@ def nacelle_example_80m_baseline_3pt():
     print '----- NREL 5 MW Turbine - 3 Point Suspension -----'
     nace = NacelleSE_drive3pt()
     nace.rotor_diameter = 126.0 # m
-    nace.rotor_speed = 12.1 # m/s
+    nace.rotor_speed = 12.1 # #rpm m/s
     nace.machine_rating = 5000.0
-    DrivetrainEfficiency = 0.95
-    nace.rotor_torque =  1.5 * (nace.machine_rating * 1000 / DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30)) # 6.35e6 #4365248.74 # Nm
+    nace.DrivetrainEfficiency = 0.95
+    nace.rotor_torque =  1.5 * (nace.machine_rating * 1000 / nace.DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30)) # 6.35e6 #4365248.74 # Nm
     nace.rotor_thrust = 599610.0 # N
     nace.rotor_mass = 0.0 #accounted for in F_z # kg
     nace.rotorRatedRPM = 12.1 #rpm
@@ -1109,6 +1177,18 @@ def nacelle_example_80m_baseline_3pt():
     nace.mb1Type = 'CARB'
     nace.mb2Type = 'SRB'
     nace.flange_length = 0.5
+    nace.overhang = 5.0
+
+    nace.check_fatigue = False
+    nace.blade_number=3.
+    nace.cut_in=3. #cut-in m/s
+    nace.cut_out=25. #cut-out m/s
+    nace.Vrated=11.4 #rated windspeed m/s
+    nace.weibull_k = 2.5 # windepeed distribution shape parameter
+    nace.weibull_A = 9. # windspeed distribution scale parameter
+    nace.T_life=20. #design life in years
+    nace.IEC_Class_Letter = 'A'
+    nace.L_rb = 1.912 # length from hub center to main bearing, leave zero if unknow
 
 
     # NREL 5 MW Tower Variables
@@ -1158,10 +1238,10 @@ def nacelle_example_80m_baseline_4pt():
     print '----- NREL 5 MW Turbine - 4 Point Suspension -----'
     nace = NacelleSE_drive4pt()
     nace.rotor_diameter = 126.0 # m
-    nace.rotor_speed = 12.1 # m/s
+    nace.rotor_speed = 12.1 # #rpm m/s
     nace.machine_rating = 5000.0
-    DrivetrainEfficiency = 0.95
-    nace.rotor_torque =  1.5 * (nace.machine_rating * 1000 / DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30)) # 6.35e6 #4365248.74 # Nm
+    nace.DrivetrainEfficiency = 0.95
+    nace.rotor_torque =  1.5 * (nace.machine_rating * 1000 / nace.DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30)) # 6.35e6 #4365248.74 # Nm
     nace.rotor_thrust = 599610.0 # N
     nace.rotor_mass = 0.0 #accounted for in F_z # kg
     nace.rotorRatedRPM = 12.1 #rpm
@@ -1195,6 +1275,17 @@ def nacelle_example_80m_baseline_4pt():
     nace.mb2Type = 'SRB'
     nace.flange_length = 0.5 #m
 
+    nace.check_fatigue = False
+    nace.blade_number=3.
+    nace.cut_in=3. #cut-in m/s
+    nace.cut_out=25. #cut-out m/s
+    nace.Vrated=11.4 #rated windspeed m/s
+    nace.weibull_k = 2.5 # windepeed distribution shape parameter
+    nace.weibull_A = 9. # windspeed distribution scale parameter
+    nace.T_life=20. #design life in years
+    nace.IEC_Class_Letter = 'A'
+    nace.L_rb = 1.912 # length from hub center to main bearing, leave zero if unknow
+
 
     # NREL 5 MW Tower Variables
     nace.tower_top_diameter = 3.78 # m
@@ -1204,6 +1295,7 @@ def nacelle_example_80m_baseline_4pt():
     print 'Nacelle system model results'
     print 'Low speed shaft %8.1f kg  %6.2f m Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz %6.2f'\
           % (nace.lowSpeedShaft.mass , nace.lowSpeedShaft.length, nace.lowSpeedShaft.I[0], nace.lowSpeedShaft.I[1], nace.lowSpeedShaft.I[2], nace.lowSpeedShaft.cm[0], nace.lowSpeedShaft.cm[1], nace.lowSpeedShaft.cm[2])
+    print 'diameters:', nace.lowSpeedShaft.diameter1   , nace.lowSpeedShaft.diameter2 , nace.lowSpeedShaft.diameter1*nace.shaft_ratio, 'l_mb:', (nace.lowSpeedShaft.length-(nace.lowSpeedShaft.FW_mb1+nace.lowSpeedShaft.FW_mb2)/2.)
     # 31257.3 kg
     print 'Main bearings   %8.1f kg ' % (nace.mainBearing.mass + nace.secondBearing.mass)
     # 9731.4 kg
@@ -1242,10 +1334,10 @@ def nacelle_example_GE_3pt():
     print '----- NREL GE 1.5MW Drivetrain - 3 Point Suspension-----'
     nace = NacelleSE_drive3pt()
     nace.rotor_diameter = 77 # m
-    nace.rotor_speed = 16.18 # m/s
-    DrivetrainEfficiency = 0.95
+    nace.rotor_speed = 16.18  #rpm# m/s
+    nace.DrivetrainEfficiency = 0.95
     nace.machine_rating = 1500
-    nace.rotor_torque =  1.5 * (nace.machine_rating * 1000 / DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30)) # 6.35e6 #4365248.74 # Nm
+    nace.rotor_torque =  1.5 * (nace.machine_rating * 1000 / nace.DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30)) # 6.35e6 #4365248.74 # Nm
     nace.rotor_thrust = 2.6204e5 #209770.0 #500930.84 # N
     nace.rotor_mass = 0.0 #142585.75 # kg
     nace.rotorRatedRPM = 16.18 #rpm
@@ -1280,7 +1372,16 @@ def nacelle_example_GE_3pt():
     nace.mb2Type = 'SRB'
     nace.flange_length = 0.285 #m
 
-
+    nace.check_fatigue = False
+    nace.blade_number=3.
+    nace.cut_in=3.5 #cut-in m/s
+    nace.cut_out=20. #cut-out m/s
+    nace.Vrated=11.5 #rated windspeed m/s
+    nace.weibull_k = 2.5 # windepeed distribution shape parameter
+    nace.weibull_A = 9. # windspeed distribution scale parameter
+    nace.T_life=20. #design life in years
+    nace.IEC_Class_Letter = 'B'
+    nace.L_rb = 1.535 # length from hub center to main bearing, leave zero if unknow
 
     # GE Tower Variables
     nace.tower_top_diameter = 2.3 # m
@@ -1328,10 +1429,10 @@ def nacelle_example_GE_4pt():
     print '----- NREL GE 1.5MW Drivetrain - 4 Point Suspension-----'
     nace = NacelleSE_drive4pt()
     nace.rotor_diameter = 77 # m
-    nace.rotor_speed = 16.18 # m/s
-    DrivetrainEfficiency = 0.95
+    nace.rotor_speed = 16.18  #rpm# rpm
+    nace.DrivetrainEfficiency = 0.95
     nace.machine_rating = 1500
-    nace.rotor_torque =  1.5 * (nace.machine_rating * 1000 / DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30)) # 6.35e6 #4365248.74 # Nm
+    nace.rotor_torque =  1.5 * (nace.machine_rating * 1000 / nace.DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30)) # 6.35e6 #4365248.74 # Nm
     nace.rotor_thrust = 2.6204e5 #209770.0 #500930.84 # N
     nace.rotor_mass = 0.0 #142585.75 # kg
     nace.rotorRatedRPM = 16.18 #rpm
@@ -1365,6 +1466,17 @@ def nacelle_example_GE_4pt():
     nace.mb2Type = 'SRB'
     nace.flange_length = 0.285 #m
 
+    nace.check_fatigue = False
+    nace.blade_number=3.
+    nace.cut_in=3.5 #cut-in m/s
+    nace.cut_out=20. #cut-out m/s
+    nace.Vrated=11.5 #rated windspeed m/s
+    nace.weibull_k = 2.5 # windepeed distribution shape parameter
+    nace.weibull_A = 9. # windspeed distribution scale parameter
+    nace.T_life=20. #design life in years
+    nace.IEC_Class_Letter = 'B'
+    nace.L_rb = 1.535 # length from hub center to main bearing, leave zero if unknown
+
 
     # GE Tower Variables
     nace.tower_top_diameter = 2.3 # m
@@ -1373,7 +1485,8 @@ def nacelle_example_GE_4pt():
 
     print 'Nacelle system model results'
     print 'Low speed shaft %8.1f kg  %6.2f m Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz %6.2f'\
-          % (nace.lowSpeedShaft.mass , nace.lowSpeedShaft.length, nace.lowSpeedShaft.I[0], nace.lowSpeedShaft.I[1], nace.lowSpeedShaft.I[2], nace.lowSpeedShaft.cm[0], nace.lowSpeedShaft.cm[1], nace.lowSpeedShaft.cm[2])   
+          % (nace.lowSpeedShaft.mass , nace.lowSpeedShaft.length, nace.lowSpeedShaft.I[0], nace.lowSpeedShaft.I[1], nace.lowSpeedShaft.I[2], nace.lowSpeedShaft.cm[0], nace.lowSpeedShaft.cm[1], nace.lowSpeedShaft.cm[2])
+    print 'diameters:', nace.lowSpeedShaft.diameter1   , nace.lowSpeedShaft.diameter2 , nace.lowSpeedShaft.diameter1*nace.shaft_ratio, 'l_mb:', (nace.lowSpeedShaft.length-(nace.lowSpeedShaft.FW_mb1+nace.lowSpeedShaft.FW_mb2)/2.)
     # 31257.3 kg
     print 'Main bearings   %8.1f kg ' % (nace.mainBearing.mass + nace.secondBearing.mass)
     # 9731.4 kg
@@ -1411,10 +1524,10 @@ def nacelle_example_GRC_3pt():
     # GRC Rotor Variables
     nace = NacelleSE_drive3pt()
     nace.rotor_diameter = 48.2 # m
-    nace.rotor_speed = 22.0 # m/s
-    DrivetrainEfficiency = 0.95
+    nace.rotor_speed = 22.0 # #rpm m/s
+    nace.DrivetrainEfficiency = 0.95
     nace.machine_rating = 750
-    nace.rotor_torque =  1.5 * (nace.machine_rating * 1000 / DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30)) # 6.35e6 #4365248.74 # Nm
+    nace.rotor_torque =  1.5 * (nace.machine_rating * 1000 / nace.DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30)) # 6.35e6 #4365248.74 # Nm
     #nace.rotor_torque = 6.37e6 #4365248.74 # Nm
     nace.rotor_thrust = 143000.0 #500930.84 # N
     nace.rotor_mass = 0.0 #142585.75 # kg
@@ -1449,6 +1562,21 @@ def nacelle_example_GRC_3pt():
     nace.mb2Type = 'TRB2'
     nace.flange_length = 0.338 #m
 
+    nace.L_rb = 1.33 #m , length from hub center to main bearing
+
+    # Fatigue inputs. Leave zero if not checkig for fatigue
+    nace.check_fatigue = False
+    nace.blade_number=3.
+    nace.cut_in=3. #cut-in m/s
+    nace.cut_out=25. #cut-out m/s
+    nace.Vrated=16. #rated windspeed m/s
+    nace.weibull_k = 2.5 # windepeed distribution shape parameter
+    nace.weibull_A = 9. # windspeed distribution scale parameter
+    nace.T_life=20. #design life in years
+    nace.IEC_Class_Letter = 'A'
+    nace.L_rb = 1.33 # length from hub center to main bearing, leave zero if unknown
+
+
 
     # GRC Tower Variables
     nace.tower_top_diameter = 2.21 # m
@@ -1456,7 +1584,8 @@ def nacelle_example_GRC_3pt():
     nace.run()
     print 'Nacelle system model results'
     print 'Low speed shaft %8.1f kg  %6.2f m Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz %6.2f'\
-          % (nace.lowSpeedShaft.mass , nace.lowSpeedShaft.length, nace.lowSpeedShaft.I[0], nace.lowSpeedShaft.I[1], nace.lowSpeedShaft.I[2], nace.lowSpeedShaft.cm[0], nace.lowSpeedShaft.cm[1], nace.lowSpeedShaft.cm[2])   
+          % (nace.lowSpeedShaft.mass , nace.lowSpeedShaft.length, nace.lowSpeedShaft.I[0], nace.lowSpeedShaft.I[1], nace.lowSpeedShaft.I[2], nace.lowSpeedShaft.cm[0], nace.lowSpeedShaft.cm[1], nace.lowSpeedShaft.cm[2])
+    print 'diameter:', nace.lowSpeedShaft.diameter ,'l_mb:', (nace.lowSpeedShaft.length-nace.lowSpeedShaft.FW_mb/2. ) 
     # 31257.3 kg
     print 'Main bearings   %8.1f kg ' % (nace.mainBearing.mass + nace.secondBearing.mass)
     # 9731.4 kg
@@ -1494,10 +1623,10 @@ def nacelle_example_GRC_4pt():
     # GRC Rotor Variables
     nace = NacelleSE_drive4pt()
     nace.rotor_diameter = 48.2 # m
-    nace.rotor_speed = 22.0 # m/s
-    DrivetrainEfficiency = 0.95
+    nace.rotor_speed = 22.0 # #rpm m/s
+    nace.DrivetrainEfficiency = 0.95
     nace.machine_rating = 750
-    nace.rotor_torque =  1.5 * (nace.machine_rating * 1000 / DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30)) # 6.35e6 #4365248.74 # Nm
+    nace.rotor_torque =  1.5 * (nace.machine_rating * 1000 / nace.DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30)) # 6.35e6 #4365248.74 # Nm
     #nace.rotor_torque = 6.37e6 #4365248.74 # Nm
     nace.rotor_thrust = 143000.0 #500930.84 # N
     nace.rotor_mass = 0.0 #142585.75 # kg
@@ -1532,6 +1661,17 @@ def nacelle_example_GRC_4pt():
     nace.mb2Type = 'TRB2'
     nace.flange_length = 0.338 #m
 
+    nace.check_fatigue = False
+    nace.blade_number=3.
+    nace.cut_in=3. #cut-in m/s
+    nace.cut_out=25. #cut-out m/s
+    nace.Vrated=16. #rated windspeed m/s
+    nace.weibull_k = 2.5 # windepeed distribution shape parameter
+    nace.weibull_A = 9. # windspeed distribution scale parameter
+    nace.T_life=20. #design life in years
+    nace.IEC_Class_Letter = 'A'
+    nace.L_rb = 1.33 # 0.007835*rotor_diameter+0.9642 length from hub center to main bearing, leave zero if unknown
+
 
     # GRC Tower Variables
     nace.tower_top_diameter = 2.21 # m
@@ -1540,6 +1680,8 @@ def nacelle_example_GRC_4pt():
     print 'Nacelle system model results'
     print 'Low speed shaft %8.1f kg  %6.2f m Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz %6.2f'\
           % (nace.lowSpeedShaft.mass , nace.lowSpeedShaft.length, nace.lowSpeedShaft.I[0], nace.lowSpeedShaft.I[1], nace.lowSpeedShaft.I[2], nace.lowSpeedShaft.cm[0], nace.lowSpeedShaft.cm[1], nace.lowSpeedShaft.cm[2])   
+
+    print nace.lowSpeedShaft.diameter1, nace.lowSpeedShaft.diameter2
     # 31257.3 kg
     print 'Main bearings   %8.1f kg ' % (nace.mainBearing.mass + nace.secondBearing.mass)
     # 9731.4 kg
@@ -1574,10 +1716,10 @@ def nacelle_example_GRC_4pt():
 if __name__ == '__main__':
     ''' Main runs through tests of several drivetrain configurations with known component masses and dimensions '''
 
-    nacelle_example_80m_baseline_3pt()
+    #nacelle_example_80m_baseline_3pt()
     nacelle_example_80m_baseline_4pt()
-    nacelle_example_GE_3pt()
-    nacelle_example_GE_4pt()
-    nacelle_example_GRC_3pt()
-    # nacelle_example_GRC_4pt()
+    #nacelle_example_GE_3pt()
+    #nacelle_example_GE_4pt()
+    #nacelle_example_GRC_3pt()
+    #nacelle_example_GRC_4pt()
 

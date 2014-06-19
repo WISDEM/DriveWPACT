@@ -2,19 +2,524 @@
 driveSE_components.py
 New components for hub, low speed shaft, main bearings, gearbox, bedplate and yaw bearings
 
-Created by Ryan King 2013.
+Created by Ryan King 2013. Edited by Taylor Parsons 2014
 Copyright (c) NREL. All rights reserved.
 """
 
 from openmdao.main.api import Component, Assembly
 from openmdao.main.datatypes.api import Float, Bool, Int, Str, Array
 import numpy as np
-from math import pi, cos, sqrt, radians, sin
+from math import pi, cos, sqrt, radians, sin, exp, log10, floor, ceil
 import algopy
 import scipy as scp
 import scipy.optimize as opt
+import matplotlib.pyplot as plt
+from scipy import integrate
+#import matplotlib.pyplot as plt
+#import time
+
+#---------global functions-----------#
+
+#bearing table seeding
+def seed_bearing_table(bearing_type):
+  if bearing_type == 'CARB':
+    TABLE = np.zeros(49,dtype = [('d','f8'),('D','f8'),('B','f8'),('C','f8'),('C0','f8'),('mass','f8')])
+    #bore diameter(m),  outer diameter(m), facewidth(m), C(kN), C0(kN), mass(kg)
+    TABLE [0] = (.3,.5,.16,3250,5200,120)
+    TABLE [1] = (.3,.46,.16,2900,4900,95.5)
+    TABLE [2] = (.32,.48,.121,2280,4000,76.5)
+    TABLE [3] = (.32,.54,.176,4150,6300,160)
+    TABLE [4] = (.34,.52,.133,2900,5000,100)
+    TABLE [5] = (.34,.58,.19,4900,7500,205)
+    TABLE [6] = (.36,.54,.134,2900,5000,105)
+    TABLE [7] = (.36,.6,.192,5000,8000,215)
+    TABLE [8] = (.38,.56,.135,2000,5200,110)
+    TABLE [9] = (.38,.62,.194,4400,7200,243)
+    TABLE [10] = (.4,.6,.148,3650,6200,145)
+    TABLE [11] = (.4,.65,.2,4800,8300,258)
+    TABLE [12] = (.42,.72,.15,3800,6400,150)
+    TABLE [13] = (.42,.7,.224,6000,10400,340)
+    TABLE [14] = (.44,.65,.157,3750,6400,185)
+    TABLE [15] = (.44,.72,.226,6700,11400,385)
+    TABLE [16] = (.46,.68,.163,4000,7500,200)
+    TABLE [17] = (.46,.76,.24,6800,12000,430)
+    TABLE [18] = (.48,.7,.165,4050,7800,210)
+    TABLE [19] = (.48,.79,.248,6950,12500,523)
+    TABLE [20] = (.5,.72,.167,4250,8300,225)
+    TABLE [21] = (.5,.83,.246,7500,12700,550)
+    TABLE [22] = (.53,.78,.185,5100,9500,295)
+    TABLE [23] = (.53,.87,.272,8800,15600,630)
+    TABLE [24] = (.56,.82,.195,5600,11000,345)
+    TABLE [25] = (.56,.92,.28,9500,17000,750)
+    TABLE [26] = (.6,.87,.2,6300,12200,390)
+    TABLE [27] = (.6,.98,.3,10200,18000,929)
+    TABLE [28] = (.63,.92,.212,6800,12900,465)
+    TABLE [29] = (.63,1.03,.315,11800,20800,1089)
+    TABLE [30] = (.67,.98,.23,8150,16300,580)
+    TABLE [31] = (.67,1.09,.336,12000,22000,1230)
+    TABLE [32] = (.71,1.03,.315,20600,21600,860)
+    TABLE [33] = (.71,1.15,.345,12700,24000,1410)
+    TABLE [34] = (.75,1.09,.25,9500,19300,838)
+    TABLE [35] = (.75,1.22,.365,13700,20500,1802)
+    TABLE [36] = (.8,1.15,.258,9150,18600,860)
+    TABLE [37] = (.8,1.28,.375,15600,30500,1870)
+    TABLE [38] = (.85,1.22,.272,11600,24500,1105)
+    TABLE [39] = (.85,1.36,.4,16000,32000,2260)
+    TABLE [40] = (.9,1.18,.206,8150,18000,580)
+    TABLE [41] = (.9,1.28,.28,12700,26500,1200)
+    TABLE [42] = (.95,1.25,.224,9300,22000,745)
+    TABLE [43] = (.95,1.36,.3,12900,27500,1410)
+    TABLE [44] = (1.,1.42,.308,13400,29000,1570)
+    TABLE [45] = (1.,1.58,.462,22800,45500,3470)
+    TABLE [46] = (1.06,1.4,.25,11000,26000,1120)
+    TABLE [47] = (1.08,1.54,.272,13400,33500,1400)
+    TABLE [48] = (1.25,1.75,.375,20400,45000,2740) 
+
+  elif bearing_type == 'SRB':
+    TABLE = np.zeros(82,dtype = [('d','f8'),('D','f8'),('B','f8'),('C','f8'),('C0','f8'),('mass','f8')])
+    TABLE [0] = (.3,.46,.16,2700,4750,97)
+    TABLE [1] = (.3,.5,.16,3200,5100,120)
+    TABLE [2] = (.32,.48,.16,2850,5100,100)
+    TABLE [3] = (.32,.54,.176,3750,6000,160)
+    TABLE [4] = (.32,.58,.15,4400,6700,240)
+    TABLE [5] = (.34,.52,.18,3450,6200,140)
+    TABLE [6] = (.34,.58,.19,4259,6800,210)
+    TABLE [7] = (.34,.62,.224,5100,7800,295)
+    TABLE [8] = (.36,.54,.134,2750,4800,110)
+    TABLE [9] = (.36,.6,.192,4300,6950,220)
+    TABLE [10] = (.36,.65,.232,5400,8300,335)
+    TABLE [11] = (.38,.56,.135,2900,5000,115)
+    TABLE [12] = (.38,.62,.194,4400,7100,230)
+    TABLE [13] = (.38,.68,.24,5850,9150,375)
+    TABLE [14] = (.4,.6,.148,3250,5850,150)
+    TABLE [15] = (.4,.65,.2,4650,7650,265)
+    TABLE [16] = (.4,.72,.256,6550,10400,450)
+    TABLE [17] = (.4,.82,.243,7500,20400,650)
+    TABLE [18] = (.42,.62,.2,4400,8300,205)
+    TABLE [19] = (.42,.7,.28,7350,12600,445)
+    TABLE [20] = (.44,.65,.157,3650,6550,180)
+    TABLE [21] = (.44,.72,.226,6000,10000,360)
+    TABLE [22] = (.44,.72,.28,7500,13200,460)
+    TABLE [23] = (.46,.62,.118,2500,5000,100)
+    TABLE [24] = (.46,.68,.218,5200,10000,275)
+    TABLE [25] = (.46,.76,.3,8300,14600,560)
+    TABLE [26] = (.48,.7,.165,3900,6800,210)
+    TABLE [27] = (.48,.79,.308,9000,15600,605)
+    TABLE [28] = (.5,.72,.218,5500,11000,295)
+    TABLE [29] = (.5,.83,.325,9800,17000,700)
+    TABLE [30] = (.5,.92,.336,10600,17300,985)
+    TABLE [31] = (.53,.71,.136,3200,6700,155)
+    TABLE [32] = (.53,.78,.25,6700,13200,410)
+    TABLE [33] = (.53,.87,.335,10600,19000,830)
+    TABLE [34] = (.53,.98,.335,12700,20400,1200)
+    TABLE [35] = (.56,.82,.258,7350,14600,465)
+    TABLE [36] = (.56,.92,.335,12000,21600,985)
+    TABLE [37] = (.6,.87,.272,8150,17000,520)
+    TABLE [38] = (.6,.98,.375,13200,23600,1200)
+    TABLE [39] = (.6,1.09,.388,15000,25500,1600)
+    TABLE [40] = (.63,.85,.165,4650,9800,270)
+    TABLE [41] = (.63,.92,.29,8800,18000,645)
+    TABLE [42] = (.63,1.03,.4,14600,27000,1400)
+    TABLE [43] = (.67,.9,.17,5000,10800,315)
+    TABLE [44] = (.67,.98,.308,10000,20400,790)
+    TABLE [45] = (.67,1.09,.412,16000,29000,1600)
+    TABLE [46] = (.71,.95,.18,5600,12000,355)
+    TABLE [47] = (.71,1.03,.236,8300,16300,650)
+    TABLE [48] = (.71,1.15,.345,14000,26000,1405)
+    TABLE [49] = (.71,1.28,.45,20400,34500,2610)
+    TABLE [50] = (.75,1.,.185,6000,13200,405)
+    TABLE [51] = (.75,1.09,.25,9650,18600,795)
+    TABLE [52] = (.75,1.22,365,15600,29000,1650)
+    TABLE [53] = (.75,1.36,.475,21600,36500,3050)
+    TABLE [54] = (.8,1.06,.195,6400,14300,455)
+    TABLE [55] = (.8,1.15,.258,10000,20000,865)
+    TABLE [56] = (.8,1.28,.375,17300,31500,1920)
+    TABLE [57] = (.85,1.12,.272,9300,22800,740)
+    TABLE [58] = (.85,1.360,500,23200,45000,2710)
+    TABLE [59] = (.9,1.118,.206,7500,17000,585)
+    TABLE [60] = (.9,1.280,.28,11600,23200,1200)
+    TABLE [61] = (.9,1.42,.515,24500,49000,3350)
+    TABLE [62] = (.95,1.25,.3,10600,26000,995)
+    TABLE [63] = (.95,1.36,.412,17000,39000,1990)
+    TABLE [64] = (.95,1.5,.545,27000,55000,3475)
+    TABLE [65] = (1.,1.32,.315,11800,29000,1200)
+    TABLE [66] = (1.,1.42,.412,17600,40500,2140)
+    TABLE [67] = (1.,1.58,.462,24500,48000,3390)
+    TABLE [68] = (1.06,1.28,.218,6950,20000,570)
+    TABLE [69] = (1.06,1.4,.25,11000,26000,1065)
+    TABLE [70] = (1.06,1.5,.325,16000,30500,2190)
+    TABLE [71] = (1.12,1.46,.335,13700,34500,1475)
+    TABLE [72] = (1.12,1.58,.462,21200,50000,2825)
+    TABLE [73] = (1.12,2.58,.462,21200,50000,2925)
+    TABLE [74] = (1.18,1.42,.243,8800,27000,770)
+    TABLE [75] = (1.18,1.42,.243,8800,27000,755)
+    TABLE [76] = (1.18,1.54,.355,15600,40500,1770)
+    TABLE [77] = (1.25,1.75,.375,20400,45000,2840)
+    TABLE [78] = (1.32,1.6,.28,11200,33500,1160)
+    TABLE [79] = (1.32,1.72,.4,18600,49000,2455)
+    TABLE [80] = (1.5,1.82,.315,14600,45000,1710)
+    TABLE [81] = (1.8,2.18,.375,20000,63000,2900) 
+    
+  elif bearing_type == 'TRB1':   
+    TABLE = np.zeros(47,dtype = [('d','f8'),('D','f8'),('B','f8'),('C','f8'),('C0','f8'),('mass','f8')]) #for TRBs, mass is all over the place. maybe pick one with lowest mass here...
+    TABLE [0] = (.3,.46,.1,140,3000,58)
+    TABLE [1] = (.3,.54,.149,2750,4750,140)
+    TABLE [2] = (.32,.48,.1,1540,3100,64)
+    TABLE [3] = (.32,.62,.141,2810,4650,180)
+    TABLE [4] = (.34,.46,.076,1080,2400,35)
+    TABLE [5] = (.3556,.482,.06032,572,1200,26.5)
+    TABLE [6] = (.36,.68,.165,3690,6300,260)
+    TABLE [7] = (.36,.48,.076,1120,2550,37)
+    TABLE [8] = (.381,.479425,.0492,594,1500,20)
+    TABLE [9] = (.4064,.508,.0619,825,2120,26.5)
+    TABLE [10] = (.4064,.762,.181,3690,610,320)
+    TABLE [11] = (.416,.590,.1143,2120,4800,120)
+    TABLE [12] = (.4302,.60325,.0762,1100,2320,59)
+    TABLE [13] = (.4319,.6857,.1778,3910,8650,253)
+    TABLE [14] = (.4477,.635,.12065,2380,5500,120)
+    TABLE [15] = (.4572,.603,.0857,1450,3400,61.5)
+    TABLE [16] = (.4572,.61595,.08573,1470,3800,72)
+    TABLE [17] = (.479425,.795,.12859,2750,6300,145)
+    TABLE [18] = (.48,.95,.24,7040,12700,760)
+    TABLE [19] = (.4985,.63487,.0809,1470,3650,59.5)
+    TABLE [20] = (.5207,.7366,.0889,1650,3350,100)
+    TABLE [21] = (.5366,.82,.152,3910,7800,272)
+    TABLE [22] = (.5398,.635,.0508,781,2160,27)
+    TABLE [23] = (.5493,.69215,.08096,1340,3450,67)
+    TABLE [24] = (.5588,.7366,.1048,2330,5700,115)
+    TABLE [26] = (.56,1.08,.265,8970,16000,1060) #heavy! (but good load ratings...)
+    TABLE [27] = (.60772,.7874,.09366,2160,5300,110)
+    TABLE [28] = (.635,.7366,.05715,858,2650,37)
+    TABLE [29] = (.6604,.9398,.1365,3740,8150,287)
+    TABLE [30] = (.68,1.,.19,5610,12700,485)
+    TABLE [31] = (.68,.901,.1429,3580,9000,242)
+    TABLE [32] = (.71,.95,.113,2860,6550,200)
+    TABLE [30] = (.724,.914,.0841,1050,4900,115)
+    TABLE [34] = (.737,.8255,.0318,429,1370,22.5)
+    TABLE [35] = (.7493,.9906,.1595,4570,12000,330)
+    TABLE [36] = (.76,.889,.06985,1230,3800,67.5)
+    TABLE [37] = (.76,.889,.0889,1870,5850,94)
+    TABLE [38] = (.774,.965,.0937,1940,4900,131)
+    TABLE [39] = (.8,.914,.0587,1100,3550,53.5)
+    TABLE [40] = (.838,1.041,.09366,1900,4800,160)
+    TABLE [41] = (.857,1.092,.1207,2810,7350,245)
+    TABLE [42] = (.9,1.18,.122,3960,9150,340)
+    TABLE [43] = (.978,1.13,.0667,1450,4400,100)
+    TABLE [44] = (1.016, 1.270,.1016,250,750,275)
+    TABLE [45] = (1.27,1.465,.073,2120,6950,153)
+    TABLE [46] = (1.27,1.465,.1,3190,10800,265)
+
+  elif bearing_type == 'CRB':
+    TABLE = np.zeros(80,dtype = [('d','f8'),('D','f8'),('B','f8'),('C','f8'),('C0','f8'),('mass','f8')])
+    TABLE [0] = (.3,.46,.074,858,1370,47)
+    TABLE [1] = (.3,.54,.085,1420,2120,89.5)
+    TABLE [2] = (.3,.54,.14,2090,3450,145)
+    TABLE [3] = (.32,.4,.048,495,1060,14.5)
+    TABLE [4] = (.32,.44,.072,765,1500,34.5)
+    TABLE [5] = (.32,.58,.15,3190,5000,180)
+    TABLE [6] = (.34,.46,.056,1020,2040,37)
+    TABLE [7] = (.34,.58,.19,3190,5700,210)
+    TABLE [8] = (.35,.48,.085,1060,2160,48)
+    TABLE [9] = (.36,.54,.106,1940,3600,88.5)
+    TABLE [10] = (.36,.6,.192,4310,5700,225)
+    TABLE [11] = (.38,.48,.046,539,1060,23)
+    TABLE [12] = (.38,.56,.106,1980,3750,92.5)
+    TABLE [13] = (.38,.68,.175,3960,6400,275)
+    TABLE [14] = (.4,.54,.082,1190,2500,54.5)
+    TABLE [15] = (.4,.6,.118,220,4750,120)
+    TABLE [16] = (.42,.56,.082,1210,2550,59)
+    TABLE [17] = (.42,.62,.15,2920,5400,160)
+    TABLE [18] = (.44,.6,.095,1720,3600,84)
+    TABLE [19] = (.44,.65,.122,2550,4900,145)
+    TABLE [20] = (.44,.72,.226,5120,9650,395)
+    TABLE [21] = (.46,.58,.72,1080,2400,48)
+    TABLE [22] = (.46,.68,128,2810,5400,165)
+    TABLE [23] = (.46,.83,.165,4180,6800,415)
+    TABLE [24] = (.48,.6,.072,1100,2450,47.5)
+    TABLE [25] = (.48,.65,.078,1170,2240,78.)
+    TABLE [26] = (.48,.7,.128,2860,5600,170)
+    TABLE [27] = (.5,.67,.128,2330,5200,130)
+    TABLE [28] = (.5,.72,.128,2920,5850,180)
+    TABLE [29] = (.5,.83,.264,6440,12000,595)
+    TABLE [30] = (.53,.710,.106,2380,5000,120)
+    TABLE [31] = (.53,.78,.145,3740,7350,225)
+    TABLE [32] = (.53,.87,.272,7480,14600,660)
+    TABLE [33] = (.56,.68,.056,809,1830,44.5)
+    TABLE [34] = (.56,.75,.112,2460,5400,145)
+    TABLE [35] = (.56,.82,.15,3800,7650,290)
+    TABLE [36] = (.56,1.03,.206,7210,11200,805)
+    TABLE [37] = (.6,.8,.09,1900,3800,135)
+    TABLE [38] = (.6,.87,.118,2750,5100,245)
+    TABLE [39] = (.6,1.09,.155,5610,9800,710)
+    TABLE [40] = (.63,.78,.088,1570,3900,100)
+    TABLE [41] = (.63,.85,.128,3410,6200,285)
+    TABLE [42] = (.63,.92,.212,6440,14300,490)
+    TABLE [43] = (.6604,.8636,.10795,3080,6550,177)
+    TABLE [44] = (.67,.9,.103,2330,4750,195)
+    TABLE [45] = (.67,.98,.18,5390,11000,480)
+    TABLE [46] = (.71,.95,.14,3740,8300,300)
+    TABLE [47] = (.71, 1.03,.185,5940,12000,540)
+    TABLE [48] = (.75,1.,112,2810,5850,265)
+    TABLE [49] = (.75,1.09,.195,7040,14600,635)
+    TABLE [50] = (.8,1.15,.2,7040,14600,715)
+    TABLE [51] = (.8,.98,.082,1720,4150,145)
+    TABLE [52] = (.82,.99,.072,858,1960,100)
+    TABLE [53] = (.85,1.03,.106,2120,6000,195)
+    TABLE [54] = (.85,1.12,.118,3190,6950,330)
+    TABLE [55] = (.9,1.09,.112,2700,7200,240)
+    TABLE [56] = (.9,1.180,.165,5830,14000,560)
+    TABLE [57] = (.95,1.25,.175,5830,14000,745)
+    TABLE [58] = (.95,1.150,.09,1340,3100,170)
+    TABLE [59] = (1.,1.22,.128,3690,10000,350)
+    TABLE [60] = (1.,1.32,.185,7040,17300,700)
+    TABLE [61] = (1.03,1250,.1,1510,3450,230)
+    TABLE [62] = (1.06,1.28,.128,3580,10400,360)
+    TABLE [63] = (1.06,1.4,.195,7210,17300,870)
+    TABLE [64] = (1.06,1.5,.325,13000,32500,1900)
+    TABLE [65] = (1.12,1.36,.106,3410,8650,335)
+    TABLE [66] = (1.12,1.58,.345,15700,39000,2150)
+    TABLE [67] = (1.18,1.42,.106,3030,7800,350)
+    TABLE [68] = (1.18,1.54,.206,8970,21600,1050)
+    TABLE [69] = (1.18,1.54,.272,11200,29000,1400)
+    TABLE [70] = (1.25,1.5,.106,1720,4150,330)
+    TABLE [71] = (1.25,1.75,.29,12800,30500,2320)
+    TABLE [72] = (1.32,1.6,.122,3800,10000,530)
+    TABLE [73] = (1.32,1.72,.3,13200,34000,1900)
+    TABLE [74] = (1.32,1.85,.4,21600,55000,3550)
+    TABLE [75] = (1.4,1.2,.175,6600,18300,860)
+    TABLE [76] = (1.5,1.82,.14,3300,8000,665)
+    TABLE [77] = (1.7,2.06,.16,3690,9150,925)
+    TABLE [78] = (1.7,2.06,.16,7210,19300,1150)
+    TABLE [79] = (1.7,2.06,.16,3690,9150,935)
+
+  elif bearing_type == 'TRB2':
+    TABLE = np.zeros(42,dtype = [('d','f8'),('D','f8'),('B','f8'),('C','f8'),('C0','f8'),('mass','f8')])
+    TABLE [0] = (.3,.5,.203,2810,5100,140)
+    TABLE [1] = (.3175,.447675,.181,2330,5400,84)
+    TABLE [2] = (.3302,.482,.1778,2240,5000,100)
+    TABLE [3] = (.34,.46,.16,2050,4900,71)
+    TABLE [4] = (.34,.5334,.174625,2380,4400,130)
+    TABLE [5] = (.3556,.444,.1365,1250,3650,46)
+    TABLE [6] = (.3556,.5017,.1556,1830,4250,87)
+    TABLE [7] = (.368,.524,.214,3140,7500,140)
+    TABLE [8] = (.38,.52,.148,2160,4500,80.2)
+    TABLE [9] = (.38,.66,.38,7650,16000,520)
+    TABLE [10] = (.384,.5461,.2223,3470,8300,161)
+    TABLE [11] = (.431,.5715,.1556,1980,5100,100)
+    TABLE [12] = (.431,.5715,.1921,2640,6950,125)
+    TABLE [13] = (.4477,.635,.2572,4400,11000,245)
+    TABLE [14] = (.4985,.635,.1778,2750,7350,125)
+    TABLE [15] = (.508,.8382,.3048,6440,14000,630)
+    TABLE [16] = (.5366,.762,.311,6270,16000,430)
+    TABLE [17] = (.5588,.7366,.1873,3410,8300,190)
+    TABLE [18] = (.5715,.8128,.1905,3580,8800,250)
+    TABLE [19] = (.6096,.787,.206,4020,10600,232)
+    TABLE [20] = (.635,.990,.339,8090,16000,840)
+    TABLE [21] = (.6858,.8763,.2,3910,11000,270)
+    TABLE [22] = (.711,.9144,.1905,3800,9650,265)
+    TABLE [23] = (.7239,.9144,.1873,3800,9650,250)
+    TABLE [24] = (.775,.965,.187,3580,10200,350)
+    TABLE [25] = (.775,1.016,.2267,6440,17000,525)
+    TABLE [26] = (.8128,1.016,.190,3580,10200,350)
+    TABLE [27] = (.8636,1.371,.4699,14700,32000,2250)
+    TABLE [28] = (.9144,1.066,.1397,2600,8000,190)
+    TABLE [29] = (.9398,1.27,.457,9680,29000,1540)
+    TABLE [30] = (1.12,1.48,.4,13400,38000,1900)
+    TABLE [31] = (1.16,1.54,.4,14200,38000,1900)
+    TABLE [32] = (1.25,1.5,.25,7370,2240,795)
+    TABLE [33] = (1.321,1.727,.41275,14000,40500,2325)
+    TABLE [34] = (1.562,1.8066,.2794,7210,28000,1045)
+    TABLE [35] = (1.778,2.159,.3937,15400,53000,2750)
+    TABLE [36] = (2,2.5,.32,7810,33500,3040)
+    TABLE [37] = (2.134,2.8194,.742,34700,10800,11600)
+    TABLE [38] = (2.1844,2.527,.3048,3950,37500,2230)
+    TABLE [39] = (2.616,3.048,.381,12300,53000,4485)
+    TABLE [40] = (3.3782,3.835,.3937,15100,63000,6380)
+    TABLE [41] = (3.811,4.216,.419,19400,108000,6315)
+
+  elif bearing_type == 'RB':
+    TABLE = np.zeros(75,dtype = [('d','f8'),('D','f8'),('B','f8'),('C','f8'),('C0','f8'),('mass','f8')])
+    TABLE [0] = (.3,.42,.056,270,375,24.5)
+    TABLE [1] = (.3,.46,.074,358,500,44)
+    TABLE [2] = (.3,.54,.085,462,670,88.5)
+    TABLE [3] = (.32,.44,.056,276,400,25.5)
+    TABLE [4] = (.32,.48,.074,371,540,46)
+    TABLE [5] = (.33,.46,.056,281,425,26.5)
+    TABLE [6] = (.34,.48,.06,291,430,36)
+    TABLE [7] = (.34,.52,.082, 423,640,62)
+    TABLE [8] = (.34,.62,.092,559,900,110)
+    TABLE [9] = (.35,.5,.07,319,475,46)
+    TABLE [10] = (.36,.48,.056,291,450,28,)
+    TABLE [11] = (.36,.54,.082,462,735,64.5)
+    TABLE [12] = (.38,.48,.046,242,390,20)
+    TABLE [13] = (.38,.56,.057,.377,.62,51)
+    TABLE [14] = (.4,.54,.065,345,570,41.5)
+    TABLE [15] = (.4,.6,.09,520,.865,87.5)
+    TABLE [16] = (.4,.72,.13,663,1160,235)
+    TABLE [17] = (.42,.56,.065,351,600,43)
+    TABLE [18] = (.42,.62,.09,507,880,91.5)
+    TABLE [19] = (.46,.62,.074,423,750,62.5)
+    TABLE [20] = (.46,.68,.1,582,1060,120)
+    TABLE [21] = (.48,.65,.078,449,815,74)
+    TABLE [22] = (.48,.7,.1,618,1140,125)
+    TABLE [23] = (.5,.62,.056,332,620,40)
+    TABLE [24] = (.5,.689,100,475,865,77)
+    TABLE [25] = (.5,.72,.1,605,1140,135)
+    TABLE [26] = (.53,.71,.082,488,930,90.5)
+    TABLE [27] = (.53,.76,.1,585,1120,150)
+    TABLE [28] = (.53,.78,.112,650,1270,185)
+    TABLE [29] = (.56,.68,.056,345,695,42)
+    TABLE [30] = (.56,.82,.115,663,1470,210)
+    TABLE [31] = (.6,.8,.09,585,1220,125)
+    TABLE [32] = (.6,.87,.118,728,1500,230)
+    TABLE [33] = (.63,.78,.069,442,965,73)
+    TABLE [34] = (.63,.92,.128,819,1760,285)
+    TABLE [35] = (.67,.82,.069,442,1000,800)
+    TABLE [36] = (.67,.9,.103,676,1500,185)
+    TABLE [37] = (.67,.98,.136,904,2040,345)
+    TABLE [38] = (.71,1.,.14,832,1900,335)
+    TABLE [39] = (.71,1.08,.16,1040,2400,505)
+    TABLE [40] = (.73,.94,.1,650,1500,175)
+    TABLE [41] = (.75,1,.112,761,1800,255)
+    TABLE [42] = (.75,1.09,.15,995,2360,485)
+    TABLE [43] = (.76,1.08,.15,923,2200,430)
+    TABLE [44] = (.8,1.08,.115,819,2040,320)
+    TABLE [45] = (.8,1.15,.155,1010,2550,535)
+    TABLE [46] = (.85,1.03,.082,559,1430,140)
+    TABLE [47] = (.85,1.22,.165,1120,2900,630)
+    TABLE [48] = (.9,1.18,.122,852,2280,350)
+    TABLE [49] = (.9,1.28,.17,1140,3100,720)
+    TABLE [50] = (.95,1.25,.132,1010,2800,390)
+    TABLE [51] = (.95,1.36,.18,1170,3250,860)
+    TABLE [52] = (.97,1.125,.075,488,1340,125)
+    TABLE [53] = (1,1.32,.103,819,2360,410)
+    TABLE [54] = (1,1.42,.185,1350,3900,930)
+    TABLE [55] = (1.06,1.28,.1,728,2120,240)
+    TABLE [56] = (1.06,1.5,.195,1350,3900,1080)
+    TABLE [57] = (1.12,1.36,.106,761,2360,330)
+    TABLE [58] = (1.12,1.58,.2,1460,4400,1250)
+    TABLE [59] = (1.12,1.46,.15,1040,3100,650)
+    TABLE [60] = (1.18,1.42,.106,761,2360,330)
+    TABLE [61] = (1.18,1.54,.160,1140,4400,1250)
+    TABLE [62] = (1.25,1.5,.112,852,2750,385)
+    TABLE [63] = (1.32,1.6,.122,956,3150,500)
+    TABLE [64] = (1.32,1.72,.128,1210,4050,830)
+    TABLE [65] = (1.4,1.82,.185,1590,5500,1250)
+    TABLE [66] = (1.5,1.82,.14,1210,4400,690)
+    TABLE [67] = (1.5,1.95,.195,1720,6100,1500)
+    TABLE [68] = (1.6,1.95,.155,1270,4800,965)
+    TABLE [69] = (1.6,2.06,.2,1860,6950,1650)
+    TABLE [70] = (1.7,2.06,.16,1270,4900,1100)
+    TABLE [71] = (1.7,2.18,.212,1990,7650,1950)
+    TABLE [72] = (1.8,2,.1,715,2850,325)
+    TABLE [73] = (2,2.2,.075,936,4500,290)
+    TABLE [74] = (2.39,2.69,.12,1300,6200,975)
+  else:
+    print 'Invalid bearing type!'
+
+  return TABLE
+
+# fatigue analysis for bearings
+def fatigue_for_bearings(D_shaft,F_r,F_a,N_array,life_bearing,type):
+
+  TABLE = seed_bearing_table(type)
+
+  if type == 'CARB': #p = Fr, so X=1, Y=0
+    e = 1
+    Y1 = 0.
+    X2 = 1.
+    Y2 = 0.
+    p = 10./3
+
+  elif type == 'SRB':
+    e = 0.32
+    Y1 = 2.1
+    X2 = 0.67
+    Y2 = 3.1
+    p = 10./3
+
+  elif type == 'TRB1':
+    e = .37
+    Y1 = 0
+    X2 = .4
+    Y2 = 1.6
+    p = 10./3
+
+  elif type == 'CRB':
+    if (np.max(F_a)/np.max(F_r)>=.5) or (np.min(F_a)/(np.min(F_r))>=.5):
+      print ''
+      print "error: axial loads too large for CRB bearing application"
+      print ''
+    e = 0.2
+    Y1 = 0
+    X2 = 0.92
+    Y2 = 0.6
+    p = 10./3
+
+  elif type == 'TRB2':
+    e = 0.4
+    Y1 = 2.5
+    X2 = 0.4
+    Y2 = 1.75
+    p = 10./3
+
+  elif type == 'RB': #factors depend on ratio Fa/C0, C0 depends on bearing... TODO: add this functionality?
+  #idea: select bearing based off of bore, then calculate Fa/C0, see if life is feasible, if not, iterate?
+    e = 0.4
+    Y1 = 1.6
+    X2 = 0.75
+    Y2 = 2.15
+    p = 3.
+
+  #calculate required dynamic load rating, C
+  Fa_ref = np.max(F_a) #used in comparisons Fa/Fr <e
+  Fr_ref = np.max(F_r)
+
+  if Fa_ref/Fr_ref <=e:
+    P = F_r + Y1*F_a
+  else:
+    P = X2*F_r + Y2*F_a
+
+
+
+  P_eq = ((scp.integrate.simps((P**p),x=N_array,even='avg'))/(N_array[-1]-N_array[0]))**(1/p)
+
+  C_min = (P_eq*life_bearing/1e6)**(1./p)/1000 #kN
+  print 'loadrating:', C_min
+
+  subset = TABLE[TABLE['C'] >= C_min] #all bearings above load rating
+  # print''
+  # print 'after C check:'
+  # print subset
+  subset =  subset[subset['d'] >= D_shaft] #all of those bearings above bore diameter
+  # print''
+  # print 'after D check:'
+  # print subset
+  index = np.argmin(subset['d']) #select bearing with lowest diameter (what if multiple with same d?)
+  bearing = subset[index]
+  print 'final bearing selection (d,D,FW,C,C0,mass):'
+  print bearing
+  print ''
+
+
+  return [bearing['d'],bearing['B'],bearing['mass']] #add outer diameter output for calculating housing mass?
 
 # -------------------------------------------------
+
+def resize_for_bearings(D_shaft,type):
+
+  TABLE = seed_bearing_table(type)
+  bearing = TABLE[TABLE['d']>=D_shaft]
+  bearing = bearing[np.argmin(bearing['d'])] #check if index -1 is correct...
+
+  print ''
+  print 'bearing selection:'
+  print bearing
+
+  return [bearing['d'],bearing['B'],bearing['mass']]
+
+
+#-------------------------------------------------------------------------------------------------------------------------------------------------------
 
 class Hub_drive(Component):
     ''' Hub class    
@@ -114,379 +619,6 @@ class Hub_drive(Component):
 
         self.derivatives.set_first_derivative(input_keys, output_keys, self.J)'''
 
-# Resize shaft for bearing selection
-def resize_for_bearings(D_mb, mbtype):
-    # Internal function to resize shaft for bearings - for Yi to add content (using lookup table etc)   
-    # To add bearing load capacity check later        
-
-    # Modified by TParsons 4/21/14
-    if D_mb <= 0.3:
-      if mbtype == 'CARB':
-              D_mb_a = 0.3 #m
-              FW_mb = 0.16
-      elif mbtype == 'SRB':
-              D_mb_a = 0.3 #m
-              FW_mb = 0.16
-      elif mbtype == 'TRB1':
-              D_mb_a = 0.3 #m
-              FW_mb = 0.141      
-      elif mbtype == 'CRB':
-              D_mb_a = 0.3 #m
-              FW_mb = 0.085 
-      elif mbtype == 'RB':
-              D_mb_a = 0.3 #m
-              FW_mb = 0.074        
-      elif mbtype == 'TRB2':
-              D_mb_a = 0.3 #m
-              FW_mb = 0.203  
-
-    elif D_mb <= 0.34:
-      if mbtype == 'CARB':
-              D_mb_a = 0.34 #m
-              FW_mb = 0.19
-      elif mbtype == 'SRB':
-              D_mb_a =  0.34 
-              FW_mb =0.19
-      elif mbtype == 'TRB1':
-              D_mb_a = 0.34 #m
-              FW_mb = 0.076    
-      elif mbtype == 'CRB':
-              D_mb_a = 0.34 #m
-              FW_mb = 0.082 
-      elif mbtype == 'RB':
-              D_mb_a = 0.34 #m
-              FW_mb = 0.082
-      elif mbtype == 'TRB2':
-            D_mb_a = 0.34 #m
-            FW_mb = 0.16
-
-    elif D_mb <= 0.38:
-      D_mb_a = 0.38
-      if mbtype == 'CARB': 
-              FW_mb = 0.194
-      elif mbtype == 'SRB':
-              FW_mb = 0.243
-      elif mbtype == 'TRB1':
-              FW_mb = 0.050     
-      elif mbtype == 'CRB':
-              FW_mb = 0.106 
-      elif mbtype == 'RB':
-              FW_mb = 0.057      
-      elif mbtype == 'TRB2':
-              FW_mb = 0.148  
-
-    elif D_mb <= 0.4:
-      D_mb_a = 0.4
-      if mbtype == 'CARB':
-              FW_mb = 0.2
-      elif mbtype == 'SRB':
-              FW_mb =0.2
-      elif mbtype == 'TRB1':
-             D_mb_a = .4064
-             FW_mb = 0.181     
-      elif mbtype == 'CRB':
-             FW_mb = 0.118    
-      elif mbtype == 'RB':
-             FW_mb = .044      
-      elif mbtype == 'TRB2':
-             D_mb_a = .4064
-             FW_mb = 0.1429
-
-    elif D_mb <= 0.44:
-      D_mb_a = 0.44
-      if mbtype == 'CARB':
-             FW_mb = 0.226
-      elif mbtype == 'SRB':
-             FW_mb =0.226
-      elif mbtype == 'TRB1':
-             D_mb_a = .4477
-             FW_mb = 0.12065     
-      elif mbtype == 'CRB':
-             FW_mb = 0.122    
-      elif mbtype == 'RB':
-             FW_mb = .080      
-      elif mbtype == 'TRB2':
-             D_mb_a = 0.440
-             FW_mb = 0.196
-
-    elif D_mb <= 0.48:
-      D_mb_a = 0.48
-      if mbtype == 'CARB':
-             FW_mb = 0.248
-      elif mbtype == 'SRB':
-             FW_mb =0.248
-      elif mbtype == 'TRB1':
-             D_mb_a = .4794
-             FW_mb = 0.1365    
-      elif mbtype == 'CRB':
-             FW_mb = 0.128    
-      elif mbtype == 'RB':
-             FW_mb = 0.078      
-      elif mbtype == 'TRB2':
-             D_mb_a = 0.4794
-             FW_mb = 0.2762
-
-    elif D_mb <= 0.5:
-      D_mb_a = 0.5
-      if mbtype == 'CARB':
-             FW_mb = 0.167
-      elif mbtype == 'SRB':
-             FW_mb = 0.167
-      elif mbtype == 'TRB1':
-             D_mb_a = .4985
-             FW_mb = 0.081    
-      elif mbtype == 'CRB':
-             FW_mb = 0.128    
-      elif mbtype == 'RB':
-             FW_mb = 0.078      
-      elif mbtype == 'TRB2':
-             D_mb_a = 0.50165
-             FW_mb = 0.2921
-
-    elif D_mb <= 0.56:
-      D_mb_a = 0.56
-      if mbtype == 'CARB':
-             FW_mb = 0.195
-      elif mbtype == 'SRB':
-             FW_mb = 0.195
-      elif mbtype == 'TRB1':
-             D_mb_a = .5588
-             FW_mb = 0.1048   
-      elif mbtype == 'CRB':
-             FW_mb = 0.112   
-      elif mbtype == 'RB':
-             FW_mb = 0.085      
-      elif mbtype == 'TRB2':
-             D_mb_a = 0.5588
-             FW_mb = 0.2254
-
-    elif D_mb <= 0.60:
-      D_mb_a = 0.60
-      if mbtype == 'CARB':
-             FW_mb = 0.20
-      elif mbtype == 'SRB':
-             FW_mb = 0.20
-      elif mbtype == 'TRB1':
-             D_mb_a = .60772
-             FW_mb = 0.0937 
-      elif mbtype == 'CRB':
-             FW_mb = 0.118   
-      elif mbtype == 'RB':
-             FW_mb = 0.090      
-      elif mbtype == 'TRB2':
-             D_mb_a = 0.6029
-             FW_mb = 0.2064
-
-    elif D_mb <= 0.67:
-      D_mb_a = 0.67
-      if mbtype == 'CARB':
-             FW_mb = 0.230
-      elif mbtype == 'SRB':
-             FW_mb = 0.230
-      elif mbtype == 'TRB1':
-             D_mb_a = 0.6604
-             FW_mb = 0.1365
-      elif mbtype == 'CRB':
-             FW_mb = 0.136   
-      elif mbtype == 'RB':
-             FW_mb = 0.103      
-      elif mbtype == 'TRB2':
-             D_mb_a = 0.6858
-             FW_mb = 0.200025
-
-    elif D_mb <= 0.710:
-      D_mb_a = 0.710
-      if mbtype == 'CARB':
-             FW_mb = 0.236
-      elif mbtype == 'SRB':
-             FW_mb = 0.236
-      elif mbtype == 'TRB1':
-             D_mb_a = .710
-             FW_mb = 0.113
-      elif mbtype == 'CRB':
-             FW_mb = 0.140   
-      elif mbtype == 'RB':
-             FW_mb = 0.106      
-      elif mbtype == 'TRB2':
-             D_mb_a = 0.7112
-             FW_mb = 0.1905
-
-    elif D_mb <= 0.75:
-      D_mb_a = 0.75
-      if mbtype == 'CARB':
-             FW_mb = 0.25
-      elif mbtype == 'SRB':
-             FW_mb = 0.25
-      elif mbtype == 'TRB1':
-             D_mb_a = .7493
-             FW_mb = 0.1595
-      elif mbtype == 'CRB':
-             FW_mb = 0.112   
-      elif mbtype == 'RB':
-             FW_mb = 0.112      
-      elif mbtype == 'TRB2':
-             D_mb_a = 0.762
-             FW_mb = 0.1873
-
-    elif D_mb <= 0.80:
-      D_mb_a = 0.80
-      if mbtype == 'CARB':
-             FW_mb = 0.258
-      elif mbtype == 'SRB':
-             FW_mb = 0.258
-      elif mbtype == 'TRB1':
-             D_mb_a = .801688
-             FW_mb = 0.058738
-      elif mbtype == 'CRB':
-             FW_mb = 0.155   
-      elif mbtype == 'RB':
-             FW_mb = 0.115      
-      elif mbtype == 'TRB2':
-             D_mb_a = 0.8128
-             FW_mb = 0.1905  
-             
-    elif D_mb <= 0.85:
-      D_mb_a = 0.85
-      if mbtype == 'CARB':
-             FW_mb = 0.272
-      elif mbtype == 'SRB':
-             FW_mb = 0.272
-      elif mbtype == 'TRB1':
-             D_mb_a = .85725
-             FW_mb = 0.12065
-      elif mbtype == 'CRB':
-             FW_mb = 0.118   
-      elif mbtype == 'RB':
-             FW_mb = 0.118      
-      elif mbtype == 'TRB2':
-             D_mb_a = 0.8636
-             FW_mb = 0.4699                        
-
-    elif D_mb <= 0.90:
-      D_mb_a = 0.90
-      if mbtype == 'CARB':
-             FW_mb = 0.280
-      elif mbtype == 'SRB':
-             FW_mb = 0.280
-      elif mbtype == 'TRB1':
-             D_mb_a = .90
-             FW_mb = 0.122
-      elif mbtype == 'CRB':
-             FW_mb = 0.122   
-      elif mbtype == 'RB':
-             FW_mb = 0.122      
-      elif mbtype == 'TRB2':
-             D_mb_a = 0.9144
-             FW_mb = 0.1397
-
-    elif D_mb <= 0.95:
-      D_mb_a = 0.95
-      if mbtype == 'CARB':
-             FW_mb = 0.300
-      elif mbtype == 'SRB':
-             FW_mb = 0.300
-      elif mbtype == 'TRB1':
-             D_mb_a = .9779
-             FW_mb = 0.06675
-      elif mbtype == 'CRB':
-             FW_mb = 0.175   
-      elif mbtype == 'RB':
-             FW_mb = 0.132      
-      elif mbtype == 'TRB2':
-             D_mb_a = 1.12
-             FW_mb = 0.4
-
-    elif D_mb <= 1.0:
-      D_mb_a = 1.0
-      if mbtype == 'CARB':
-             FW_mb = 0.315
-      elif mbtype == 'SRB':
-             FW_mb = 0.315
-      elif mbtype == 'TRB1':
-             D_mb_a = 1.016
-             FW_mb = 0.1016
-      elif mbtype == 'CRB':
-             FW_mb = 0.128   
-      elif mbtype == 'RB':
-             FW_mb = 0.140      
-      elif mbtype == 'TRB2':
-             D_mb_a = 1.12
-             FW_mb = 0.4
-
-
-    elif D_mb <= 1.06:
-      D_mb_a = 1.06
-      if mbtype == 'CARB':
-             FW_mb = 0.25
-      elif mbtype == 'SRB':
-             FW_mb = 0.25
-      elif mbtype == 'TRB1':
-             D_mb_a = 1.270
-             FW_mb = 0.10
-      elif mbtype == 'CRB':
-             FW_mb = 0.195   
-      elif mbtype == 'RB':
-             FW_mb = 0.150      
-      elif mbtype == 'TRB2':
-             D_mb_a = 1.12
-             FW_mb = 0.4
-
-    elif D_mb <= 1.18:
-      D_mb_a = 1.18
-      if mbtype == 'CARB':
-             FW_mb = 0.272
-      elif mbtype == 'SRB':
-             FW_mb = 0.272
-      elif mbtype == 'TRB1':
-             D_mb_a = 1.270
-             FW_mb = 0.10
-      elif mbtype == 'CRB':
-             FW_mb = 0.206   
-      elif mbtype == 'RB':
-             FW_mb = 0.160      
-      elif mbtype == 'TRB2':
-             D_mb_a = 1.25
-             FW_mb = 0.25
-
-    elif D_mb <= 1.25:
-      D_mb_a = 1.25
-      if mbtype == 'CARB':
-             FW_mb = 0.375
-      elif mbtype == 'SRB':
-             FW_mb = 0.375
-      elif mbtype == 'TRB1':
-             D_mb_a = 1.270
-             FW_mb = 0.10
-      elif mbtype == 'CRB':
-             FW_mb = 0.29   
-      elif mbtype == 'RB':
-             FW_mb = 0.112     
-      elif mbtype == 'TRB2':
-             D_mb_a = 1.25
-             FW_mb = 0.25
-
-    else:
-      if mbtype == 'CARB':
-             D_mb_a =1.25
-             FW_mb = 0.375
-      elif mbtype == 'SRB':
-             D_mb_a =1.80      
-             FW_mb = 0.375
-      elif mbtype == 'TRB1':
-             D_mb_a = 1.270
-             FW_mb = 0.10
-      elif mbtype == 'CRB':
-             D_mb_a =1.40
-             FW_mb = 0.175  
-      elif mbtype == 'RB':
-             D_mb_a =1.7      
-             FW_mb = 0.212    
-      elif mbtype == 'TRB2':
-             D_mb_a = 1.778
-             FW_mb = 0.3937             
-
-    return [D_mb_a, FW_mb]
-
 #-------------------------------------------------------------------------------
 class LowSpeedShaft_drive4pt(Component):
     ''' LowSpeedShaft class
@@ -507,13 +639,27 @@ class LowSpeedShaft_drive4pt(Component):
     machine_rating = Float(iotype='in', units='kW', desc='machine_rating machine rating of the turbine')
     gearbox_mass = Float(iotype='in', units='kg', desc='Gearbox mass')
     carrier_mass = Float(iotype='in', units='kg', desc='Carrier mass')
+    overhang = Float(iotype='in', units='m', desc='Overhang distance')
 
     # parameters
-    shrink_disc_mass = Float(iotype='in', units='kg', desc='Mass of the shrink disc')# shrink disk or flange addtional mass
+    shrink_disc_mass = Float(iotype='in', units='kg', desc='Mass of the shrink disc')# shrink disk or flange addti'onal mass
     shaft_angle = Float(iotype='in', units='deg', desc='Angle of the LSS inclindation with respect to the horizontal')
     shaft_ratio = Float(iotype='in', desc='Ratio of inner diameter to outer diameter.  Leave zero for solid LSS')
     mb1Type = Str(iotype='in',desc='Main bearing type: CARB, TRB1 or SRB')
     mb2Type = Str(iotype='in',desc='Second bearing type: CARB, TRB1 or SRB')
+
+    L_rb = Float(iotype='in', units='m', desc='distance between hub center and upwind main bearing')
+    check_fatigue = Bool(iotype = 'in', desc = 'turns on and off fatigue check')
+    weibull_A = Float(iotype = 'in', units = 'm/s', desc = 'weibull scale parameter "A" of 10-minute windspeed probability distribution')
+    weibull_k = Float(iotype = 'in', desc = 'weibull shape parameter "k" of 10-minute windspeed probability distribution')
+    blade_number = Float(iotype = 'in', desc = 'number of blades on rotor, 2 or 3')
+    cut_in = Float(iotype = 'in', units = 'm/s', desc = 'cut-in windspeed')
+    cut_out = Float(iotype = 'in', units = 'm/s', desc = 'cut-out windspeed')
+    Vrated = Float(iotype = 'in', units = 'm/s', desc = 'rated windspeed')
+    T_life = Float(iotype = 'in', units = 'yr', desc = 'cut-in windspeed')
+    IEC_Class = Str(iotype='in',desc='IEC class letter: A, B, or C')
+    DrivetrainEfficiency = Float(iotype = 'in', desc = 'overall drivettrain efficiency')
+    rotor_freq = Float(iotype = 'in', units = 'rpm', desc='rated rotor speed')
     
     # outputs
     design_torque = Float(iotype='out', units='N*m', desc='lss design torque')
@@ -523,7 +669,11 @@ class LowSpeedShaft_drive4pt(Component):
     diameter2 = Float(iotype='out', units='m', desc='lss outer diameter at second bearing')
     mass = Float(0.0, iotype='out', units='kg', desc='overall component mass')
     cm = Array(np.array([0.0, 0.0, 0.0]), iotype='out', desc='center of mass of the component in [x,y,z] for an arbitrary coordinate system')
-    I = Array(np.array([0.0, 0.0, 0.0]), iotype='out', desc=' moments of Inertia for the component [Ixx, Iyy, Izz] around its center of mass')    
+    I = Array(np.array([0.0, 0.0, 0.0]), iotype='out', desc=' moments of Inertia for the component [Ixx, Iyy, Izz] around its center of mass')
+    FW_mb1 = Float(iotype='out', units='m', desc='facewidth of upwind main bearing') 
+    FW_mb2 = Float(iotype='out', units='m', desc='facewidth of main bearing')     
+    bearing_mass1 = Float(iotype='out', units = 'kg', desc='main bearing mass')
+    bearing_mass2 = Float(iotype='out', units = 'kg', desc='second bearing mass')
 
     def __init__(self):
         '''
@@ -575,8 +725,21 @@ class LowSpeedShaft_drive4pt(Component):
         g=9.81
         gamma=self.shaft_angle #deg LSS angle wrt horizontal
         PSF=1
+        check_fatigue = self.check_fatigue
+        blade_number = self.blade_number
+        V_0 = self.cut_in
+        V_f = self.cut_out
+        V_rated = self.Vrated
+        T_life =self.T_life
+        IEC_Class_Letter = self.IEC_Class
+        rotor_mass = self.rotor_mass
+        rotor_diameter = self.rotor_diameter
+        machine_rating = self.machine_rating
+        DrivetrainEfficiency = self.DrivetrainEfficiency
+        rotor_freq = self.rotor_freq
 
-        
+        if rotor_mass ==0:
+          rotor_mass = 23.523*self.machine_rating
                 
         # initialization for iterations    
         L_ms_new = 0.0
@@ -594,7 +757,11 @@ class LowSpeedShaft_drive4pt(Component):
         sR = self.shaft_ratio
 
         #Distances
-        L_rb = 1.912        #distance from hub center to main bearing   # to add as an input
+        if self.L_rb == 0: #distance from hub center to main bearing
+          L_rb = 0.007835*rotor_diameter+0.9642
+        else:
+          L_rb = self.L_rb
+
         L_bg = 6.11         #distance from hub center to gearbox yokes  # to add as an input
         L_as = L_ms/2.0     #distance from main bearing to shaft center
         L_gb = 0.0          #distance to gbx center from trunnions in x-dir # to add as an input
@@ -868,22 +1035,265 @@ class LowSpeedShaft_drive4pt(Component):
                 else:
                     L_mb_new = L_mb + dL_ms
 
-        [D_max_a,FW_max] = resize_for_bearings(D_max,  self.mb1Type)        
-        
-        [D_med_a,FW_med] = resize_for_bearings(D_med,  self.mb2Type)   
+        # fatigue check Taylor Parsons 6/14
+        if check_fatigue == True:
+          #start_time = time.time()
+
+          #checks to make sure all inputs are reasonable
+          if rotor_mass < 100:
+              rotor_mass = 23.523*machine_rating
+
+          # print L_rb
+          # print D_in
+          # print D_max_a
+
+          #Weibull Parameters
+          A=self.weibull_A
+          k=self.weibull_k
+
+          g=9.81 
+          #material properties 34CrNiMo6 steel +QT, large diameter
+          E=2.1e11
+          density=7800.0
+          n_safety = 2.5
+          Sy = 490.0e6 # Pa
+          Sut=700.0e6 #Pa
+
+          #calculate material props for fatigue
+          Sm=0.9*Sut #for bending situations, material strength at 10^3 cycles
+          C_size=0.6 #diameter larger than 10"
+          C_surf=4.51*(Sut/1e6)**-.265 #machined surface 272*(Sut/1e6)**-.995 #forged
+          C_temp=1 #normal operating temps
+          C_reliab=0.814 #99% reliability
+          C_envir=1. #enclosed environment
+          Se=C_size*C_surf*C_temp*C_reliab*C_envir*.5*Sut #modified endurance limit for infinite life
+
+          #Rotor Loads calculations using DS472
+          R=rotor_diameter/2.0
+          rotor_torque = (machine_rating * 1000 / DrivetrainEfficiency) / (rotor_freq * (pi/30))
+          Tip_speed_ratio= rotor_freq/30*pi*R/V_rated
+          rho_air= 1.225 #kg/m^3 density of air
+          Cl_blade= 1.0 #lift coefficient at r=2/3R DOES NOT EFFECT P_o RESULTS
+          c_blade=16*pi*R/(9.*blade_number*Cl_blade*Tip_speed_ratio*(Tip_speed_ratio**2*(2./3)**2+4./9)**0.5) #chord length at r=2/3R using Soren Gundtof
+
+          W2=(4./3*pi*(rotor_freq/60)*R)**2+V_rated**2
+          p_o=1./2*rho_air*W2*c_blade*Cl_blade
+          M_root=p_o*(R**2)/3.
+
+          n_c=blade_number*rotor_freq/60 #characteristic frequency on rotor from turbine of given blade number [Hz]
+          N_f=0.85*n_c*(T_life*365*24*60*60)*exp(-(V_0/A)**k)-exp(-(V_f/A)**k) #number of rotor rotations based off of weibull curve. .827 comes from lower rpm than rated at lower wind speeds
+          print 'Nf:', N_f
+          Nfinal = 1e9 #point where fatigue limit occurs under hypothetical S-N curve TODO adjust to fit actual data
+          z=log10(1e3)-log10(Nfinal)  #assuming no endurance limit (high strength steel)
+          b=1/z*log10(Sm/Se)
+          a=Sm/(1000.**b)
+
+          # print 'm:', -1/b
+          # print 'a:', a
+
+          k_b= 2.5 #calculating rotor pressure from all three blades. Use kb=1 for individual blades
+
+          if IEC_Class_Letter == 'A': # From IEC 61400-1 TODO consider calculating based off of 10-minute windspeed and weibull parameters, include neighboring wake effects?
+            I_t=0.18 
+          elif IEC_Class_Letter == 'B':
+            I_t=0.14
+          else:
+            I_t=0.12
+
+          Beta=0.11*k_b*(I_t+0.1)*(A+4.4)
+
+          # find generic standardized stochastic load range distribution
+          def standardrange(N, N_f, Beta, k_b): 
+              F_delta=(Beta*(log10(N_f)-log10(N)))+0.18
+              if F_delta>=2*k_b:
+                F_delta=0.
+              return F_delta
+
+          def rounddown(x,step):
+            return int(floor(x/step))*step
+
+          def roundup(x,step):
+              return int(ceil(x/step))*step
+
+          #for analysis with N on log scale, makes larger loads contain finer step sizes
+          num_pts=1000
+          N=np.logspace( (log10(N_f)-(2*k_b-0.18)/Beta) , log10(N_f) , endpoint=True , num=num_pts) # with zeros: N=np.logspace(log10(1.0),log10(N_f),endpoint=True,num=num_pts)
+          F_stoch=N.copy()
+
+
+          for i in range(num_pts):
+              N[i]=roundup(N[i],1)
+
+          #print N
+
+          k_r=1. #assuming natural frequency of rotor is significantly larger than rotor rotational frequency
+
+          for i in range(num_pts):
+            F_stoch[i] = standardrange(N[i],N_f,Beta,k_b)
+
+          Fx_stoch = F_stoch.copy()*0.5*p_o*(R)
+          Mx_stoch = F_stoch.copy()*0.45*p_o*(R)**2#*0.3
+          Fy_stoch = F_stoch.copy()*0
+          My_stoch = F_stoch.copy()*0.33*p_o*k_r*(R)**2#*0.25
+          Fz_stoch = F_stoch.copy()*0
+          Mz_stoch = F_stoch.copy()*0.33*p_o*k_r*(R)**2#*0.25
+
+          def loadtostress1 (Fx,Fy,Fz,Mx,My,Mz,D_outer,D_inner,x,gamma):
+              I=(pi/64.0)*(D_outer**4-D_inner**4)
+              J=I*2
+              A=pi/4*(D_outer**2-D_inner**2)
+              My=abs(My)+abs(Fz*x*cos(radians(gamma)))
+              Mz=abs(Mz)+abs(Fy*x)
+              bendingstress=(My**2+Mz**2)**(0.5)*D_outer/(2.*I)
+              shearstress=abs(Mx*D_outer/(2.*J))
+              normalstress = Fx/A*cos(radians(gamma))+Fy/a*sin(radians(gamma))
+              return ((bendingstress+normalstress)**2+3.*shearstress**2)**(0.5)
+
+          def Ninterp(S,a,b):
+              return (S/a)**(1/b)
+
+          def Goodman(S_alt,S_mean,Sut):
+              return S_alt/(1-(S_mean/Sut))
+
+          #upwind bearing calculations
+          iterationstep=0.01
+          while True:
+              AltStress=loadtostress1(Fx_stoch/2,Fy_stoch/2,Fz_stoch/2,Mx_stoch/2,My_stoch/2,Mz_stoch/2,D_in,D_max,L_rb,gamma)
+
+              Fx_mean=1.5*p_o*R
+              Mx_mean=0.5*rotor_torque
+              Fz_mean=-rotor_mass*g
+              MeanStress=-loadtostress1(Fx_mean,0,Fz_mean,Mx_mean,0,0,D_max,D_in,L_rb,gamma)
+
+              #apply Goodman with compressive (-) mean stress
+              S_mod=Goodman(AltStress,MeanStress,Sut)
+
+              #Use Palmgren-Miner linear damage rule to add damage from successive stress ranges, weighting across N values which are not captured
+              DEL_y=Fz_stoch.copy() #initialize
+              for i in range(num_pts):
+                  DEL_y[i] = N[i]/(Ninterp(S_mod[i],a,b))
+
+              Damage = scp.integrate.simps(DEL_y,x= N, even='avg')
+
+              print 'Upwind Bearing Diameter:', D_max
+              print 'Damage:', Damage
+              if Damage < 1:
+                  print ''
+                  print 'final unadjusted upwind diameter is %f m.' %(D_max)
+                  #print (time.time() - start_time), 'seconds of total simulation time'
+                  break
+              else:
+                  D_max+=iterationstep
+              break
+
+          print 'alt1:', np.max(AltStress)
+          print 'mean1:', np.max(MeanStress)
+
+
+          #downwind bearing calculations
+
+            # F_mb_x = -F_r_x - rotorWeight*sin(radians(gamma))
+            # F_mb_y = +M_r_z/L_bg - F_r_y*(L_bg + L_rb)/L_bg
+            # F_mb_z = (-M_r_y + rotorWeight*(cos(radians(gamma))*(L_rb + L_bg)\
+            #            + sin(radians(gamma))*H_gb) + lssWeight*(L_bg - L_as)\
+            #            * cos(radians(gamma)) + shrinkDiscWeight*cos(radians(gamma))\
+            #            *(L_bg - L_ms) - gbxWeight*cos(radians(gamma))*L_gb - F_r_z*cos(radians(gamma))*(L_bg + L_rb))/L_bg
+
+          def loadtostress2 (Fx,Fy,Fz,Mx,My,Mz,Wgb,D_outer1,D_outer2,D_inner,l_rb,l_mb,L_gb,density,gamma):
+              lss_weight=density*9.81*(((pi/12)*(D_outer1**2+D_outer2**2+D_outer1*D_outer2)*(L_mb))-(pi/4*L_mb*D_inner**2))
+              I=(pi/64.0)*(D_outer2**4-D_inner**4)
+              J=I*2.
+              A=pi/4*(D_outer2**2-D_inner**2)
+              Fz1=(lss_weight*2./3.*L_mb-My)/(L_mb) #vertical force on upwind bearing, ASSUMING CG OF SHAFT IS 1/3 OF L_MB DOWNWIND OF MB1 (more accurate than l_mb/2)
+              Fy1=(Mz-Fy*L_rb)/(L_mb)
+              My=abs(Fz*(L_rb+L_mb)-My+2./3*L_mb*lss_weight+Fz1*L_mb)
+              Mz=abs(Fy*(L_rb+L_mb)-Mz+Fy1*L_mb)
+              bendingstress=((My**2+Mz**2)**(0.5))*D_outer2/(2.*I)
+              shearstress=Mx*D_outer2/(2.*J)
+              print 'My:', np.max(My)
+              print 'Mz:', np.max(Mz)
+              print 'bendingstress:', np.max(bendingstress)
+              return ((bendingstress**2)+3.*(shearstress**2))**0.5 #no axial load on second main bearing
+
+          iterationstep=0.01
+
+          while True:
+              AltStress=loadtostress2(Fx_stoch/2,Fy_stoch/2,-Fz_stoch/2,Mx_stoch/2,My_stoch/2,Mz_stoch/2,0,D_max,D_med,D_in,L_rb,L_mb,L_gb,density,gamma)
+              MeanStress=-loadtostress2(0,0,Fz_mean,Mx_mean,0,0,gbxWeight,D_max,D_med,D_in,L_rb,L_mb,L_gb,0,gamma) #set density =0 to ignore shaft weight
+
+              #apply Goodman with compressive (-) mean stress
+              S_mod=Goodman(AltStress,MeanStress,Sut)
+
+              DEL_y=Fz_stoch.copy() #initialize
+              for i in range(num_pts):
+                  DEL_y[i] = N[i]/((S_mod[i]/a)**(1/b))
+
+              Damage = scp.integrate.simps(DEL_y,x= N, even= 'avg')
+              # print 'Downwind Bearing Diameter:', D_med
+              # print 'Damage:', Damage
+              if Damage < 1:
+                  print ''
+                  print 'unadjusted downwind diameter is %f m.' %(D_med)
+                  #print (time.time() - start_time), 'seconds of total simulation time'
+                  break
+              else:
+                  D_med+=iterationstep
+
+          #begin bearing calculations
+          N_bearings = N/blade_number #counts per rotation (not defined by characteristic frequency 3n_rotor)
+
+          print 'alt2:', np.max(AltStress)
+          print 'mean2:', np.max(MeanStress)
+          print ''
+
+
+          def loadtoradial1(Fx,Fy,Fz,Mx,My,Mz,Wgb,D_outer1,D_outer2,D_inner,l_rb,l_mb,L_gb,density,gamma):
+            lss_weight=density*9.81*(((pi/12)*(D_outer1**2+D_outer2**2+D_outer1*D_outer2)*(L_mb))-(pi/4*L_mb*D_inner**2))
+            Fz1=(lss_weight*2./3.*L_mb-My)/(L_mb) #vertical force on upwind bearing, ASSUMING CG OF SHAFT IS 1/3 OF L_MB DOWNWIND OF MB1 (more accurate than l_mb/2)
+            Fy1=(Mz-Fy*L_rb)/(L_mb)
+            return (Fy1**2+(Fz1*cos(radians(gamma))+Fx*sin(radians(gamma)))**2)**(.5)
+
+          def loadtoaxial1(Fx,Fz,gamma):
+            return Fx*cos(radians(gamma))+Fz*sin(radians(gamma))
+
+          #calculate forces on bearings 1 and 2
+          Fradial_1 = loadtoradial1(Fx_stoch/2,Fy_stoch/2,Fz_stoch/2,Mx_stoch/2,My_stoch/2,Mz_stoch/2,0,D_max,D_med,D_in,L_rb,L_mb,L_gb,density,gamma) + loadtoradial1(0,0,Fz_mean,Mx_mean,0,0,gbxWeight,D_max,D_med,D_in,L_rb,L_mb,L_gb,density,gamma) #forces on upwind bearing, from above. assuming constant mean force and alternating forces lasting one revolution
+          Faxial_1 = loadtoaxial1(Fx_stoch/2,Fz_stoch/2,gamma) + loadtoaxial1(Fx_mean,Fz_mean,gamma)
+
+          #...calculate downwind forces
+          lss_weight=density*9.81*(((pi/12)*(D_max**2+D_med**2+D_max*D_med)*(L_mb))-(pi/4*L_mb*D_in**2))
+          Fy2 = -Mz_stoch/(L_mb)-Fy_stoch #= -Fy1 - Fy_stoch
+          Fz2 = -(lss_weight*2./3.*L_mb-My_stoch)/(L_mb) + (lss_weight+shrinkDiscWeight+gbxWeight)*cos(gamma) - Fz_stoch - Fz_mean #-Fz1 +Weights*cos(gamma)-Fz_stoch+Fz_mean (Fz_mean is in negative direction)
+          Fradial_2 = (Fy2**2+Fz2**2)**(0.5)
+          Faxial_2 = 0.
+
+          life_bearing = N_f/blade_number
+
+          print 'life_bearing', life_bearing
+
+          [D_max_a,FW_max,bearing1mass] = fatigue_for_bearings(D_max, Fradial_1, Faxial_1, N_bearings, life_bearing, self.mb1Type)
+          [D_med_a,FW_med,bearing2mass] = fatigue_for_bearings(D_med, Fradial_2, Faxial_2, N_bearings, life_bearing, self.mb2Type)
+
+        else: #if fatigue_check is not true, just resize based on diameter
+            [D_max_a,FW_max,bearing1mass] = resize_for_bearings(D_max,  self.mb1Type)        
+            [D_med_a,FW_med,bearing2mass] = resize_for_bearings(D_med,  self.mb2Type)   
+
+        # end fatigue code additions 6/2014
             
         lss_mass_new=(pi/3)*(D_max_a**2+D_med_a**2+D_max_a*D_med_a)*(L_mb-(FW_max+FW_med)/2)*density/4+ \
                          (pi/4)*(D_max_a**2-D_in**2)*density*FW_max+\
                          (pi/4)*(D_med_a**2-D_in**2)*density*FW_med-\
                          (pi/4)*(D_in**2)*density*(L_mb+(FW_max+FW_med)/2)
         lss_mass_new *= 1.3 # add flange and shrink disk mass
+
+        ## begin bearing routine with updated shaft mass
         self.length=L_mb_new + (FW_max+FW_med)/2 # TODO: create linear relationship based on power rating
-        print ("L_mb: {0}").format(L_mb)
-        print ("LSS length, m: {0}").format(self.length)
+        # print ("L_mb: {0}").format(L_mb)
+        # print ("LSS length, m: {0}").format(self.length)
         self.D_outer=D_max
-        print ("Upwind MB OD, m: {0}").format(D_max_a)
-        print ("Dnwind MB OD, m: {0}").format(D_med_a)
-        print ("D_min: {0}").format(D_min)
+        # print ("Upwind MB OD, m: {0}").format(D_max_a)
+        # print ("Dnwind MB OD, m: {0}").format(D_med_a)
+        # print ("D_min: {0}").format(D_min)
         self.D_inner=D_in
         self.mass=lss_mass_new
         self.diameter1= D_max_a
@@ -901,6 +1311,12 @@ class LowSpeedShaft_drive4pt(Component):
         I[1]  = self.mass * (self.D_inner ** 2.0 + self.D_outer ** 2.0 + (4.0 / 3.0) * (self.length ** 2.0)) / 16.0
         I[2]  = I[1]
         self.I = I
+
+        self.FW_mb1 = FW_max
+        self.FW_mb2 = FW_med
+
+        self.bearing_mass1 = bearing1mass
+        self.bearing_mass2 = bearing2mass
 
 #-------------------------------------------------------------------------------
 class LowSpeedShaft_drive3pt(Component):
@@ -922,13 +1338,30 @@ class LowSpeedShaft_drive3pt(Component):
     machine_rating = Float(iotype='in', units='kW', desc='machine_rating machine rating of the turbine')
     gearbox_mass = Float(iotype='in', units='kg', desc='Gearbox mass')
     carrier_mass = Float(iotype='in', units='kg', desc='Carrier mass')
+    overhang = Float(iotype='in', units='m', desc='Overhang distance')
+    
+    
 
     # parameters
     shrink_disc_mass = Float(iotype='in', units='kg', desc='Mass of the shrink disc')
     shaft_angle = Float(iotype='in', units='deg', desc='Angle of the LSS inclindation with respect to the horizontal')
     shaft_ratio = Float(iotype='in', desc='Ratio of inner diameter to outer diameter.  Leave zero for solid LSS')
     mb1Type = Str(iotype='in',desc='Main bearing type: CARB, TRB1 or SRB')
-    mb2Type = Str(iotype='in',desc='Second bearing type: CARB, TRB1 or SRB')    
+    mb2Type = Str(iotype='in',desc='Second bearing type: CARB, TRB1 or SRB') 
+
+    L_rb = Float(iotype='in', units='m', desc='distance between hub center and upwind main bearing')
+    check_fatigue = Bool(iotype = 'in', desc = 'turns on and off fatigue check')
+    weibull_A = Float(iotype = 'in', units = 'm/s', desc = 'weibull scale parameter "A" of 10-minute windspeed probability distribution')
+    weibull_k = Float(iotype = 'in', desc = 'weibull shape parameter "k" of 10-minute windspeed probability distribution')
+    blade_number = Float(iotype = 'in', desc = 'number of blades on rotor, 2 or 3')
+    cut_in = Float(iotype = 'in', units = 'm/s', desc = 'cut-in windspeed')
+    cut_out = Float(iotype = 'in', units = 'm/s', desc = 'cut-out windspeed')
+    Vrated = Float(iotype = 'in', units = 'm/s', desc = 'rated windspeed')
+    T_life = Float(iotype = 'in', units = 'yr', desc = 'cut-in windspeed')
+    IEC_Class = Str(iotype='in',desc='IEC class letter: A, B, or C')
+    DrivetrainEfficiency = Float(iotype = 'in', desc = 'overall drivettrain efficiency')
+    rotor_freq = Float(iotype = 'in', units = 'rpm', desc='rated rotor speed')
+   
     # outputs
     design_torque = Float(iotype='out', units='N*m', desc='lss design torque')
     design_bending_load = Float(iotype='out', units='N', desc='lss design bending load')
@@ -937,7 +1370,9 @@ class LowSpeedShaft_drive3pt(Component):
     diameter2 = Float(iotype='out', units='m', desc='lss outer diameter at second bearing')
     mass = Float(0.0, iotype='out', units='kg', desc='overall component mass')
     cm = Array(np.array([0.0, 0.0, 0.0]), iotype='out', desc='center of mass of the component in [x,y,z] for an arbitrary coordinate system')
-    I = Array(np.array([0.0, 0.0, 0.0]), iotype='out', desc=' moments of Inertia for the component [Ixx, Iyy, Izz] around its center of mass')    
+    I = Array(np.array([0.0, 0.0, 0.0]), iotype='out', desc=' moments of Inertia for the component [Ixx, Iyy, Izz] around its center of mass')
+    FW_mb = Float(iotype='out', units='m', desc='facewidth of main bearing')    
+    bearing_mass = Float(iotype='out', units = 'kg', desc='main bearing mass') 
 
     def __init__(self):
         '''
@@ -984,9 +1419,24 @@ class LowSpeedShaft_drive3pt(Component):
         M_r_x = self.rotor_bending_moment_x
         M_r_y = self.rotor_bending_moment_y
         M_r_z = self.rotor_bending_moment_z
-        
+
+        #input parameters
+        gamma=self.shaft_angle #deg LSS angle wrt horizontal
+
+        check_fatigue = self.check_fatigue
+        blade_number = self.blade_number
+        V_0 = self.cut_in
+        V_f = self.cut_out
+        V_rated = self.Vrated
+        T_life =self.T_life
+        IEC_Class_Letter = self.IEC_Class
+        rotor_mass = self.rotor_mass
+        rotor_diameter = self.rotor_diameter
+        machine_rating = self.machine_rating
+        rotor_freq = self.rotor_freq
+        DrivetrainEfficiency = self.DrivetrainEfficiency
+
         g = 9.81 #m/s
-        gamma = self.shaft_angle #deg LSS angle wrt horizontal
         PSF = 1.0
         density = 7850.0
 
@@ -999,6 +1449,7 @@ class LowSpeedShaft_drive3pt(Component):
         dL=0.05
         D_max = 1.0
         D_min = 0.2
+        rotor_diameter = self.rotor_diameter
 
         T=M_r_x/1000.0
 
@@ -1023,8 +1474,11 @@ class LowSpeedShaft_drive3pt(Component):
                 	L_ms=L_ms_0
 
             #Distances
-            L_rb = 1.912 #*(self.machine_rating/5.0e3)   #distance from hub center to main bearing scaled off NREL 5MW
-            L_bg = 6.11 #*(self.machine_rating/5.0e3)         #distance from hub center to gearbox yokes
+            if self.L_rb == 0: #distance from hub center to main bearing
+              L_rb = 0.007835*rotor_diameter+0.9642
+            else:
+              L_rb = self.L_rb
+            L_bg = 6.11 *(self.machine_rating/5.0e3)         #distance from hub center to gearbox yokes
             L_as = L_ms/2.0     #distance from main bearing to shaft center
             H_gb = 1.0          #distance to gbx center from trunnions in z-dir     
             L_gp = 0.825        #distance from gbx coupling to gbx trunnions
@@ -1155,12 +1609,168 @@ class LowSpeedShaft_drive3pt(Component):
             #print 'threshold'
             #print theta_y[-1]
             L_ms_new = L_ms + dL        
-            
-            
-        
-        [D_max_a,FW_max] = resize_for_bearings(D_max,  self.mb1Type)        
-        
-        [D_min_a,FW_min] = resize_for_bearings(D_min,  self.mb2Type)   
+
+        # fatigue check Taylor Parsons 6/14
+        if check_fatigue == True:
+          #start_time = time.time()
+
+          #checks to make sure all inputs are reasonable
+          if rotor_mass < 100:
+              rotor_mass = 23.523*machine_rating
+
+          # print L_rb
+          # print D_in
+          # print D_max_a
+
+          #Weibull Parameters
+          A=self.weibull_A
+          k=self.weibull_k
+
+          g=9.81 
+          #material properties 34CrNiMo6 steel +QT, large diameter
+          E=2.1e11
+          density=7800.0
+          n_safety = 2.5
+          Sy = 490.0e6 # Pa
+          Sut=700.0e6 #Pa
+
+          #calculate material props for fatigue
+          Sm=0.9*Sut #for bending situations, material strength at 10^3 cycles
+          C_size=0.6 #diameter larger than 10"
+          C_surf=4.51*(Sut/1e6)**-.265 #machined surface 272*(Sut/1e6)**-.995 #forged
+          C_temp=1 #normal operating temps
+          C_reliab=0.814 #99% reliability
+          C_envir=1. #enclosed environment
+          Se=C_size*C_surf*C_temp*C_reliab*C_envir*.5*Sut #modified endurance limit for infinite life
+
+          #Rotor Loads calculations using DS472
+          R=rotor_diameter/2.0
+          rotor_torque = (machine_rating * 1000 / DrivetrainEfficiency) / (rotor_freq * (pi/30))
+          Tip_speed_ratio= rotor_freq/30*pi*R/V_rated
+          rho_air= 1.225 #kg/m^3 density of air
+          Cl_blade= 1.0 #lift coefficient at r=2/3R DOES NOT EFFECT P_o RESULTS
+          c_blade=16*pi*R/(9.*blade_number*Cl_blade*Tip_speed_ratio*(Tip_speed_ratio**2*(2./3)**2+4./9)**0.5) #chord length at r=2/3R using Soren Gundtof
+
+          W2=(4./3*pi*(rotor_freq/60)*R)**2+V_rated**2
+          p_o=1./2*rho_air*W2*c_blade*Cl_blade
+          M_root=p_o*(R**2)/3.
+
+          n_c=blade_number*rotor_freq/60 #characteristic frequency on rotor from turbine of given blade number [Hz]
+          N_f=0.85*n_c*(T_life*365*24*60*60)*exp(-(V_0/A)**k)-exp(-(V_f/A)**k) #number of rotor rotations based off of weibull curve. .827 comes from lower rpm than rated at lower wind speeds
+          print 'Nf:', N_f
+          Nfinal = 1e9 #point where fatigue limit occurs under hypothetical S-N curve TODO adjust to fit actual data
+          z=log10(1e3)-log10(Nfinal)  #assuming no endurance limit (high strength steel)
+          b=1/z*log10(Sm/Se)
+          a=Sm/(1000.**b)
+
+          print 'm:', -1/b
+          print 'a:', a
+
+
+          k_b= 2.5 #calculating rotor pressure from all three blades. Use kb=1 for individual blades
+
+          if IEC_Class_Letter == 'A': # From IEC 61400-1 TODO consider calculating based off of 10-minute windspeed and weibull parameters, include neighboring wake effects?
+            I_t=0.18 
+          elif IEC_Class_Letter == 'B':
+            I_t=0.14
+          else:
+            I_t=0.12
+
+          Beta=0.11*k_b*(I_t+0.1)*(A+4.4)
+
+          # find generic standardized stochastic load range distribution
+          def standardrange(N, N_f, Beta, k_b): 
+              F_delta=(Beta*(log10(N_f)-log10(N)))+0.18
+              if F_delta>=2*k_b:
+                F_delta=0.
+              return F_delta
+
+          def rounddown(x,step):
+            return int(floor(x/step))*step
+
+          def roundup(x,step):
+              return int(ceil(x/step))*step
+
+          #for analysis with N on log scale, makes larger loads contain finer step sizes
+          num_pts=1000
+          N=np.logspace( (log10(N_f)-(2*k_b-0.18)/Beta) , log10(N_f) , endpoint=True , num=num_pts) # with zeros: N=np.logspace(log10(1.0),log10(N_f),endpoint=True,num=num_pts)
+          #F_stoch=Fx_stoch=Mx_stoch=Fy_stoch=My_stoch=Fz_stoch=Mz_stoch=N.copy()
+          F_stoch=N.copy()
+
+
+          for i in range(num_pts):
+              N[i]=roundup(N[i],1)
+
+          k_r=1. #assuming natural frequency of rotor is significantly larger than rotor rotational frequency
+
+          for i in range(num_pts):
+            F_stoch[i] = standardrange(N[i],N_f,Beta,k_b)
+
+          Fx_stoch = F_stoch.copy()*0.5*p_o*(R)
+          Mx_stoch = F_stoch.copy()*0.45*p_o*(R)**2#*0.3
+          Fy_stoch = F_stoch.copy()*0
+          My_stoch = F_stoch.copy()*0.33*p_o*k_r*(R)**2#*0.25
+          Fz_stoch = F_stoch.copy()*0
+          Mz_stoch = F_stoch.copy()*0.33*p_o*k_r*(R)**2#*0.25
+
+
+          def loadtostress1 (Fx,Fy,Fz,Mx,My,Mz,D_outer,D_inner,x,gamma):
+              I=(pi/64.0)*(D_outer**4-D_inner**4)
+              J=I*2
+              A=pi/4*(D_outer**2-D_inner**2)
+              My=abs(My)+abs(Fz*x*cos(radians(gamma)))
+              Mz=abs(Mz)+abs(Fy*x)
+              bendingstress=(My**2+Mz**2)**(0.5)*D_outer/(2.*I)
+              shearstress=abs(Mx*D_outer/(2.*J))
+              normalstress = Fx/A*cos(radians(gamma))+Fy/a*sin(radians(gamma))
+              return ((bendingstress+normalstress)**2+3.*shearstress**2)**(0.5)
+
+          def Ninterp(S,a,b):
+              return (S/a)**(1/b)
+
+          def Goodman(S_alt,S_mean,Sut):
+              return S_alt/(1-(S_mean/Sut))
+
+          #upwind bearing calculations
+          iterationstep=0.01
+          while True:
+              AltStress=loadtostress1(Fx_stoch/2,Fy_stoch/2,Fz_stoch/2,Mx_stoch/2,My_stoch/2,Mz_stoch/2,D_in,D_max,L_rb,gamma)
+
+              Fx_mean=1.5*p_o*R
+              Mx_mean=0.5*rotor_torque
+              Fz_mean=-rotor_mass*g
+              MeanStress=-loadtostress1(Fx_mean,0,Fz_mean,Mx_mean,0,0,D_max,D_in,L_rb,gamma)
+
+              #apply Goodman with compressive (-) mean stress
+              S_mod=Goodman(AltStress,MeanStress,Sut)
+
+              #print N
+              #Use Palmgren-Miner linear damage rule to add damage from successive stress ranges
+              DEL_y=Fz_stoch.copy() #initialize
+              for i in range(num_pts):
+                  DEL_y[i] = N[i]/(Ninterp(S_mod[i],a,b))
+
+              Damage = scp.integrate.simps(DEL_y,x= N, even='avg')
+
+              # print 'Upwind Bearing Diameter:', D_max
+              # print 'Damage:', Damage
+              if Damage < 1:
+                  print ''
+                  print 'final unadjusted bearing diameter is %f m.' %(D_max)
+                  #print (time.time() - start_time), 'seconds of total simulation time'
+                  break
+              else:
+                  D_max+=iterationstep
+              break
+
+          life_bearing = Nf/blade_number
+
+          bearing = fatigue_for_bearings(D_max, Fradial_1, Faxial_1, N_bearings, life_bearing, self.mb1Type)
+         
+        #resize bearings if no fatigue check
+        else:
+            [D_max_a,FW_max,bearingmass] = resize_for_bearings(D_max,  self.mb1Type)        
+        [D_min_a,FW_min] = resize_for_bearings(D_min,  self.mb2Type) #what is mb2? TODO:check this
             
         lss_mass_new=(pi/3)*(D_max_a**2+D_min_a**2+D_max_a*D_min_a)*(L_ms-(FW_max+FW_min)/2)*density/4+ \
                          (pi/4)*(D_max_a**2-D_in**2)*density*FW_max+\
@@ -1196,11 +1806,21 @@ class LowSpeedShaft_drive3pt(Component):
         I[2]  = I[1]
         self.I = I
 
+        print 'L_rb %8.f' %(L_rb) #*(self.machine_rating/5.0e3)   #distance from hub center to main bearing scaled off NREL 5MW
+        print 'L_bg %8.f' %(L_bg) #*(self.machine_rating/5.0e3)         #distance from hub center to gearbox yokes
+        print 'L_as %8.f' %(L_as) #distance from main bearing to shaft center
+        L_cu
+        L_cd
+        L_gb
+
+        self.FW_mb=FW_max
+        self.bearing_mass = bearingmass
+
 #-------------------------------------------------------------------------------
 
 class LowSpeedShaft_drive(Component):
     ''' LowSpeedShaft class
-          The LowSpeedShaft class is used to represent the low speed shaft component of a wind turbine drivetrain. 
+          The LowSpeedShaft class is used to represent the low speed shaft component of a wind turbine drivetrain. This model is outdated and does not contain fatigue analysis
           It contains the general properties for a wind turbine component as well as additional design load and dimentional attributes as listed below.
           It contains an update method to determine the mass, mass properties, and dimensions of the component.
     '''
@@ -1411,101 +2031,6 @@ class LowSpeedShaft_drive(Component):
 
 #-------------------------------------------------------------------------------
 
-class MainBearings_drive(Component):
-    ''' MainBearings class
-          The MainBearings class is used to represent the main bearing components of a wind turbine drivetrain. It contains two subcomponents (main bearing and second bearing) which also inherit from the SubComponent class.
-          It contains the general properties for a wind turbine component as well as additional design load and dimentional attributes as listed below.
-          It contains an update method to determine the mass, mass properties, and dimensions of the component.
-    '''
-
-    def __init__(self, shaftD1, shaftD2, shaft_length, rotor_mass, rotor_bending_moment, D_outer):
-        ''' Initializes main bearings component
-
-        Parameters
-        ----------
-        shaftD1 : float
-          Fraction of LSS length from gearbox to downwind main bearing.
-        shaftD2 : float
-          Fraction of LSS length from gearbox to upwind main bearing.
-        shaft_length : float
-          Length of the LSS [m].
-        rotor_mass : float
-          Mass of the rotor [kg].
-        rotor_bending_moment : float
-          Aerodynamic bending moment [N*m].
-        D_outer : float
-          Outer diameter of the LSS [m].
-        '''
-
-        self.upwindBearing = Bearing()
-        self.downwindBearing = Bearing()
-
-        #compute reaction forces
-        #Safety Factors
-        gammaAero=1.35
-        gammaGravity=1.35 #some talk of changing this to 1.1
-        gammaFavorable=0.9
-        gammaMaterial=1.25 #most conservative
-        
-        #Bearing 1 is closest to gearbox, Bearing 2 is closest to rotor
-        L2=shaft_length*shaftD2
-        L1=shaft_length*shaftD1
-
-        Fstatic=rotor_mass*9.81*gammaFavorable #N
-        Mrotor=rotor_bending_moment*gammaAero #Nm
-
-        R2=(-Mrotor+Fstatic*shaftD1)/(shaftD2-shaftD1)
-        #print "R2: %g" %(R2)
-
-        R1=-Fstatic-R2
-        #print "R1: %g" %(R1)     
-
-        # compute masses, dimensions and cost
-
-        self.upwindBearing.mass = 485.0
-        self.downwindBearing.mass = 460.0
-
-        self.mass = (self.upwindBearing.mass + self.downwindBearing.mass)
-
-        # # calculate mass properties
-        # inDiam  = lss.diameter
-        # self.depth = (inDiam * 1.5)
-
-        # cmMB = np.array([0.0,0.0,0.0])
-        # cmMB = ([- (0.035 * rotor_diameter), 0.0, 0.025 * rotor_diameter])
-        # self.mainBearing.cm = cmMB
-
-        # cmSB = np.array([0.0,0.0,0.0])
-        # cmSB = ([- (0.01 * rotor_diameter), 0.0, 0.025 * rotor_diameter])
-        # self.secondBearing.cm = cmSB
-
-        # cm = np.array([0.0,0.0,0.0])
-        # for i in (range(0,3)):
-        #     # calculate center of mass
-        #     cm[i] = (self.mainBearing.mass * self.mainBearing.cm[i] + self.secondBearing.mass * self.secondBearing.cm[i]) \
-        #               / (self.mainBearing.mass + self.secondBearing.mass)
-        # self.cm = cm
-
-        # self.b1I0 = (b1mass * inDiam ** 2 ) / 4 + (h1mass * self.depth ** 2) / 4
-        # self.mainBearing.I = ([self.b1I0, self.b1I0 / 2, self.b1I0 / 2])
-
-        # self.b2I0  = (b2mass * inDiam ** 2 ) / 4 + (h2mass * self.depth ** 2) / 4
-        # self.secondBearing.I = ([self.b2I0, self.b2I0 / 2, self.b2I0 / 2])
-
-        # I = np.array([0.0, 0.0, 0.0])
-        # for i in (range(0,3)):                        # calculating MOI, at nacelle center of gravity with origin at tower top center / yaw mass center, ignoring masses of non-drivetrain components / auxiliary systems
-        #     # calculate moments around CM
-        #     # sum moments around each components CM
-        #     I[i]  =  self.mainBearing.I[i] + self.secondBearing.I[i]
-        #     # translate to nacelle CM using parallel axis theorem
-        #     for j in (range(0,3)):
-        #         if i != j:
-        #             I[i] +=  (self.mainBearing.mass * (self.mainBearing.cm[i] - self.cm[i]) ** 2) + \
-        #                           (self.secondBearing.mass * (self.secondBearing.cm[i] - self.cm[i]) ** 2)
-        # self.I = I
-
-#-------------------------------------------------------------------------------
-
 class Bearing_drive(Component): 
     ''' MainBearings class          
           The MainBearings class is used to represent the main bearing components of a wind turbine drivetrain. It contains two subcomponents (main bearing and second bearing) which also inherit from the SubComponent class.
@@ -1514,9 +2039,11 @@ class Bearing_drive(Component):
     '''
     # variables
     bearing_type = Str(iotype='in',desc='Main bearing type: CARB, TRB1 or SRB')
+    bearing_mass = Float(iotype ='in', units = 'kg', desc = 'bearing mass from LSS model')
     lss_diameter = Float(iotype='in', units='m', desc='lss outer diameter at main bearing')
     lss_design_torque = Float(iotype='in', units='N*m', desc='lss design torque')
     rotor_diameter = Float(iotype='in', units='m', desc='rotor diameter')
+
     
     # returns
     mass = Float(0.0, iotype='out', units='kg', desc='overall component mass')
@@ -1527,304 +2054,9 @@ class Bearing_drive(Component):
         
         super(Bearing_drive, self).__init__()
     
-    def execute(self): #Modified by TParsons 4/21/14
-
-        if self.lss_diameter <= 0.3:
-            if self.bearing_type == 'CARB':
-                self.mass = 120. #3250 kN
-            elif self.bearing_type == 'SRB':
-                self.mass = 128.7 #3070 kN
-            elif self.bearing_type == 'TRB1':
-                self.mass = 107.
-            elif self.bearing_type == 'CRB':
-                self.mass = 89.5
-            elif self.bearing_type == 'RB':
-                self.mass = 44
-            elif self.bearing_type == 'TRB2':
-                self.mass = 140
-        if self.lss_diameter <= 0.34 :
-            if self.bearing_type == 'CARB':
-                self.mass = 205
-            elif self.bearing_type == 'SRB':
-                self.mass = 205
-            elif self.bearing_type == 'TRB1':
-                self.mass = 35
-            elif self.bearing_type == 'CRB':
-                self.mass = 65
-            elif self.bearing_type == 'RB':
-                self.mass = 62
-            elif self.bearing_type == 'TRB2':
-                self.mass = 71
-
-        elif self.lss_diameter <= 0.38:
-            if self.bearing_type == 'CARB':
-                self.mass = 243
-            elif self.bearing_type == 'SRB':
-                self.mass = 300
-            elif self.bearing_type == 'TRB1':
-                self.mass = 20.5
-            elif self.bearing_type == 'CRB':
-                self.mass = 92.5
-            elif self.bearing_type == 'RB':
-                self.mass = 51
-            elif self.bearing_type == 'TRB2':
-                self.mass = 80.2
-
-        elif self.lss_diameter <= 0.4:
-            if self.bearing_type == 'CARB':
-                self.mass = 258.
-            elif self.bearing_type == 'SRB':
-                self.mass = 265.
-            elif self.bearing_type == 'TRB1':
-                self.mass = 320
-            elif self.bearing_type == 'CRB':
-                self.mass = 120
-            elif self.bearing_type == 'RB':
-                self.mass = 27.5
-            elif self.bearing_type == 'TRB2':
-                self.mass = 82.4
-
-        elif self.lss_diameter <= 0.44:
-            if self.bearing_type == 'CARB':
-                self.mass = 385.
-            elif self.bearing_type == 'SRB':
-                self.mass = 360.
-            elif self.bearing_type == 'TRB1':
-                self.mass = 120.
-            elif self.bearing_type == 'CRB':
-                self.mass = 145.
-            elif self.bearing_type == 'RB':
-                self.mass = 66.
-            elif self.bearing_type == 'TRB2':
-                self.mass = 203.
-
-        elif self.lss_diameter <= 0.48:
-            if self.bearing_type == 'CARB':
-                self.mass = 523.
-            elif self.bearing_type == 'SRB':
-                self.mass = 470
-            elif self.bearing_type == 'TRB1':
-                self.mass = 190.
-            elif self.bearing_type == 'CRB':
-                self.mass = 170.
-            elif self.bearing_type == 'RB':
-                self.mass = 74.
-            elif self.bearing_type == 'TRB2':
-                self.mass = 302. 
-
-        elif self.lss_diameter <= 0.5:
-            if self.bearing_type == 'CARB':
-                self.mass = 225.
-            elif self.bearing_type == 'SRB':
-                self.mass = 225.
-            elif self.bearing_type == 'TRB1':
-                self.mass = 59.5
-            elif self.bearing_type == 'CRB':
-                self.mass = 130.
-            elif self.bearing_type == 'RB':
-                self.mass = 77.
-            elif self.bearing_type == 'TRB2':
-                self.mass = 343.
-
-        elif self.lss_diameter <= 0.56:
-            if self.bearing_type == 'CARB':
-                self.mass = 345.
-            elif self.bearing_type == 'SRB':
-                self.mass = 345.
-            elif self.bearing_type == 'TRB1':
-                self.mass = 115.
-            elif self.bearing_type == 'CRB':
-                self.mass = 145.
-            elif self.bearing_type == 'RB':
-                self.mass = 105.
-            elif self.bearing_type == 'TRB2':
-                self.mass = 150.
-
-        elif self.lss_diameter <= 0.60:
-            if self.bearing_type == 'CARB':
-                self.mass = 390.
-            elif self.bearing_type == 'SRB':
-                self.mass = 405.
-            elif self.bearing_type == 'TRB1':
-                self.mass = 110.
-            elif self.bearing_type == 'CRB':
-                self.mass = 165.
-            elif self.bearing_type == 'RB':
-                self.mass = 125.
-            elif self.bearing_type == 'TRB2':
-                self.mass = 180.
-
-        elif self.lss_diameter <= 0.67:
-            if self.bearing_type == 'CARB':
-                self.mass = 580.
-            elif self.bearing_type == 'SRB':
-                self.mass = 580.
-            elif self.bearing_type == 'TRB1':
-                self.mass = 287.
-            elif self.bearing_type == 'CRB':
-                self.mass = 360.
-            elif self.bearing_type == 'RB':
-                self.mass = 185.
-            elif self.bearing_type == 'TRB2':
-                self.mass = 270.                
-
-        elif self.lss_diameter <= 0.710:
-            if self.bearing_type == 'CARB':
-                self.mass = 645.
-            elif self.bearing_type == 'SRB':
-                self.mass = 670.
-            elif self.bearing_type == 'TRB1':
-                self.mass = 200.
-            elif self.bearing_type == 'CRB':
-                self.mass = 300.
-            elif self.bearing_type == 'RB':
-                self.mass = 220.
-            elif self.bearing_type == 'TRB2':
-                self.mass = 265.
-
-        elif self.lss_diameter <= 0.75:
-            if self.bearing_type == 'CARB':
-                self.mass = 838.
-            elif self.bearing_type == 'SRB':
-                self.mass = 770.
-            elif self.bearing_type == 'TRB1':
-                self.mass = 330.
-            elif self.bearing_type == 'CRB':
-                self.mass = 265.
-            elif self.bearing_type == 'RB':
-                self.mass = 225.
-            elif self.bearing_type == 'TRB2':
-                self.mass = 290.
-
-        elif self.lss_diameter <= 0.80:
-            if self.bearing_type == 'CARB':
-                self.mass = 860.
-            elif self.bearing_type == 'SRB':
-                self.mass = 640.
-            elif self.bearing_type == 'TRB1':
-                self.mass = 53.5
-            elif self.bearing_type == 'CRB':
-                self.mass = 560.
-            elif self.bearing_type == 'RB':
-                self.mass = 320.
-            elif self.bearing_type == 'TRB2':
-                self.mass = 350.
-
-        elif self.lss_diameter <= 0.85:
-            if self.bearing_type == 'CARB':
-                self.mass = 1105
-            elif self.bearing_type == 'SRB':
-                self.mass = 1050
-            elif self.bearing_type == 'TRB1':
-                self.mass = 245
-            elif self.bearing_type == 'CRB':
-                self.mass = 335.
-            elif self.bearing_type == 'RB':
-                self.mass = 310.
-            elif self.bearing_type == 'TRB2':
-                self.mass = 2250. #note: seems extremely high but is only TRB2 of this diameter on SKF site. Similar problems from here on
-
-        elif self.lss_diameter <= 0.90:
-            if self.bearing_type == 'CARB':
-                self.mass = 1200.
-            elif self.bearing_type == 'SRB':
-                self.mass = 1200.
-            elif self.bearing_type == 'TRB1':
-                self.mass = 340.
-            elif self.bearing_type == 'CRB':
-                self.mass = 380.
-            elif self.bearing_type == 'RB':
-                self.mass = 350.
-            elif self.bearing_type == 'TRB2':
-                self.mass = 190.
-
-        elif self.lss_diameter <= 0.95:
-            if self.bearing_type == 'CARB':
-                self.mass = 1410.
-            elif self.bearing_type == 'SRB':
-                self.mass = 1450.
-            elif self.bearing_type == 'TRB1':
-                self.mass = 100.
-            elif self.bearing_type == 'CRB':
-                self.mass = 745.
-            elif self.bearing_type == 'RB':
-                self.mass = 390.
-            elif self.bearing_type == 'TRB2':
-                self.mass = 1760.
-
-        elif self.lss_diameter <= 1.0:
-            if self.bearing_type == 'CARB':
-                self.mass = 1570.
-            elif self.bearing_type == 'SRB':
-                self.mass = 2250.
-            elif self.bearing_type == 'TRB1':
-                self.mass = 275.
-            elif self.bearing_type == 'CRB':
-                self.mass = 350.
-            elif self.bearing_type == 'RB':
-                self.mass = 515.
-            elif self.bearing_type == 'TRB2':
-                self.mass = 1760.
-
-        elif self.lss_diameter <= 1.06:
-            if self.bearing_type == 'CARB':
-                self.mass = 1120.
-            elif self.bearing_type == 'SRB':
-                self.mass = 1100.
-            elif self.bearing_type == 'TRB1':
-                self.mass = 265.
-            elif self.bearing_type == 'CRB':
-                self.mass = 870.
-            elif self.bearing_type == 'RB':
-                self.mass = 620.
-            elif self.bearing_type == 'TRB2':
-                self.mass = 1760.
-
-        elif self.lss_diameter <= 1.18:
-            if self.bearing_type == 'CARB':
-                self.mass = 1400.
-            elif self.bearing_type == 'SRB':
-                self.mass = 1400.
-            elif self.bearing_type == 'TRB1':
-                self.mass = 265.
-            elif self.bearing_type == 'CRB':
-                self.mass = 1090.
-            elif self.bearing_type == 'RB':
-                self.mass = 775.
-            elif self.bearing_type == 'TRB2':
-                self.mass = 795.
-
-        elif self.lss_diameter <= 1.25:
-            if self.bearing_type == 'CARB':
-                self.mass = 2740
-            elif self.bearing_type == 'SRB':
-                self.mass = 2840.
-            elif self.bearing_type == 'TRB1':
-                self.mass = 265.
-            elif self.bearing_type == 'CRB':
-                self.mass = 2320.
-            elif self.bearing_type == 'RB':
-                self.mass = 385.
-            elif self.bearing_type == 'TRB2':
-                self.mass = 795.
-
-        else:
-            if self.bearing_type == 'CARB':
-                self.mass = 2740.
-            elif self.bearing_type == 'SRB':
-                self.mass = 2850.
-            elif self.bearing_type == 'TRB1':
-                self.mass = 265.
-            elif self.bearing_type == 'CRB':
-                self.mass = 860.
-            elif self.bearing_type == 'RB':
-                self.mass = 1950.
-            elif self.bearing_type == 'TRB2':
-                self.mass = 2750.                
-
-        print self.mass
-        self.mass += self.mass*(8000.0/2700.0) # add housing weight
-        print ("Bearing Mass, kg: {0}").format(self.mass)
+    def execute(self):
+        self.mass = self.bearing_mass
+        self.mass += self.mass*(8000.0/2700.0) #add housing weight
 
 class MainBearing_drive(Bearing_drive): 
     ''' MainBearings class          
@@ -2553,45 +2785,45 @@ class Bedplate_drive(Component):
 
 
         
-        print 'rotor mass'
-        print self.rotor_mass
+     #    print 'rotor mass'
+     #    print self.rotor_mass
 
-        print 'rotor bending moment_y'
-        print self.rotor_bending_moment_y
+     #    print 'rotor bending moment_y'
+     #    print self.rotor_bending_moment_y
     
 
-    	print 'rotor fz'
-    	print self.rotor_force_z 
+    	# print 'rotor fz'
+    	# print self.rotor_force_z 
 
-        print 'steel rear bedplate length: '
-        print rearTotalLength
+     #    print 'steel rear bedplate length: '
+     #    print rearTotalLength
 
-        print 'cast front bedplate length: '
-        print frontTotalLength
+     #    print 'cast front bedplate length: '
+     #    print frontTotalLength
 
-        print b0
-        print h0
+     #    print b0
+     #    print h0
 
-        print'rear bedplate tip deflection'
-        print rearTotalTipDefl
+     #    print'rear bedplate tip deflection'
+     #    print rearTotalTipDefl
 
-        print'front bedplate tip deflection'
-        print frontTotalTipDefl
+     #    print'front bedplate tip deflection'
+     #    print frontTotalTipDefl
 
-        print 'bending stress [MPa] at root of rear bedplate:'
-        print rearBendingStress/1.0e6
+     #    print 'bending stress [MPa] at root of rear bedplate:'
+     #    print rearBendingStress/1.0e6
 
-        print 'bending stress [MPa] at root of front bedplate:'
-        print frontBendingStress/1.0e6
+     #    print 'bending stress [MPa] at root of front bedplate:'
+     #    print frontBendingStress/1.0e6
 
-        print 'cast front bedplate bedplate mass [kg]:'
-        print totalCastMass
+     #    print 'cast front bedplate bedplate mass [kg]:'
+     #    print totalCastMass
 
-        print 'rear steel bedplate mass [kg]:'
-        print totalSteelMass
+     #    print 'rear steel bedplate mass [kg]:'
+     #    print totalSteelMass
 
-        print 'total bedplate mass:'
-        print totalSteelMass+ totalCastMass
+     #    print 'total bedplate mass:'
+     #    print totalSteelMass+ totalCastMass
         
 
 

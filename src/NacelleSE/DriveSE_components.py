@@ -18,7 +18,7 @@ from scipy import integrate
 #import matplotlib.pyplot as plt
 #import time
 
-# def 
+
 
 #---------global functions-----------#
 

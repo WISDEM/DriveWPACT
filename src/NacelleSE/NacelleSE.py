@@ -332,6 +332,7 @@ class NacelleSE_drive3pt(NacelleBase):
     shrink_disc_mass = Float(iotype='in', units='kg', desc='Mass of the shrink disc')
     carrier_mass = Float(iotype='in', units='kg', desc='Carrier mass')
     mb1Type = Str(iotype='in',desc='Main bearing type: CARB, TRB or SRB')
+<<<<<<< HEAD
     mb2Type = Str(iotype='in',desc= 'Carrier bearing type: CRB, TRB or RB')
     flange_length = Float(iotype='in', units='kg', desc='flange length')    
     L_rb = Float(iotype='in', units='m', desc='distance between hub center and upwind main bearing')
@@ -345,6 +346,10 @@ class NacelleSE_drive3pt(NacelleBase):
     T_life = Float(iotype = 'in', units = 'yr', desc = 'cut-in windspeed')
     IEC_Class = Str(iotype='in',desc='IEC class letter: A, B, or C')
     DrivetrainEfficiency = Float(iotype = 'in', desc = 'overall drivettrain efficiency')
+=======
+    mb2Type = Str(iotype='in',desc= 'Carrier bearing type: CRB, TRB or RB (Not coded)')
+    flange_length = Float(iotype='in', units='kg', desc='flange length')
+>>>>>>> f9b75cd4c897723bbccb2a9dfda40c608c441220
     overhang = Float(iotype='in', units='m', desc='Overhang distance')
 
 
@@ -419,6 +424,7 @@ class NacelleSE_drive3pt(NacelleBase):
         self.connect('flange_length', 'bedplate.flange_length')
         self.connect('overhang','lowSpeedShaft.overhang')
 
+<<<<<<< HEAD
         self.connect('L_rb', 'lowSpeedShaft.L_rb')
         self.connect('check_fatigue', 'lowSpeedShaft.check_fatigue')
         self.connect('weibull_A', 'lowSpeedShaft.weibull_A')
@@ -431,6 +437,9 @@ class NacelleSE_drive3pt(NacelleBase):
         self.connect('IEC_Class', 'lowSpeedShaft.IEC_Class')
         self.connect('DrivetrainEfficiency', 'lowSpeedShaft.DrivetrainEfficiency')
         self.connect('rotorRatedRPM', 'lowSpeedShaft.rotor_freq')
+=======
+
+>>>>>>> f9b75cd4c897723bbccb2a9dfda40c608c441220
 
         # connect components
         self.connect('lowSpeedShaft.design_torque', ['mainBearing.lss_design_torque', 'secondBearing.lss_design_torque'])
@@ -511,6 +520,8 @@ class NacelleSE_drive4pt(NacelleBase):
     shaft_ratio = Float(iotype='in', desc='Ratio of inner diameter to outer diameter.  Leave zero for solid LSS')
     rotorRatedRPM = Float(iotype='in', units='rpm', desc='Speed of rotor at rated power')
     flange_length = Float(iotype='in', units='kg', desc='flange length')
+    overhang = Float(iotype='in', units='m', desc='Overhang distance')
+
 
 
     # parameters
@@ -600,6 +611,7 @@ class NacelleSE_drive4pt(NacelleBase):
         self.connect('ratio_type', 'gearbox.ratio_type')
         self.connect('shaft_type', 'gearbox.shaft_type')
         self.connect('flange_length', 'bedplate.flange_length')
+<<<<<<< HEAD
         self.connect('L_rb', 'lowSpeedShaft.L_rb')
         self.connect('check_fatigue', 'lowSpeedShaft.check_fatigue')
         self.connect('weibull_A', 'lowSpeedShaft.weibull_A')
@@ -612,6 +624,11 @@ class NacelleSE_drive4pt(NacelleBase):
         self.connect('IEC_Class', 'lowSpeedShaft.IEC_Class')
         self.connect('DrivetrainEfficiency', 'lowSpeedShaft.DrivetrainEfficiency')
         self.connect('rotorRatedRPM', 'lowSpeedShaft.rotor_freq')
+=======
+        self.connect('overhang','lowSpeedShaft.overhang')
+
+
+>>>>>>> f9b75cd4c897723bbccb2a9dfda40c608c441220
 
         # connect components
         self.connect('lowSpeedShaft.design_torque', ['mainBearing.lss_design_torque', 'secondBearing.lss_design_torque'])
@@ -1179,6 +1196,7 @@ def nacelle_example_80m_baseline_3pt():
     nace.flange_length = 0.5
     nace.overhang = 5.0
 
+<<<<<<< HEAD
     nace.check_fatigue = False
     nace.blade_number=3.
     nace.cut_in=3. #cut-in m/s
@@ -1189,6 +1207,9 @@ def nacelle_example_80m_baseline_3pt():
     nace.T_life=20. #design life in years
     nace.IEC_Class_Letter = 'A'
     nace.L_rb = 1.912 # length from hub center to main bearing, leave zero if unknow
+=======
+
+>>>>>>> f9b75cd4c897723bbccb2a9dfda40c608c441220
 
 
     # NREL 5 MW Tower Variables
@@ -1274,6 +1295,7 @@ def nacelle_example_80m_baseline_4pt():
     nace.mb1Type = 'CARB'
     nace.mb2Type = 'SRB'
     nace.flange_length = 0.5 #m
+    nace.overhang = 5.0
 
     nace.check_fatigue = False
     nace.blade_number=3.
@@ -1716,10 +1738,19 @@ def nacelle_example_GRC_4pt():
 if __name__ == '__main__':
     ''' Main runs through tests of several drivetrain configurations with known component masses and dimensions '''
 
+<<<<<<< HEAD
     #nacelle_example_80m_baseline_3pt()
     nacelle_example_80m_baseline_4pt()
     #nacelle_example_GE_3pt()
     #nacelle_example_GE_4pt()
     #nacelle_example_GRC_3pt()
     #nacelle_example_GRC_4pt()
+=======
+    # nacelle_example_80m_baseline_3pt()
+    nacelle_example_80m_baseline_4pt()
+    # nacelle_example_GE_3pt()
+    # nacelle_example_GE_4pt()
+    # nacelle_example_GRC_3pt()
+    # # nacelle_example_GRC_4pt()
+>>>>>>> f9b75cd4c897723bbccb2a9dfda40c608c441220
 

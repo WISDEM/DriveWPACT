@@ -660,6 +660,10 @@ class LowSpeedShaft_drive4pt(Component):
     gearbox_mass = Float(iotype='in', units='kg', desc='Gearbox mass')
     carrier_mass = Float(iotype='in', units='kg', desc='Carrier mass')
     overhang = Float(iotype='in', units='m', desc='Overhang distance')
+<<<<<<< HEAD
+=======
+
+>>>>>>> f9b75cd4c897723bbccb2a9dfda40c608c441220
 
     # parameters
     shrink_disc_mass = Float(iotype='in', units='kg', desc='Mass of the shrink disc')# shrink disk or flange addti'onal mass
@@ -769,7 +773,7 @@ class LowSpeedShaft_drive4pt(Component):
         check_limit = 1.0
         dL=0.05
         counter = 0
-        N_count=100
+        N_count=50
         N_count_2=2
         len_pts=101
         D_max=1
@@ -806,7 +810,7 @@ class LowSpeedShaft_drive4pt(Component):
         TRB1_limit = 3.0/60.0/180.0*pi
         n_safety_brg = 1.0
 
-        while abs(check_limit) > tol and counter <N_count:
+        while abs(check_limit) > tol and L_ms_new < 0.5*self.overhang:
             counter = counter+1
             if L_ms_new > 0:
                 L_ms=L_ms_new
@@ -913,7 +917,7 @@ class LowSpeedShaft_drive4pt(Component):
         dL_ms = 0.05
         dL = 0.0025
 
-        while abs(check_limit_ms)>tol and counter_ms<N_count:
+        while abs(check_limit_ms)>tol and L_mb_new < 0.5*self.overhang:
             counter_ms = counter_ms + 1
             if L_mb_new > 0:
                 L_mb=L_mb_new
@@ -1410,6 +1414,10 @@ class LowSpeedShaft_drive3pt(Component):
     gearbox_mass = Float(iotype='in', units='kg', desc='Gearbox mass')
     carrier_mass = Float(iotype='in', units='kg', desc='Carrier mass')
     overhang = Float(iotype='in', units='m', desc='Overhang distance')
+<<<<<<< HEAD
+=======
+
+>>>>>>> f9b75cd4c897723bbccb2a9dfda40c608c441220
 
     # parameters
     shrink_disc_mass = Float(iotype='in', units='kg', desc='Mass of the shrink disc')
@@ -1535,7 +1543,7 @@ class LowSpeedShaft_drive3pt(Component):
         u_knm_inlb = 8850.745454036
         u_in_m = 0.0254000508001
         counter=0
-        while abs(check_limit) > tol and counter <N_count:
+        while abs(check_limit) > tol and L_ms_new < 0.5*self.overhang:
             counter = counter+1
             if L_ms_new > 0:
                	 L_ms=L_ms_new

@@ -1733,17 +1733,11 @@ if __name__ == '__main__':
     ''' Main runs through tests of several drivetrain configurations with known component masses and dimensions '''
 
     #nacelle_example_80m_baseline_3pt()
-    #nacelle_example_80m_baseline_4pt()
+    nacelle_example_80m_baseline_4pt()
     #nacelle_example_GE_3pt()
     #nacelle_example_GE_4pt()
     #nacelle_example_GRC_3pt()
     #nacelle_example_GRC_4pt()
 
-    # nacelle_example_80m_baseline_3pt()
-    nacelle_example_80m_baseline_4pt()
-    # nacelle_example_GE_3pt()
-    # nacelle_example_GE_4pt()
-    # nacelle_example_GRC_3pt()
-    # # nacelle_example_GRC_4pt()
 
 

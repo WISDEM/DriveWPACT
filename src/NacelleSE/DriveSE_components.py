@@ -18,8 +18,6 @@ from scipy import integrate
 #import matplotlib.pyplot as plt
 #import time
 
-
-
 #---------global functions-----------#
 
 #bearing table seeding
@@ -450,14 +448,15 @@ def fatigue_for_bearings(D_shaft,F_r,F_a,N_array,life_bearing,type):
 
   elif type == 'CRB':
     if (np.max(F_a)/np.max(F_r)>=.5) or (np.min(F_a)/(np.min(F_r))>=.5):
-      print ''
+      print '--------------------------------------------------------'
       print "error: axial loads too large for CRB bearing application"
-      print ''
-    e = 0.2
-    Y1 = 0
-    X2 = 0.92
-    Y2 = 0.6
-    p = 10./3
+      print '--------------------------------------------------------'
+    else:
+        e = 0.2
+        Y1 = 0
+        X2 = 0.92
+        Y2 = 0.6
+        p = 10./3
 
   elif type == 'TRB2':
     e = 0.4
@@ -484,9 +483,10 @@ def fatigue_for_bearings(D_shaft,F_r,F_a,N_array,life_bearing,type):
     P = X2*F_r + Y2*F_a
 
   P_eq = ((scp.integrate.simps((P**p),x=N_array,even='avg'))/(N_array[-1]-N_array[0]))**(1/p)
+  C_min = P_eq*(life_bearing/1e6)**(1./p)/1000 #kN
 
-  C_min = (P_eq*life_bearing/1e6)**(1./p)/1000 #kN
-  # print 'loadrating:', C_min
+  # print ''
+  # print 'loadrating (kN):', C_min
 
   subset = TABLE[TABLE['C'] >= C_min] #all bearings above load rating
   # print''
@@ -496,7 +496,7 @@ def fatigue_for_bearings(D_shaft,F_r,F_a,N_array,life_bearing,type):
   # print''
   # print 'after D check:'
   # print subset
-  if len(subset>=1):
+  if len(subset)>=1:
     index = np.argmin(subset['d']) #select bearing with lowest diameter (what if multiple with same d?)
     bearing = subset[index]
     # print 'final bearing selection (d,D,FW,C,C0,mass):'
@@ -529,7 +529,11 @@ def resize_for_bearings(D_shaft,type):
     bearing = bearing[np.argmin(bearing['d'])]
     return [bearing['d'],bearing['B'],bearing['mass']]
   else:
+    print ''
+    print '---------------------------------------------------------------------'
     print 'Suitable Bearing not found in table! Large mass and facewidth assumed'
+    print '---------------------------------------------------------------------'
+    print ''
     if D_shaft < 2.0:
         return [2.0,2.0,5000.]
     elif D_shaft < 2.5:
@@ -1063,19 +1067,9 @@ class LowSpeedShaft_drive4pt(Component):
           if rotor_mass < 100:
               rotor_mass = 23.523*machine_rating
 
-          # print L_rb
-          # print D_in
-          # print D_max_a
-
           #Weibull Parameters
           weibullA=self.weibull_A
           weibullk=self.weibull_k
-          # D_max = .3
-          # D_med = .3
-          # D_in=sR*D_max
-          # D_max = (D_max**4 + D_in**4)**0.25
-          # D_min = (D_min**4 + D_in**4)**0.25
-          # D_med = (D_med**4 + D_in**4)**0.25
 
           g=9.81 
           #material properties 34CrNiMo6 steel +QT, large diameter
@@ -1097,7 +1091,7 @@ class LowSpeedShaft_drive4pt(Component):
           #Rotor Loads calculations using DS472
           R=rotor_diameter/2.0
           rotor_torque = (machine_rating * 1000 / DrivetrainEfficiency) / (rotor_freq * (pi/30))
-          Tip_speed_ratio= rotor_freq/30*pi*R/V_rated
+          Tip_speed_ratio= rotor_freq/30.*pi*R/V_rated
           rho_air= 1.225 #kg/m^3 density of air
           Cl_blade= 1.0 #lift coefficient at r=2/3R DOES NOT EFFECT P_o RESULTS
           c_blade=16*pi*R/(9.*blade_number*Cl_blade*Tip_speed_ratio*(Tip_speed_ratio**2*(2./3)**2+4./9)**0.5) #chord length at r=2/3R using Soren Gundtof
@@ -1108,14 +1102,12 @@ class LowSpeedShaft_drive4pt(Component):
 
           n_c=blade_number*rotor_freq/60 #characteristic frequency on rotor from turbine of given blade number [Hz]
           N_f=0.85*n_c*(T_life*365*24*60*60)*exp(-(V_0/weibullA)**weibullk)-exp(-(V_f/weibullA)**weibullk) #number of rotor rotations based off of weibull curve. .827 comes from lower rpm than rated at lower wind speeds
-          print 'Nf:', N_f
-          Nfinal = 1e10 #point where fatigue limit occurs under hypothetical S-N curve TODO adjust to fit actual data
+          Nfinal = 1e11 #point where fatigue limit occurs under hypothetical S-N curve TODO adjust to fit actual data
           z=log10(1e3)-log10(Nfinal)  #assuming no endurance limit (high strength steel)
           SN_b=1/z*log10(Sm/Se)
           SN_a=Sm/(1000.**SN_b)
-
-          print 'm:', -1/SN_b
-          print 'a:', SN_a
+          # print 'm:', -1/SN_b
+          # print 'a:', SN_a
 
           k_b= 2.5 #calculating rotor pressure from all three blades. Use kb=1 for individual blades
 
@@ -1158,10 +1150,10 @@ class LowSpeedShaft_drive4pt(Component):
           for i in range(num_pts):
             F_stoch[i] = standardrange(N[i],N_f,Beta,k_b)
 
-          Fx_stoch = (F_stoch.copy()*0.5*p_o*(R))*.5#divide by 2 to reflect amplitudes
-          Mx_stoch = (F_stoch.copy()*0.45*p_o*(R)**2)*.5#*0.3
-          My_stoch = (F_stoch.copy()*0.33*p_o*k_r*(R)**2)*.5#*0.25
-          Mz_stoch = (F_stoch.copy()*0.33*p_o*k_r*(R)**2)*.5#*0.25 
+          Fx_stoch = (F_stoch.copy()*0.5*p_o*(R))*.5 #divide by 2 to reflect amplitudes
+          Mx_stoch = (F_stoch.copy()*0.45*p_o*(R)**2)*.5*0.31
+          My_stoch = (F_stoch.copy()*0.33*p_o*k_r*(R)**2)*.5*0.25
+          Mz_stoch = (F_stoch.copy()*0.33*p_o*k_r*(R)**2)*.5*0.25 
 
           def Ninterp(S,a,b):
               return (S/a)**(1/b)
@@ -1184,6 +1176,7 @@ class LowSpeedShaft_drive4pt(Component):
               I=(pi/64.0)*(D_max**4-D_in**4)
               J=I*2
               Area=pi/4.*(D_max**2-D_in**2)
+              LssWeight=density*9.81*(((pi/12)*(D_max**2+D_med**2+D_max*D_med)*(L_mb))-(pi/4*L_mb*D_in**2))
 
               #create stochastic loads across N
               stoch_bend1 = (My_stoch**2+Mz_stoch**2)**(0.5)*D_max/(2.*I)
@@ -1194,7 +1187,7 @@ class LowSpeedShaft_drive4pt(Component):
               #create mean loads
               mean_bend1 = 0 #Fz_mean*L_rb*D_max/(2.*I) #not mean, but deterministic
               mean_shear1 = Mx_mean*D_max/(2.*J)
-              mean_normal1 = Fx_mean/Area*cos(radians(gamma))+rotorWeight*sin(radians(gamma))
+              mean_normal1 = Fx_mean/Area*cos(radians(gamma))+(rotorWeight+LssWeight)*sin(radians(gamma))
               mean_stress1 = ((mean_bend1+mean_normal1)**2+3.*mean_shear1**2)**(0.5)
 
               #apply Goodman with compressive (-) mean stress
@@ -1208,58 +1201,27 @@ class LowSpeedShaft_drive4pt(Component):
               Damage = scp.integrate.simps(DEL_y,x= N, even='avg') #damage from stochastic loading
 
               #create deterministic loads occurring N_rotor times
-              determ_stress1 = abs(rotorWeight*L_rb*D_max/(2.*I)) #only deterministic stress at mb1 is bending due to rotor weight
+              determ_stress1 = abs(rotorWeight*cos(radians(gamma))*L_rb*D_max/(2.*I)) #only deterministic stress at mb1 is bending due to rotor weight
 
               S_mod_determ=Goodman(determ_stress1,-mean_stress1,Sut)
-              print 'before deterministic Damage:', Damage
+              # print 'before deterministic Damage:', Damage
 
               Damage += N_rotor/(Ninterp(S_mod_determ,SN_a,SN_b))
 
-              print 'Upwind Bearing Diameter:', D_max
-              print 'Damage:', Damage
+              # print 'Upwind Bearing Diameter:', D_max
+              # print 'Damage:', Damage
               if Damage < 1 or D_max >= diameter_limit:
-                  print ''
-                  print 'final unadjusted upwind diameter is %f m.' %(D_max)
+                  print 'unadjusted upwind diameter is %f m.' %(D_max)
                   #print (time.time() - start_time), 'seconds of total simulation time'
                   break
               else:
                   D_max+=iterationstep
-              #break
-          print S_mod_determ
-          print S_mod_stoch1[0]
-          print S_mod_stoch1
-
-          
-
-            # F_mb_x = -F_r_x - rotorWeight*sin(radians(gamma))
-            # F_mb_y = +M_r_z/L_bg - F_r_y*(L_bg + L_rb)/L_bg
-            # F_mb_z = (-M_r_y + rotorWeight*(cos(radians(gamma))*(L_rb + L_bg)\
-            #            + sin(radians(gamma))*H_gb) + lssWeight*(L_bg - L_as)\
-            #            * cos(radians(gamma)) + shrinkDiscWeight*cos(radians(gamma))\
-            #            *(L_bg - L_ms) - gbxWeight*cos(radians(gamma))*L_gb - F_r_z*cos(radians(gamma))*(L_bg + L_rb))/L_bg
-
-            #   LssWeight=density*9.81*(((pi/12)*(D_outer1**2+D_outer2**2+D_outer1*D_outer2)*(L_mb))-(pi/4*L_mb*D_in**2))
-            #   I=(pi/64.0)*(D_outer2**4-D_in**4)
-            #   J=I*2.
-            #   A=pi/4*(D_outer2**2-D_in**2)
-            #   Fz1=(lss_weight*2./3.*L_mb-My)/(L_mb) #vertical force on upwind bearing, ASSUMING CG OF SHAFT IS 1/3 OF L_MB DOWNWIND OF MB1 (more accurate than l_mb/2)
-            #   Fy1=(Mz-Fy*L_rb)/(L_mb)
-            #   My2=abs(Fz*(L_rb+L_mb)-My+2./3*L_mb*lss_weight-Fz1*L_mb)
-            #   Mz2=abs(Fy*(L_rb+L_mb)-Mz-Fy1*L_mb)
-            #   bendingstress2=((My**2+Mz**2)**(0.5))*D_outer2/(2.*I)
-            #   shearstress2=Mx*D_outer2/(2.*J)
-            #   stoch_stress2 = ((bendingstress2**2)+3.*(shearstress2**2))**0.5
-
 
           #downwind bearing calculations
           diameter_limit = 1.0
           iterationstep=0.01
 
           while True:
-              # D_in=sR*D_max
-              # D_max = (D_max**4 + D_in**4)**0.25
-              # D_min = (D_min**4 + D_in**4)**0.25
-              # D_med = (D_med**4 + D_in**4)**0.25
               I=(pi/64.0)*(D_med**4-D_in**4)
               J=I*2
               Area=pi/4.*(D_med**2-D_in**2)
@@ -1273,7 +1235,7 @@ class LowSpeedShaft_drive4pt(Component):
               #create stochastic loads across N
               stoch_bend2 = (My2stoch**2+Mz2stoch**2)**(0.5)*D_med/(2.*I)
               stoch_shear2 = abs(Mx_stoch*D_med/(2.*J))
-              stoch_normal2 = Fx_stoch/Area*cos(radians(gamma))
+              stoch_normal2 = 0. #Fx_stoch/Area*cos(radians(gamma)) #all normal force held by upwind bearing
               stoch_stress2 = ((stoch_bend1+stoch_normal1)**2+3.*stoch_shear1**2)**(0.5)
               #print stoch_stress2
               
@@ -1304,50 +1266,35 @@ class LowSpeedShaft_drive4pt(Component):
               # print 'Downwind Bearing Diameter:', D_med
               # print 'Damage:', Damage
               if Damage < 1 or D_med >= diameter_limit:
-                  print ''
+                  # print ''
                   print 'unadjusted downwind diameter is %f m.' %(D_med)
+                  print ''
                   #print (time.time() - start_time), 'seconds of total simulation time'
                   break
               else:
                   D_med+=iterationstep
 
+          #begin bearing calculations
+          N_bearings = N/blade_number #counts per rotation (not defined by characteristic frequency 3n_rotor)
 
-          # #begin bearing calculations
-          # N_bearings = N/blade_number #counts per rotation (not defined by characteristic frequency 3n_rotor)
+          Fr1_range = ((abs(Fz1stoch)+abs(Fz1determ))**2 +Fy1stoch**2)**.5 #radial stochastic + deterministic mean
+          Fa1_range = Fx_stoch*cos(radians(gamma)) + (rotorWeight+LssWeight)*sin(radians(gamma)) #axial stochastic + mean
 
-          # def loadtoradial1(Fx,Fy,Fz,Mx,My,Mz,Wgb,D_outer1,D_outer2,D_in,l_rb,l_mb,L_gb,density,gamma): #remove this...
-          #   lss_weight=density*9.81*(((pi/12)*(D_outer1**2+D_outer2**2+D_outer1*D_outer2)*(L_mb))-(pi/4*L_mb*D_in**2))
-          #   Fz1=(lss_weight*2./3.*L_mb-My)/(L_mb) #vertical force on upwind bearing, ASSUMING CG OF SHAFT IS 1/3 OF L_MB DOWNWIND OF MB1 (more accurate than l_mb/2)
-          #   Fy1=(Mz-Fy*L_rb)/(L_mb)
-          #   return (Fy1**2+(Fz1*cos(radians(gamma))+Fx*sin(radians(gamma)))**2)**(.5)
+          #...calculate downwind forces
+          lss_weight=density*9.81*(((pi/12)*(D_max**2+D_med**2+D_max*D_med)*(L_mb))-(pi/4*L_mb*D_in**2))
+          Fy2stoch = -Mz_stoch/(L_mb) #= -Fy1 - Fy_stoch
+          Fz2stoch = -(lss_weight*2./3.*L_mb-My_stoch)/(L_mb) + (lss_weight+shrinkDiscWeight+gbxWeight)*cos(gamma) - rotorWeight #-Fz1 +Weights*cos(gamma)-Fz_stoch+Fz_mean (Fz_mean is in negative direction)
+          Fr2_range = (Fy2stoch**2+(Fz2stoch+abs(-rotorWeight*L_rb + 0.5*lss_weight+gbxWeight*L_gb/L_mb))**2)**0.5
+          Fa2_range = 0.
 
-          # def loadtoaxial1(Fx,Fz,gamma):
-          #   return Fx*cos(radians(gamma))+Fz*sin(radians(gamma))
+          life_bearing = N_f/blade_number
 
-          # #calculate forces on bearings 1 and 2
-          # Fradial_1 = loadtoradial1(Fx_stoch/2,Mx_stoch/2,My_stoch/2,Mz_stoch/2,0,D_max,D_med,D_in,L_rb,L_mb,L_gb,density,gamma) + loadtoradial1(0,0,Fz_mean,Mx_mean,0,0,gbxWeight,D_max,D_med,D_in,L_rb,L_mb,L_gb,density,gamma) #forces on upwind bearing, from above. assuming constant mean force and alternating forces lasting one revolution
-          # Faxial_1 = loadtoaxial1(Fx_stoch/2,gamma) + loadtoaxial1(Fx_mean,Fz_mean,gamma)
+          [D_max_a,FW_max,bearing1mass] = fatigue_for_bearings(D_max, Fr1_range, Fa1_range, N_bearings, life_bearing, self.mb1Type)
+          [D_med_a,FW_med,bearing2mass] = fatigue_for_bearings(D_med, Fr2_range, Fa2_range, N_bearings, life_bearing, self.mb2Type)  
 
-          # #...calculate downwind forces
-          # lss_weight=density*9.81*(((pi/12)*(D_max**2+D_med**2+D_max*D_med)*(L_mb))-(pi/4*L_mb*D_in**2))
-          # Fy2 = -Mz_stoch/(L_mb)-Fy_stoch #= -Fy1 - Fy_stoch
-          # Fz2 = -(lss_weight*2./3.*L_mb-My_stoch)/(L_mb) + (lss_weight+shrinkDiscWeight+gbxWeight)*cos(gamma) - Fz_stoch - Fz_mean #-Fz1 +Weights*cos(gamma)-Fz_stoch+Fz_mean (Fz_mean is in negative direction)
-          # Fradial_2 = (Fy2**2+Fz2**2)**(0.5)
-          # Faxial_2 = 0.
-
-          # life_bearing = N_f/blade_number
-
-          # print 'life_bearing', life_bearing
-
-          # [D_max_a,FW_max,bearing1mass] = fatigue_for_bearings(D_max, Fradial_1, Faxial_1, N_bearings, life_bearing, self.mb1Type)
-          # [D_med_a,FW_med,bearing2mass] = fatigue_for_bearings(D_med, Fradial_2, Faxial_2, N_bearings, life_bearing, self.mb2Type)  
-
-          [D_max_a,FW_max,bearing1mass] = resize_for_bearings(D_max,  self.mb1Type)        
-          [D_med_a,FW_med,bearing2mass] = resize_for_bearings(D_med,  self.mb2Type)   
-
-        else: #if fatigue_check is not true, just resize based on diameter
-            [D_max_a,FW_max,bearing1mass] = resize_for_bearings(D_max,  self.mb1Type)        
-            [D_med_a,FW_med,bearing2mass] = resize_for_bearings(D_med,  self.mb2Type)   
+        else: #if fatigue_check is not true, resize based on diameter
+            [D_max_a,FW_max,bearing1mass] = resize_for_bearings(D_max,  self.mb1Type)
+            [D_med_a,FW_med,bearing2mass] = resize_for_bearings(D_med,  self.mb2Type)
 
         # end fatigue code additions 6/2014
             
@@ -1441,7 +1388,8 @@ class LowSpeedShaft_drive3pt(Component):
     cm = Array(np.array([0.0, 0.0, 0.0]), iotype='out', desc='center of mass of the component in [x,y,z] for an arbitrary coordinate system')
     I = Array(np.array([0.0, 0.0, 0.0]), iotype='out', desc=' moments of Inertia for the component [Ixx, Iyy, Izz] around its center of mass')
     FW_mb = Float(iotype='out', units='m', desc='facewidth of main bearing')    
-    bearing_mass = Float(iotype='out', units = 'kg', desc='main bearing mass') 
+    bearing_mass1 = Float(iotype='out', units = 'kg', desc='main bearing mass')
+    bearing_mass2 = Float(iotype='out', units = 'kg', desc='main bearing mass') #zero for 3-pt model
 
     def __init__(self):
         '''
@@ -1518,6 +1466,7 @@ class LowSpeedShaft_drive3pt(Component):
         dL=0.05
         D_max = 1.0
         D_min = 0.2
+        sR = self.shaft_ratio
         rotor_diameter = self.rotor_diameter
 
         T=M_r_x/1000.0
@@ -1687,13 +1636,9 @@ class LowSpeedShaft_drive3pt(Component):
           if rotor_mass < 100:
               rotor_mass = 23.523*machine_rating
 
-          # print L_rb
-          # print D_in
-          # print D_max_a
-
           #Weibull Parameters
-          A=self.weibull_A
-          k=self.weibull_k
+          weibullA=self.weibull_A
+          weibullk=self.weibull_k
 
           g=9.81 
           #material properties 34CrNiMo6 steel +QT, large diameter
@@ -1715,7 +1660,7 @@ class LowSpeedShaft_drive3pt(Component):
           #Rotor Loads calculations using DS472
           R=rotor_diameter/2.0
           rotor_torque = (machine_rating * 1000 / DrivetrainEfficiency) / (rotor_freq * (pi/30))
-          Tip_speed_ratio= rotor_freq/30*pi*R/V_rated
+          Tip_speed_ratio= rotor_freq/30.*pi*R/V_rated
           rho_air= 1.225 #kg/m^3 density of air
           Cl_blade= 1.0 #lift coefficient at r=2/3R DOES NOT EFFECT P_o RESULTS
           c_blade=16*pi*R/(9.*blade_number*Cl_blade*Tip_speed_ratio*(Tip_speed_ratio**2*(2./3)**2+4./9)**0.5) #chord length at r=2/3R using Soren Gundtof
@@ -1725,16 +1670,13 @@ class LowSpeedShaft_drive3pt(Component):
           M_root=p_o*(R**2)/3.
 
           n_c=blade_number*rotor_freq/60 #characteristic frequency on rotor from turbine of given blade number [Hz]
-          N_f=0.85*n_c*(T_life*365*24*60*60)*exp(-(V_0/A)**k)-exp(-(V_f/A)**k) #number of rotor rotations based off of weibull curve. .827 comes from lower rpm than rated at lower wind speeds
-          print 'Nf:', N_f
-          Nfinal = 1e9 #point where fatigue limit occurs under hypothetical S-N curve TODO adjust to fit actual data
+          N_f=0.85*n_c*(T_life*365*24*60*60)*exp(-(V_0/weibullA)**weibullk)-exp(-(V_f/weibullA)**weibullk) #number of rotor rotations based off of weibull curve. .827 comes from lower rpm than rated at lower wind speeds
+          Nfinal = 1e10 #point where fatigue limit occurs under hypothetical S-N curve TODO adjust to fit actual data
           z=log10(1e3)-log10(Nfinal)  #assuming no endurance limit (high strength steel)
-          b=1/z*log10(Sm/Se)
-          a=Sm/(1000.**b)
-
-          print 'm:', -1/b
-          print 'a:', a
-
+          SN_b=1/z*log10(Sm/Se)
+          SN_a=Sm/(1000.**SN_b)
+          # print 'm:', -1/SN_b
+          # print 'a:', SN_a
 
           k_b= 2.5 #calculating rotor pressure from all three blades. Use kb=1 for individual blades
 
@@ -1745,7 +1687,7 @@ class LowSpeedShaft_drive3pt(Component):
           else:
             I_t=0.12
 
-          Beta=0.11*k_b*(I_t+0.1)*(A+4.4)
+          Beta=0.11*k_b*(I_t+0.1)*(weibullA+4.4)
 
           # find generic standardized stochastic load range distribution
           def standardrange(N, N_f, Beta, k_b): 
@@ -1761,38 +1703,26 @@ class LowSpeedShaft_drive3pt(Component):
               return int(ceil(x/step))*step
 
           #for analysis with N on log scale, makes larger loads contain finer step sizes
-          num_pts=1000
+          num_pts=100
           N=np.logspace( (log10(N_f)-(2*k_b-0.18)/Beta) , log10(N_f) , endpoint=True , num=num_pts) # with zeros: N=np.logspace(log10(1.0),log10(N_f),endpoint=True,num=num_pts)
-          #F_stoch=Fx_stoch=Mx_stoch=Fy_stoch=My_stoch=Fz_stoch=Mz_stoch=N.copy()
+          N_rotor = N_f/3.
           F_stoch=N.copy()
 
 
           for i in range(num_pts):
               N[i]=roundup(N[i],1)
 
+          #print N
+
           k_r=1. #assuming natural frequency of rotor is significantly larger than rotor rotational frequency
 
           for i in range(num_pts):
             F_stoch[i] = standardrange(N[i],N_f,Beta,k_b)
 
-          Fx_stoch = F_stoch.copy()*0.5*p_o*(R)
-          Mx_stoch = F_stoch.copy()*0.45*p_o*(R)**2#*0.3
-          Fy_stoch = F_stoch.copy()*0
-          My_stoch = F_stoch.copy()*0.33*p_o*k_r*(R)**2#*0.25
-          Fz_stoch = F_stoch.copy()*0
-          Mz_stoch = F_stoch.copy()*0.33*p_o*k_r*(R)**2#*0.25
-
-
-          def loadtostress1 (Fx,Fy,Fz,Mx,My,Mz,D_outer,D_in,x,gamma):
-              I=(pi/64.0)*(D_outer**4-D_in**4)
-              J=I*2
-              A=pi/4*(D_outer**2-D_in**2)
-              My=abs(My)+abs(Fz*x*cos(radians(gamma)))
-              Mz=abs(Mz)+abs(Fy*x)
-              bendingstress=(My**2+Mz**2)**(0.5)*D_outer/(2.*I)
-              shearstress=abs(Mx*D_outer/(2.*J))
-              normalstress = Fx/A*cos(radians(gamma))+Fy/a*sin(radians(gamma))
-              return ((bendingstress+normalstress)**2+3.*shearstress**2)**(0.5)
+          Fx_stoch = (F_stoch.copy()*0.5*p_o*(R))*.5 #divide by 2 to reflect amplitudes
+          Mx_stoch = (F_stoch.copy()*0.45*p_o*(R)**2)*.5*0.31
+          My_stoch = (F_stoch.copy()*0.33*p_o*k_r*(R)**2)*.5*0.25
+          Mz_stoch = (F_stoch.copy()*0.33*p_o*k_r*(R)**2)*.5*0.25 
 
           def Ninterp(S,a,b):
               return (S/a)**(1/b)
@@ -1800,46 +1730,80 @@ class LowSpeedShaft_drive3pt(Component):
           def Goodman(S_alt,S_mean,Sut):
               return S_alt/(1-(S_mean/Sut))
 
+          Fx_mean=1.5*p_o*R
+          Mx_mean=0.5*rotor_torque
+          rotorWeight=rotor_mass*g
+
           #upwind bearing calculations
           iterationstep=0.01
+          diameter_limit = 1.5
           while True:
-              AltStress=loadtostress1(Fx_stoch/2,Fy_stoch/2,Fz_stoch/2,Mx_stoch/2,My_stoch/2,Mz_stoch/2,D_in,D_max,L_rb,gamma)
+              D_in=sR*D_max
+              D_max = (D_max**4 + D_in**4)**0.25
+              D_min = (D_min**4 + D_in**4)**0.25
+              I=(pi/64.0)*(D_max**4-D_in**4)
+              J=I*2
+              Area=pi/4.*(D_max**2-D_in**2)
+              LssWeight=density*9.81*(((pi/12)*(D_max**2+D_min**2+D_max*D_min)*(L_ms))-(pi/4*L_ms*D_in**2))
 
-              Fx_mean=1.5*p_o*R
-              Mx_mean=0.5*rotor_torque
-              Fz_mean=-rotor_mass*g
-              MeanStress=-loadtostress1(Fx_mean,0,Fz_mean,Mx_mean,0,0,D_max,D_in,L_rb,gamma)
+              #create stochastic loads across N
+              stoch_bend1 = (My_stoch**2+Mz_stoch**2)**(0.5)*D_max/(2.*I)
+              stoch_shear1 = abs(Mx_stoch*D_max/(2.*J))
+              stoch_normal1 = Fx_stoch/Area*cos(radians(gamma))
+              stoch_stress1 = ((stoch_bend1+stoch_normal1)**2+3.*stoch_shear1**2)**(0.5)
+              
+              #create mean loads
+              mean_bend1 = 0 #Fz_mean*L_rb*D_max/(2.*I) #not mean, but deterministic
+              mean_shear1 = Mx_mean*D_max/(2.*J)
+              mean_normal1 = Fx_mean/Area*cos(radians(gamma))+(rotorWeight+LssWeight)*sin(radians(gamma))
+              mean_stress1 = ((mean_bend1+mean_normal1)**2+3.*mean_shear1**2)**(0.5)
 
               #apply Goodman with compressive (-) mean stress
-              S_mod=Goodman(AltStress,MeanStress,Sut)
+              S_mod_stoch1=Goodman(stoch_stress1,-mean_stress1,Sut)
 
-              #print N
-              #Use Palmgren-Miner linear damage rule to add damage from successive stress ranges
-              DEL_y=Fz_stoch.copy() #initialize
+              #Use Palmgren-Miner linear damage rule to add damage from stochastic load ranges
+              DEL_y=Fx_stoch.copy() #initialize
               for i in range(num_pts):
-                  DEL_y[i] = N[i]/(Ninterp(S_mod[i],a,b))
+                  DEL_y[i] = N[i]/(Ninterp(S_mod_stoch1[i],SN_a,SN_b))
 
-              Damage = scp.integrate.simps(DEL_y,x= N, even='avg')
+              Damage = scp.integrate.simps(DEL_y,x= N, even='avg') #damage from stochastic loading
 
-              # print 'Upwind Bearing Diameter:', D_max
-              # print 'Damage:', Damage
-              if Damage < 1:
+              #create deterministic loads occurring N_rotor times
+              determ_stress1 = abs(rotorWeight*cos(radians(gamma))*L_rb*D_max/(2.*I)) #only deterministic stress at mb1 is bending due to rotor weight
+
+              S_mod_determ=Goodman(determ_stress1,-mean_stress1,Sut)
+              # print 'before deterministic Damage:', Damage
+
+              Damage += N_rotor/(Ninterp(S_mod_determ,SN_a,SN_b))
+
+              print 'Bearing Diameter:', D_max
+              print 'Damage:', Damage
+              if Damage < 1 or D_max >= diameter_limit:
                   print ''
-                  print 'final unadjusted bearing diameter is %f m.' %(D_max)
+                  print 'final unadjusted diameter is %f m.' %(D_max)
                   #print (time.time() - start_time), 'seconds of total simulation time'
                   break
               else:
                   D_max+=iterationstep
-              break
 
-          life_bearing = Nf/blade_number
+          #begin bearing calculations
+          N_bearings = N/blade_number #counts per rotation (not defined by characteristic frequency 3n_rotor)
 
-          bearing = fatigue_for_bearings(D_max, Fradial_1, Faxial_1, N_bearings, life_bearing, self.mb1Type)
+          Fz1stoch = (-My_stoch)/(L_ms)
+          Fy1stoch = Mz_stoch/L_ms
+          Fz1determ = (weightGbx*L_gb - LssWeight*.5*L_ms - rotorWeight*(L_ms+L_rb)) / (L_ms)
+
+          Fr_range = ((abs(Fz1stoch)+abs(Fz1determ))**2 +Fy1stoch**2)**.5 #radial stochastic + deterministic mean
+          Fa_range = Fx_stoch*cos(radians(gamma)) + (rotorWeight+LssWeight)*sin(radians(gamma)) #axial stochastic + mean
+
+          life_bearing = N_f/blade_number
+
+          [D_max_a,FW_max,bearingmass] = fatigue_for_bearings(D_max, Fr_range, Fa_range, N_bearings, life_bearing, self.mb1Type)
          
-        #resize bearings if no fatigue check
+        #resize bearing if no fatigue check
         else:
             [D_max_a,FW_max,bearingmass] = resize_for_bearings(D_max,  self.mb1Type)        
-        [D_min_a,FW_min] = resize_for_bearings(D_min,  self.mb2Type) #what is mb2? TODO:check this
+        [D_min_a,FW_min,trash] = resize_for_bearings(D_min,  self.mb2Type) #mb2 is a representation of the gearbox connection
             
         lss_mass_new=(pi/3)*(D_max_a**2+D_min_a**2+D_max_a*D_min_a)*(L_ms-(FW_max+FW_min)/2)*density/4+ \
                          (pi/4)*(D_max_a**2-D_in**2)*density*FW_max+\
@@ -1875,15 +1839,16 @@ class LowSpeedShaft_drive3pt(Component):
         I[2]  = I[1]
         self.I = I
 
-        print 'L_rb %8.f' %(L_rb) #*(self.machine_rating/5.0e3)   #distance from hub center to main bearing scaled off NREL 5MW
-        print 'L_bg %8.f' %(L_bg) #*(self.machine_rating/5.0e3)         #distance from hub center to gearbox yokes
-        print 'L_as %8.f' %(L_as) #distance from main bearing to shaft center
-        L_cu
-        L_cd
-        L_gb
+        # print 'L_rb %8.f' %(L_rb) #*(self.machine_rating/5.0e3)   #distance from hub center to main bearing scaled off NREL 5MW
+        # print 'L_bg %8.f' %(L_bg) #*(self.machine_rating/5.0e3)         #distance from hub center to gearbox yokes
+        # print 'L_as %8.f' %(L_as) #distance from main bearing to shaft center
+        # L_cu
+        # L_cd
+        # L_gb
 
         self.FW_mb=FW_max
-        self.bearing_mass = bearingmass
+        self.bearing_mass1 = bearingmass
+        self.bearing_mass2 = 0.
 
 #-------------------------------------------------------------------------------
 

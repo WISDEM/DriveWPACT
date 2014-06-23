@@ -660,10 +660,6 @@ class LowSpeedShaft_drive4pt(Component):
     gearbox_mass = Float(iotype='in', units='kg', desc='Gearbox mass')
     carrier_mass = Float(iotype='in', units='kg', desc='Carrier mass')
     overhang = Float(iotype='in', units='m', desc='Overhang distance')
-<<<<<<< HEAD
-=======
-
->>>>>>> f9b75cd4c897723bbccb2a9dfda40c608c441220
 
     # parameters
     shrink_disc_mass = Float(iotype='in', units='kg', desc='Mass of the shrink disc')# shrink disk or flange addti'onal mass
@@ -1414,10 +1410,6 @@ class LowSpeedShaft_drive3pt(Component):
     gearbox_mass = Float(iotype='in', units='kg', desc='Gearbox mass')
     carrier_mass = Float(iotype='in', units='kg', desc='Carrier mass')
     overhang = Float(iotype='in', units='m', desc='Overhang distance')
-<<<<<<< HEAD
-=======
-
->>>>>>> f9b75cd4c897723bbccb2a9dfda40c608c441220
 
     # parameters
     shrink_disc_mass = Float(iotype='in', units='kg', desc='Mass of the shrink disc')

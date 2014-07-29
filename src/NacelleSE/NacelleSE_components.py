@@ -864,7 +864,10 @@ class Generator(Component):
         massCoeff = [None, 6.4737, 10.51 ,  5.34  , 37.68  ]
         massExp   = [None, 0.9223, 0.9223,  0.9223, 1      ]
 
-        CalcRPM    = 80 / (self.rotor_diameter*0.5*pi/30)
+        if self.rotorRatedRPM !=0:
+          CalcRPM = self.rotorRatedRPM
+        else:
+          CalcRPM    = 80 / (self.rotor_diameter*0.5*pi/30)
         CalcTorque = (self.machine_rating*1.1) / (CalcRPM * pi/30)
 
         if (self.drivetrain_design < 4):
@@ -1406,6 +1409,8 @@ class NacelleSystemAdder(Component): # changed name to nacelle - need to rename,
     hss_I = Array(np.array([0.0,0.0,0.0]),iotype = 'in', units='kg', desc='component I')
     generator_I = Array(np.array([0.0,0.0,0.0]),iotype = 'in', units='kg', desc='component I')
     bedplate_I = Array(np.array([0.0,0.0,0.0]),iotype = 'in', units='kg', desc='component I')
+
+    #TODO add shrink disk mass
 
     # returns
     nacelle_mass = Float(0.0, iotype='out', units='kg', desc='overall component mass')

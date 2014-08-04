@@ -13,7 +13,6 @@ from math import pi, cos, sqrt, radians, sin, exp, log10, log, floor, ceil
 import algopy
 import scipy as scp
 import scipy.optimize as opt
-import matplotlib.pyplot as plt
 from scipy import integrate
 #import matplotlib.pyplot as plt
 #import time
@@ -1513,15 +1512,15 @@ class LowSpeedShaft_drive4pt(Component):
         print downwind_location
 
         bearing_location1 = np.array([0.,0.,0.]) #upwind
-        bearing_location1[0] = downwind_location[0] - L_ms*cos(radians(gamma))
+        bearing_location1[0] = downwind_location[0] - L_mb_new*cos(radians(gamma))
         bearing_location1[1] = downwind_location[1]
-        bearing_location1[2] = downwind_location[2] + L_ms*sin(radians(gamma))
+        bearing_location1[2] = downwind_location[2] + L_mb_new*sin(radians(gamma))
         self.bearing_location1 = bearing_location1
 
         bearing_location2 = np.array([0.,0.,0.]) #downwind
-        bearing_location2[0] = downwind_location[0] - (L_ms-L_mb)*cos(radians(gamma))
+        bearing_location2[0] = downwind_location[0] - FW_med*cos(radians(gamma))
         bearing_location2[1] = downwind_location[1]
-        bearing_location2[2] = downwind_location[2] + (L_ms-L_mb)*sin(radians(gamma))
+        bearing_location2[2] = downwind_location[2] + FW_med*sin(radians(gamma))
         self.bearing_location2 = bearing_location2
 
         cm = np.array([0.0,0.0,0.0])
@@ -2427,6 +2426,7 @@ class Bearing_drive(Component):
     rotor_diameter = Float(iotype='in', units='m', desc='rotor diameter')
     location = Array(np.array([0.,0.,0.]),iotype = 'in', units = 'm', desc = 'x,y,z location from shaft model')
 
+
     
     # returns
     mass = Float(0.0, iotype='out', units='kg', desc='overall component mass')
@@ -2970,6 +2970,7 @@ class Bedplate_drive(Component):
     lss_mass = Float(iotype ='in', units = 'kg', desc='LSS mass')
     lss_length = Float(iotype = 'in', units = 'm', desc = 'LSS length')
     mb1_location = Float(iotype ='in', units = 'm', desc='Upwind main bearing CM location')
+    FW_mb1 = Float(iotype = 'in', units = 'm', desc = 'Upwind main bearing facewidth')
     mb1_mass = Float(iotype ='in', units = 'kg', desc='Upwind main bearing mass')
     mb2_location = Float(iotype ='in', units = 'm', desc='Downwind main bearing CM location')
     mb2_mass = Float(iotype ='in', units = 'kg', desc='Downwind main bearing mass')
@@ -2986,7 +2987,6 @@ class Bedplate_drive(Component):
 
 
     #parameters
-    #check openmdao syntax for boolean
     uptower_transformer = Bool(iotype = 'in', desc = 'Boolean stating if transformer is uptower')
 
     #outputs
@@ -3030,19 +3030,23 @@ class Bedplate_drive(Component):
         E = 2.1e11
         density = 7800
 
-        if self.flange_length == 0:
-            flange_length = 0.3044*exp(0.0068*self.rotor_diameter)
-        else:
+        if self.flange_length:
             flange_length = self.flange_length
+        else:
+            flange_length = 0.3044*exp(0.0068*self.rotor_diameter)
+
         print 'flange length:', flange_length
 
 
         #rear component weights and locations
-        transLoc = self.transformer_location
-        convLoc = 2.0*self.generator_location
-        convMass = 0.3*self.transformer_mass 
-
-        rearTotalLength = 0.0
+        if self.transformer_mass: #only if uptower transformer
+            transLoc = self.transformer_location
+            convLoc = self.transformer_location*.8
+            convMass = 0.3*
+        else:
+            transLoc = 0
+            convLoc = self.generator_location * 2.0
+            convMass = (2.4445*(self.machine_rating) + 1599.0)*0.3 #(transformer mass * .3)
 
         if transLoc > 0:
           rearTotalLength = transLoc + 1.0
@@ -3055,7 +3059,7 @@ class Bedplate_drive(Component):
         mb2_location = abs(self.mb2_location) #abs(self.gbx_length/2.0)
         lss_location= abs(self.lss_location)
 
-        frontTotalLength = mb1_location + flange_length
+        frontTotalLength = mb1_location + self.FW_mb1/2.
 
         #rotor weights and loads
         rotorLoc = frontTotalLength
@@ -3430,11 +3434,13 @@ class Transformer_drive(Component):
     #inputs
     machine_rating = Float(iotype='in', units='kW', desc='machine rating of the turbine')
     uptower_transformer = Bool(iotype='in', desc = 'uptower or downtower transformer')
-    nacelle_mass = Float(0.0, iotype='in', units='kg', desc='overall component mass')
-    nacelle_cm = Array(np.array([0.0, 0.0, 0.0]), units='m', iotype='in', desc='center of mass of the component in [x,y,z] for an arbitrary coordinate system')
-    nacelle_I = Array(np.array([0.0, 0.0, 0.0]), units='kg*m**2', iotype='in', desc=' moments of Inertia for the component [Ixx, Iyy, Izz] around its center of mass')
     tower_top_diameter = Float(iotype = 'in', units = 'm', desc = 'tower top diameter for comparision of nacelle CM')
     rotor_mass = Float(iotype='in', units='kg', desc='rotor mass')
+    overhang = Float(iotype='in', units='m', desc='rotor overhang distance')
+    generator_cm = Array(iotype='in', desc='center of mass of the generator in [x,y,z]')
+    rotor_diameter = Float(iotype='in',units='m', desc='rotor diameter of turbine')
+    RNA_mass = Float(iotype = 'in', units='kg', desc='mass of total RNA')
+    RNA_cm = Float(iotype='in', units='m', desc='RNA CM along x-axis')
 
     #outputs
     mass = Float(0.0, iotype='out', units='kg', desc='overall component mass')
@@ -3450,7 +3456,7 @@ class Transformer_drive(Component):
         machine_rating : float
           turbine rating [kW]
         uptower_transformer : boolean
-          if uptower, calculates mass and places strategically
+          if uptower, calculates mass and places strategically #TODO add parameters when finalized
 
         Returns
         -------
@@ -3471,30 +3477,27 @@ class Transformer_drive(Component):
         def combine_CM(mass1,CM1,mass2,CM2):
             return (mass1*CM1+mass2*CM2)/(mass1+mass2)
 
-
         if self.uptower_transformer == True:
             #function places transformer where tower top CM is within tower bottom OD to reduce tower moments
-            if self.rotor_mass ==0:
+            if self.rotor_mass:
+                rotor_mass = self.rotor_mass
+            else:
                 rotor_mass = 23.523*self.machine_rating
                 print 'approx. rotor mass:', rotor_mass
-            else:
-                rotor_mass = self.rotor_mass
 
-            bottom_OD = self.tower_top_diameter*1.8 #approximate average from industry data
+            bottom_OD = self.tower_top_diameter*1.7 #approximate average from industry data
+            print bottom_OD
 
             self.mass = 2.4445*(self.machine_rating) + 1599.0
-            print 'transformer mass:', transformer_mass
 
-            RNA_CM = combine_CM(rotor_mass,-self.overhang, self.nacelle_mass, self.nacelle_cm[0]) #-rotor_mass*self.overhang + self.nacelle_cm[0]*self.nacelle_mass)/(self.nacelle_mass + rotor_mass)
-            RNA_mass = rotor_mass + self.nacelle_mass
-            print 'RNA CM:', RNA_CM
-            print 'RNA mass:', RNA_mass
-
-            if RNA_CM <= (bottom_OD)/2: #upwind of acceptable. Most likely
-                transformer_x = (bottom_OD/2.*(RNA_mass+self.mass) - (RNA_mass*RNA_CM))/(self.mass)
+            if self.RNA_cm <= -(bottom_OD)/2: #upwind of acceptable. Most likely
+                transformer_x = (bottom_OD/2.*(self.RNA_mass+self.mass) - (self.RNA_mass*self.RNA_cm))/(self.mass)
                 print transformer_x
+                if transformer_x > self.generator_cm[0]*3:
+                    print 'transformer location manipulation not suitable for overall Nacelle CM changes--rear distance too large'
+                    transformer_x = self.generator_cm[0] + (1.6 * 0.015 * self.rotor_diameter) #assuming generator and transformer approximately same length
             else:
-                transformer_x = self.generator_cm + self.generator_length #assuming generator and transformer approximately same length
+                transformer_x = self.generator_cm[0] + (1.6 * 0.015 * self.rotor_diameter) #assuming generator and transformer approximately same length
 
             cm = np.array([0.,0.,0.])
             cm[0] = transformer_x
@@ -3510,9 +3513,9 @@ class Transformer_drive(Component):
                 return mass*(d1**2 + d2**2)/12.
 
             I = np.array([0.,0.,0.])
-            I[1] = get_I(height,width,self.mass)
-            I[2] = get_I(length, height, self.mass)
-            I[3] = get_I(length, width, self.mass)
+            I[0] = get_I(height,width,self.mass)
+            I[1] = get_I(length, height, self.mass)
+            I[2] = get_I(length, width, self.mass)
             self.I = I
 
 
@@ -3967,7 +3970,103 @@ class AboveYawMassAdder_drive(Component):
         return self.J
 
 #--------------------------------------------
+class RNASystemAdder_drive(Component):
+    ''' RNASystem class
+          This analysis is only to be used in placing the transformer of the drivetrain.
+          The Rotor-Nacelle-Assembly class is used to represent the RNA of the turbine without the transformer and bedplate (to resolve circular dependency issues).
+          It contains the general properties for a wind turbine component as well as additional design load and dimentional attributes as listed below.
+          It contains an update method to determine the mass, mass properties, and dimensions of the component. 
+    '''
+    #inputs
+    yawMass = Float(iotype='in', units='kg', desc='mass of yaw system')
+    lss_mass = Float(iotype = 'in', units='kg', desc='component mass')
+    main_bearing_mass = Float(iotype = 'in', units='kg', desc='component mass')
+    second_bearing_mass = Float(iotype = 'in', units='kg', desc='component mass')
+    gearbox_mass = Float(iotype = 'in', units='kg', desc='component mass')
+    hss_mass = Float(iotype = 'in', units='kg', desc='component mass')
+    generator_mass = Float(iotype = 'in', units='kg', desc='component mass')
+    lss_cm = Array(np.array([0.0,0.0,0.0]),iotype = 'in', units='kg', desc='component CM')
+    main_bearing_cm = Array(np.array([0.0,0.0,0.0]),iotype = 'in', units='kg', desc='component CM')
+    second_bearing_cm = Array(np.array([0.0,0.0,0.0]),iotype = 'in', units='kg', desc='component CM')
+    gearbox_cm = Array(np.array([0.0,0.0,0.0]),iotype = 'in', units='kg', desc='component CM')
+    hss_cm = Array(np.array([0.0,0.0,0.0]),iotype = 'in', units='kg', desc='component CM')
+    generator_cm = Array(np.array([0.0,0.0,0.0]),iotype = 'in', units='kg', desc='component CM')
+    overhang = Float(iotype = 'in', units='m', desc='nacelle overhang')
+    rotor_mass = Float(iotype = 'in', units='kg', desc='component mass')
+    machine_rating = Float(iotype = 'in', units = 'kW', desc = 'machine rating ')
 
+    #returns
+    RNA_mass = Float(iotype = 'out', units='kg', desc='mass of total RNA')
+    RNA_cm = Float(iotype='out', units='m', desc='RNA CM along x-axis')
+
+    def __init__(self):
+        ''' Initialize RNA Adder component
+
+        Parameters
+        ----------
+        above_yaw_mass : float
+          total mass above yaw system [kg]
+        yawMass : float
+          mass of yaw component [kg]
+        lss_mass : float
+          low speed shaft component mass [kg]
+        main_bearing_mass : float
+          main bearing component mass [kg]
+        second_bearing_mass : float
+          second bearing component mass [kg]
+        gearbox_mass : float
+          gearbox component mass [kg]
+        hss_mass : float
+          high speed side component mass [kg]
+        generator_mass : float
+          generator component mass [kg]
+        lss_cm : array of float
+          low speed shaft component cm [m, m, m]
+        main_bearing_cm : array of float
+          main bearing component cm [m, m, m]
+        second_bearing_cm : array of float
+          second bearing component cm [m, m, m]
+        gearbox_cm : array of float
+          gearbox component cm [m, m, m]
+        hss_cm : array of float
+          high speed side component cm [m, m, m]
+        generator_cm : array of float
+          generator component cm [m, m, m]
+
+        Returns
+        -------
+        mass : float
+          mass of the component [kg]
+        cm : array of float
+          center of mass of the component (relative to tower top center) [m, m, m]
+        '''
+
+        super(RNASystemAdder_drive , self).__init__()
+
+        #controls what happens if derivatives are missing
+        self.missing_deriv_policy = 'assume_zero'
+
+    def execute(self):
+
+        if self.rotor_mass:
+            rotor_mass = self.rotor_mass
+        else:
+            rotor_mass = 23.523*self.machine_rating
+            print 'approx. rotor mass:', rotor_mass
+
+        masses = np.array([rotor_mass, self.yawMass, self.lss_mass, self.main_bearing_mass,self.second_bearing_mass,self.gearbox_mass,self.hss_mass,self.generator_mass])
+        cms = np.array([(-self.overhang), 0.0, self.lss_cm[0], self.main_bearing_cm[0], self.second_bearing_cm[0], self.gearbox_cm[0], self.hss_cm[0], self.generator_cm[0]])
+
+        print 'masses:', masses
+        print 'cms:', cms
+
+        self.RNA_mass = np.sum(masses)
+        self.RNA_cm = np.sum(masses*cms)/np.sum(masses)
+        print self.RNA_mass
+        print self.RNA_cm
+        
+
+#--------------------------------------------
 class NacelleSystemAdder_drive(Component): #added to drive to include transformer
     ''' NacelleSystem class
           The Nacelle class is used to represent the overall nacelle of a wind turbine.
@@ -4004,8 +4103,6 @@ class NacelleSystemAdder_drive(Component): #added to drive to include transforme
     # transformer_mass = Float(iotype = 'in', units='kg', desc='component mass')
     # transformer_cm = Array(np.array([0.0,0.0,0.0]),iotype = 'in', units='kg', desc='component CM')
     # transformer_I = Array(np.array([0.0,0.0,0.0]),iotype = 'in', units='kg', desc='component I')
-
-    #TODO add shrink disk mass (shrink disk mass added to LSS, taken care of)
 
     # returns
     nacelle_mass = Float(0.0, iotype='out', units='kg', desc='overall component mass')

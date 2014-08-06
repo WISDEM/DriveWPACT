@@ -1328,7 +1328,7 @@ def nacelle_example_80m_baseline_4pt():
     nace.mb2Type = 'SRB'
     nace.flange_length = 0.5 #m
     nace.overhang = 5.0
-    nace.gearbox_cm = 0
+    nace.gearbox_cm = 0.5
     nace.hss_length = 1.5
 
     nace.check_fatigue = 0 #0 if no fatigue check, 1 if parameterized fatigue check, 2 if known loads inputs
@@ -1855,23 +1855,22 @@ def nacelle_example_GRC_4pt():
 
 def cm_print(nace):
     print ''
-    print '--------------------CM results:-------------------------------'
-    print 'gearbox:', nace.gearbox.cm, '\n',nace.gearbox.mass, '\n'
-    print 'highSpeedSide:', nace.highSpeedSide.cm,'\n', nace.highSpeedSide.mass,'\n'
-    print 'generator:', nace.generator.cm,'\n', nace.generator.mass,'\n'
-    print 'lowSpeed:', nace.lowSpeedShaft.cm,'\n', nace.lowSpeedShaft.mass,'\n'
-    print 'bearing1:', nace.mainBearing.cm,'\n', nace.mainBearing.mass,'\n'
-    print 'bearing2:', nace.secondBearing.cm,'\n', nace.secondBearing.mass,'\n'
-    print 'yawSystem:', nace.yawSystem.cm,'\n', nace.yawSystem.mass,'\n'
-    print 'bedplate:', nace.bedplate.cm,'\n', nace.bedplate.mass,'\n'
-    print 'transformer:', nace.transformer.cm,'\n', nace.transformer.mass,'\n'
-    print 'nacelleSystem:', nace.nacelleSystem.nacelle_cm,'\n', nace.nacelleSystem.nacelle_mass,'\n'
-    print 'hub', nace.hub.cm, '\n', nace.hub.mass, '\n'
-    print ''
+    print '------------------Component CM and Mass:----------------------'
+    print 'gearbox:         ', nace.gearbox.cm, '\n                 ',nace.gearbox.mass, '\n--------------------------------------------------------------'
+    print 'highSpeedSide:   ', nace.highSpeedSide.cm,'\n                 ', nace.highSpeedSide.mass,'\n--------------------------------------------------------------'
+    print 'generator:       ', nace.generator.cm,'\n                 ', nace.generator.mass,'\n--------------------------------------------------------------'
+    print 'lowSpeed:        ', nace.lowSpeedShaft.cm,'\n                 ', nace.lowSpeedShaft.mass,'\n--------------------------------------------------------------'
+    print 'bearing1:        ', nace.mainBearing.cm,'\n                 ', nace.mainBearing.mass,'\n--------------------------------------------------------------'
+    print 'bearing2:        ', nace.secondBearing.cm,'\n                 ', nace.secondBearing.mass,'\n--------------------------------------------------------------'
+    print 'yawSystem:       ', nace.yawSystem.cm,'\n                 ', nace.yawSystem.mass,'\n--------------------------------------------------------------'
+    print 'bedplate:        ', nace.bedplate.cm,'\n                 ', nace.bedplate.mass,'\n--------------------------------------------------------------'
+    print 'transformer:     ', nace.transformer.cm,'\n                 ', nace.transformer.mass,'\n--------------------------------------------------------------'
+    print 'nacelleSystem:   ', nace.nacelleSystem.nacelle_cm,'\n                 ', nace.nacelleSystem.nacelle_mass,'\n--------------------------------------------------------------'
+    print 'hub              ', nace.hub.cm, '\n                 ', nace.hub.mass,'\n--------------------------------------------------------------'
 
 def sys_print(nace):
     print ''
-    print 'Nacelle system model results'
+    print '-------------Nacelle system model results--------------------'
 
     print 'Low speed shaft %8.1f kg %6.2f m %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz '\
           % (nace.lowSpeedShaft.mass , nace.lowSpeedShaft.length, nace.lowSpeedShaft.I[0], nace.lowSpeedShaft.I[1], nace.lowSpeedShaft.I[2], nace.lowSpeedShaft.cm[0], nace.lowSpeedShaft.cm[1], nace.lowSpeedShaft.cm[2])
@@ -1917,7 +1916,7 @@ if __name__ == '__main__':
     # example2()
     # example3()
 
-    nacelle_example_80m_baseline_3pt()
+    #nacelle_example_80m_baseline_3pt()
     nacelle_example_80m_baseline_4pt()
     #nacelle_example_GE_3pt()
     #nacelle_example_GE_4pt()

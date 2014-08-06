@@ -686,7 +686,7 @@ class Hub_drive(Component):
     rotorDiameter = Float(iotype='in', units='m', desc='rotor diameter')
     bladeRootDiam = Float(iotype='in', units='m', desc='blade root diameter')
     L_rb = Float(iotype='in', units = 'm', desc = 'distance between hub center and upwind main bearing')
-    gamma = Float(iotype = 'in', units = 'rad', desc = 'shaft angle')
+    gamma = Float(iotype = 'in', units = 'deg', desc = 'shaft angle')
     MB1_location = Array(iotype = 'in', units = 'm', desc = 'center of mass of main bearing in [x,y,z] for an arbitrary coordinate system')
     machine_rating = Float(iotype = 'in', units = 'MW', desc = 'machine rating of turbine')
     
@@ -727,14 +727,7 @@ class Hub_drive(Component):
 
     def execute(self):
 
-        print self.rotorDiameter
-        print self.bladeRootDiam
-        print self.L_rb
-        print self.gamma
-        print self.MB1_location
-        print self.machine_rating
-
-        if self.bladeRootDiam:
+        if self.bladeRootDiam: #added 8/6/14 to allow analysis of hubs for unknown blade roots.
             bladeRootDiam = self.bladeRootDiam
         else:
             bladeRootDiam = 2.659*self.machine_rating**.3254
@@ -743,8 +736,6 @@ class Hub_drive(Component):
             L_rb = self.L_rb
         else:
             L_rb = get_L_rb(self.rotorDiameter)
-
-        print bladeRootDiam
 
         #Model hub as a cyclinder with holes for blade root and nacelle flange.
         rCyl=1.1*bladeRootDiam/2.0
@@ -765,7 +756,7 @@ class Hub_drive(Component):
         cm = np.array([0.0,0.0,0.0])
         cm[0]     = self.MB1_location[0] - L_rb
         cm[1]     = 0.0
-        cm[2]     = self.MB1_location[2] + L_rb*sin(self.gamma)
+        cm[2]     = self.MB1_location[2] + L_rb*sin(radians(self.gamma))
         self.cm = (cm)
 
         I = np.array([0.0, 0.0, 0.0])

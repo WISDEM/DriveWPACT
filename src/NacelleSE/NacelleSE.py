@@ -12,7 +12,7 @@ import numpy as np
 
 from NacelleSE_components import LowSpeedShaft, MainBearing, SecondBearing, Gearbox, HighSpeedSide, Generator, Bedplate, AboveYawMassAdder, YawSystem, NacelleSystemAdder
 from DriveSE_components import LowSpeedShaft_drive, Gearbox_drive, MainBearing_drive, SecondBearing_drive, Bedplate_drive, YawSystem_drive, LowSpeedShaft_drive3pt, \
-    LowSpeedShaft_drive4pt, Transformer_drive, HighSpeedSide_drive, Generator_drive, NacelleSystemAdder_drive, AboveYawMassAdder_drive, RNASystemAdder_drive
+    LowSpeedShaft_drive4pt, Transformer_drive, HighSpeedSide_drive, Generator_drive, NacelleSystemAdder_drive, AboveYawMassAdder_drive, RNASystemAdder_drive, Hub_drive
 
 
 class NacelleBase(Assembly):
@@ -312,6 +312,7 @@ class NacelleSE_drive3pt(NacelleBase):
     rotor_force_y = Float(iotype='in', units='N', desc='The force along the y axis applied at hub center')
     rotor_force_z = Float(iotype='in', units='N', desc='The force along the z axis applied at hub center')
     shaft_angle = Float(iotype='in', units='deg', desc='Angle of the LSS inclindation with respect to the horizontal')
+    blade_root_diameter = Float(iotype='in', units='m', desc='blade root diameter')
     shaft_ratio = Float(iotype='in', desc='Ratio of inner diameter to outer diameter.  Leave zero for solid LSS')
     rotorRatedRPM = Float(iotype='in', units='rpm', desc='Speed of rotor at rated power')
     Np = Array(np.array([0.0,0.0,0.0,]), iotype='in', desc='number of planets in each stage')
@@ -327,7 +328,7 @@ class NacelleSE_drive3pt(NacelleBase):
     mb2Type = Str(iotype='in',desc= 'Carrier bearing type: CRB, TRB or RB (Not coded)')
     overhang = Float(iotype='in', units='m', desc='Overhang distance')
     gearbox_cm = Float(0.0,iotype = 'in', units = 'm', desc = 'distance from tower-top center to gearbox cm--negative for upwind')
-    hss_length = Float(iotype = 'in', units = 'm', desc = 'high speed shaft length determined by user. Default 0.5m')
+    hss_length = Float(iotype = 'in', units = 'm', desc = 'optional high speed shaft length determined by user')
 
     #Fatigue Parameters
     check_fatigue = Int(iotype = 'in', desc = 'turns on and off fatigue check. 0 if no fatigue check, 1 if unknown loads, 2 if known loads')
@@ -335,7 +336,7 @@ class NacelleSE_drive3pt(NacelleBase):
     S_ut = Float(iotype = 'in', units = 'Pa', desc = 'ultimate tensile strength of shaft material')
     weibull_A = Float(iotype = 'in', desc = 'weibull scale parameter "A" of 10-minute windspeed probability distribution')
     weibull_k = Float(iotype = 'in', desc = 'weibull shape parameter "k" of 10-minute windspeed probability distribution')
-    blade_number = Float(iotype = 'in', desc = 'number of blades on rotor, 2 or 3')
+    blade_number = Int(3,iotype = 'in', desc = 'number of blades on rotor, 2 or 3')
     cut_in = Float(iotype = 'in', units = 'm/s', desc = 'cut-in windspeed')
     cut_out = Float(iotype = 'in', units = 'm/s', desc = 'cut-out windspeed')
     Vrated = Float(iotype = 'in', units = 'm/s', desc = 'rated windspeed')
@@ -384,6 +385,7 @@ class NacelleSE_drive3pt(NacelleBase):
     def configure(self):
 
         # select components
+        self.add('hub',Hub_drive())
         self.add('above_yaw_massAdder', AboveYawMassAdder_drive())
         self.add('nacelleSystem', NacelleSystemAdder_drive())
         self.add('lowSpeedShaft', LowSpeedShaft_drive3pt())
@@ -398,11 +400,11 @@ class NacelleSE_drive3pt(NacelleBase):
         self.add('rna', RNASystemAdder_drive())
 
         # workflow
-        self.driver.workflow.add(['above_yaw_massAdder', 'nacelleSystem', 'lowSpeedShaft', 'mainBearing', 'secondBearing', 'gearbox', 'highSpeedSide', 'transformer','generator', 'bedplate', 'yawSystem','rna'])
+        self.driver.workflow.add(['above_yaw_massAdder', 'nacelleSystem', 'lowSpeedShaft', 'mainBearing', 'secondBearing', 'gearbox', 'highSpeedSide', 'transformer','generator', 'bedplate', 'yawSystem','rna','hub'])
 
         # connect inputs
         self.connect('rotor_diameter', ['lowSpeedShaft.rotor_diameter', 'mainBearing.rotor_diameter', 'secondBearing.rotor_diameter', 'gearbox.rotor_diameter', 'highSpeedSide.rotor_diameter', \
-                     'generator.rotor_diameter', 'bedplate.rotor_diameter', 'yawSystem.rotor_diameter','transformer.rotor_diameter'])
+                     'generator.rotor_diameter', 'bedplate.rotor_diameter', 'yawSystem.rotor_diameter','transformer.rotor_diameter','hub.rotorDiameter'])
         self.connect('rotor_bending_moment_x', ['lowSpeedShaft.rotor_bending_moment_x'])
         self.connect('rotor_bending_moment_y', ['bedplate.rotor_bending_moment_y','lowSpeedShaft.rotor_bending_moment_y'])
         self.connect('rotor_bending_moment_z', 'lowSpeedShaft.rotor_bending_moment_z')
@@ -413,7 +415,7 @@ class NacelleSE_drive3pt(NacelleBase):
         self.connect('rotor_mass', ['bedplate.rotor_mass','lowSpeedShaft.rotor_mass','transformer.rotor_mass'])
         self.connect('rotor_thrust', 'yawSystem.rotor_thrust')
         self.connect('tower_top_diameter', ['bedplate.tower_top_diameter', 'yawSystem.tower_top_diameter'])
-        self.connect('machine_rating', ['bedplate.machine_rating', 'generator.machine_rating', 'above_yaw_massAdder.machine_rating', 'lowSpeedShaft.machine_rating','transformer.machine_rating'])
+        self.connect('machine_rating', ['bedplate.machine_rating', 'generator.machine_rating', 'above_yaw_massAdder.machine_rating', 'lowSpeedShaft.machine_rating','transformer.machine_rating','hub.machine_rating'])
         self.connect('drivetrain_design', 'generator.drivetrain_design')
         self.connect('gear_ratio', ['gearbox.gear_ratio', 'generator.gear_ratio', 'highSpeedSide.gear_ratio'])
         self.connect('gear_configuration', 'gearbox.gear_configuration')
@@ -431,11 +433,15 @@ class NacelleSE_drive3pt(NacelleBase):
         self.connect('overhang',['lowSpeedShaft.overhang','bedplate.overhang'])
         self.connect('hss_length', 'highSpeedSide.length_in')
         self.connect('L_rb', ['lowSpeedShaft.L_rb','bedplate.L_rb'])
+        self.connect('blade_root_diameter', 'hub.bladeRootDiam')
+        self.connect('L_rb', 'hub.L_rb')
+        self.connect('shaft_angle', 'hub.gamma')
+
 
         self.connect('check_fatigue', 'lowSpeedShaft.check_fatigue')
         self.connect('weibull_A', 'lowSpeedShaft.weibull_A')
         self.connect('weibull_k', 'lowSpeedShaft.weibull_k')
-        self.connect('blade_number', 'lowSpeedShaft.blade_number')
+        self.connect('blade_number', ['lowSpeedShaft.blade_number','hub.bladeNumber'])
         self.connect('cut_in', 'lowSpeedShaft.cut_in')
         self.connect('cut_out', 'lowSpeedShaft.cut_out')
         self.connect('Vrated', 'lowSpeedShaft.Vrated')
@@ -499,6 +505,7 @@ class NacelleSE_drive3pt(NacelleBase):
         self.connect('gearbox_cm','gearbox.cm_input')
         self.connect('gearbox.cm',['lowSpeedShaft.gearbox_cm','highSpeedSide.gearbox_cm'])
         self.connect('gearbox.length',['lowSpeedShaft.gearbox_length','highSpeedSide.gearbox_length'])
+        self.connect('mainBearing.cm','hub.MB1_location')
 
         self.connect('lowSpeedShaft.I', ['nacelleSystem.lss_I'])
         self.connect('mainBearing.I', 'nacelleSystem.main_bearing_I')
@@ -570,14 +577,13 @@ class NacelleSE_drive4pt(NacelleBase):
     rotor_force_x = Float(iotype='in', units='N', desc='The force along the x axis applied at hub center')
     rotor_force_y = Float(iotype='in', units='N', desc='The force along the y axis applied at hub center')
     rotor_force_z = Float(iotype='in', units='N', desc='The force along the z axis applied at hub center')
+    blade_root_diameter = Float(iotype='in', units='m', desc='blade root diameter')
     shaft_angle = Float(iotype='in', units='deg', desc='Angle of the LSS inclindation with respect to the horizontal') # Bedplate tilting angle
     shaft_ratio = Float(iotype='in', desc='Ratio of inner diameter to outer diameter.  Leave zero for solid LSS')
     rotorRatedRPM = Float(iotype='in', units='rpm', desc='Speed of rotor at rated power')
     flange_length = Float(iotype='in', units='m', desc='flange length')
     overhang = Float(iotype='in', units='m', desc='Overhang distance')
     gearbox_cm = Float(0.0,iotype = 'in', units = 'm', desc = 'distance from tower-top center to gearbox cm--negative for upwind')
-    hss_length = Float(0.5,iotype = 'in', units = 'm', desc = 'optional input, HSS length')
-
 
     # parameters
     Np = Array(np.array([0.0,0.0,0.0,]), iotype='in', desc='number of planets in each stage')
@@ -596,7 +602,7 @@ class NacelleSE_drive4pt(NacelleBase):
     S_ut = Float(iotype = 'in', units = 'Pa', desc = 'ultimate tensile strength of shaft material')
     weibull_A = Float(iotype = 'in', desc = 'weibull scale parameter "A" of 10-minute windspeed probability distribution')
     weibull_k = Float(iotype = 'in', desc = 'weibull shape parameter "k" of 10-minute windspeed probability distribution')
-    blade_number = Float(iotype = 'in', desc = 'number of blades on rotor, 2 or 3')
+    blade_number = Int(3,iotype = 'in', desc = 'number of blades on rotor, 2 or 3')
     cut_in = Float(iotype = 'in', units = 'm/s', desc = 'cut-in windspeed')
     cut_out = Float(iotype = 'in', units = 'm/s', desc = 'cut-out windspeed')
     Vrated = Float(iotype = 'in', units = 'm/s', desc = 'rated windspeed')
@@ -655,13 +661,14 @@ class NacelleSE_drive4pt(NacelleBase):
         self.add('yawSystem', YawSystem_drive())
         self.add('transformer', Transformer_drive())
         self.add('rna', RNASystemAdder_drive())
+        self.add('hub',Hub_drive())
 
         # workflow
-        self.driver.workflow.add(['above_yaw_massAdder', 'nacelleSystem', 'lowSpeedShaft', 'mainBearing', 'secondBearing', 'gearbox', 'highSpeedSide', 'generator', 'bedplate', 'yawSystem','transformer','rna'])
+        self.driver.workflow.add(['above_yaw_massAdder', 'nacelleSystem', 'lowSpeedShaft', 'mainBearing', 'secondBearing', 'gearbox', 'highSpeedSide', 'generator', 'bedplate', 'yawSystem','transformer','rna','hub'])
 
         # connect inputs
         self.connect('rotor_diameter', ['lowSpeedShaft.rotor_diameter', 'mainBearing.rotor_diameter', 'secondBearing.rotor_diameter', 'gearbox.rotor_diameter', 'highSpeedSide.rotor_diameter', \
-                     'generator.rotor_diameter', 'bedplate.rotor_diameter', 'yawSystem.rotor_diameter','transformer.rotor_diameter'])
+                     'generator.rotor_diameter', 'bedplate.rotor_diameter', 'yawSystem.rotor_diameter','transformer.rotor_diameter','hub.rotorDiameter'])
         self.connect('rotor_bending_moment_x', ['lowSpeedShaft.rotor_bending_moment_x'])
         self.connect('rotor_bending_moment_y', ['bedplate.rotor_bending_moment_y','lowSpeedShaft.rotor_bending_moment_y'])
         self.connect('rotor_bending_moment_z', 'lowSpeedShaft.rotor_bending_moment_z')
@@ -672,7 +679,7 @@ class NacelleSE_drive4pt(NacelleBase):
         self.connect('rotor_mass', ['bedplate.rotor_mass','lowSpeedShaft.rotor_mass','transformer.rotor_mass'])
         self.connect('rotor_thrust', 'yawSystem.rotor_thrust')
         self.connect('tower_top_diameter', ['bedplate.tower_top_diameter', 'yawSystem.tower_top_diameter'])
-        self.connect('machine_rating', ['bedplate.machine_rating', 'generator.machine_rating', 'above_yaw_massAdder.machine_rating', 'lowSpeedShaft.machine_rating','transformer.machine_rating'])
+        self.connect('machine_rating', ['bedplate.machine_rating', 'generator.machine_rating', 'above_yaw_massAdder.machine_rating', 'lowSpeedShaft.machine_rating','transformer.machine_rating','hub.machine_rating'])
         self.connect('drivetrain_design', 'generator.drivetrain_design')
         self.connect('gear_ratio', ['gearbox.gear_ratio', 'generator.gear_ratio', 'highSpeedSide.gear_ratio'])
         self.connect('gear_configuration', 'gearbox.gear_configuration')
@@ -690,14 +697,16 @@ class NacelleSE_drive4pt(NacelleBase):
         self.connect('L_rb', ['lowSpeedShaft.L_rb','bedplate.L_rb'])
         self.connect('gearbox_cm','gearbox.cm_input')
         self.connect('hss_length', 'highSpeedSide.length_in')
-
+        self.connect('blade_root_diameter', 'hub.bladeRootDiam')
+        self.connect('L_rb', 'hub.L_rb')
+        self.connect('shaft_angle', 'hub.gamma')
         self.connect('availability', 'lowSpeedShaft.availability')
         self.connect('check_fatigue', 'lowSpeedShaft.check_fatigue')
         self.connect('fatigue_exponent', 'lowSpeedShaft.fatigue_exponent')
         self.connect('S_ut', ['lowSpeedShaft.S_ut'])
         self.connect('weibull_A', 'lowSpeedShaft.weibull_A')
         self.connect('weibull_k', 'lowSpeedShaft.weibull_k')
-        self.connect('blade_number', 'lowSpeedShaft.blade_number')
+        self.connect('blade_number', ['lowSpeedShaft.blade_number','hub.bladeNumber'])
         self.connect('cut_in', 'lowSpeedShaft.cut_in')
         self.connect('cut_out', 'lowSpeedShaft.cut_out')
         self.connect('Vrated', 'lowSpeedShaft.Vrated')
@@ -759,6 +768,7 @@ class NacelleSE_drive4pt(NacelleBase):
         self.connect('generator.cm', ['nacelleSystem.generator_cm'])
         self.connect('generator.cm[0]','bedplate.generator_location')
         self.connect('bedplate.cm', ['nacelleSystem.bedplate_cm'])
+        self.connect('mainBearing.cm','hub.MB1_location')
 
         self.connect('lowSpeedShaft.I', ['nacelleSystem.lss_I'])
         self.connect('mainBearing.I', 'nacelleSystem.main_bearing_I')
@@ -1202,7 +1212,7 @@ def nacelle_example_80m_baseline_3pt():
 
     nace.check_fatigue = 1 #0 if no fatigue check, 1 if parameterized fatigue check, 2 if known loads inputs
     #variables if check_fatigue = 1:
-    nace.blade_number=3.
+    nace.blade_number=3
     nace.cut_in=3. #cut-in m/s
     nace.cut_out=25. #cut-out m/s
     nace.Vrated=11.4 #rated windspeed m/s
@@ -1217,8 +1227,6 @@ def nacelle_example_80m_baseline_3pt():
     standard = count.copy()
     for i in range(len(count)):
         standard[i] = .11*2.5*.28*13.4*(log10(288984470)-log10(count[i]))+0.18
-    print 'Standard2:'
-    print standard
     Fx_factor = (.3649*log(nace.rotor_diameter)-1.074)
     Mx_factor = (.0799*log(nace.rotor_diameter)-.2577)
     My_factor = (.172*log(nace.rotor_diameter)-.5943)
@@ -1323,9 +1331,9 @@ def nacelle_example_80m_baseline_4pt():
     nace.gearbox_cm = 0
     nace.hss_length = 1.5
 
-    nace.check_fatigue = 1 #0 if no fatigue check, 1 if parameterized fatigue check, 2 if known loads inputs
+    nace.check_fatigue = 0 #0 if no fatigue check, 1 if parameterized fatigue check, 2 if known loads inputs
     #variables if check_fatigue = 1:
-    nace.blade_number=3.
+    nace.blade_number=3
     nace.cut_in=3. #cut-in m/s
     nace.cut_out=25. #cut-out m/s
     nace.Vrated=11.4 #rated windspeed m/s
@@ -1337,28 +1345,28 @@ def nacelle_example_80m_baseline_4pt():
 
     #variables if check_fatigue =2:
     #test distribution
-    p_o = 6444.24
-    R = nace.rotor_diameter*.5
-    count = np.logspace(log10(328),log10(288984470), endpoint=True , num=100)
-    standard = count.copy()
-    for i in range(len(count)):
-        standard[i] = .11*2.5*.28*13.4*(log10(288984470)-log10(count[i]))+0.18
-    Fx_factor = (.3649*log(nace.rotor_diameter)-1.074)
-    Mx_factor = (.0799*log(nace.rotor_diameter)-.2577)
-    My_factor = (.172*log(nace.rotor_diameter)-.5943)
-    Mz_factor = (.1659*log(nace.rotor_diameter)-.5795)
-    nace.rotor_thrust_distribution = standard.copy()**0.5*p_o*(R)*Fx_factor
-    nace.rotor_thrust_count = np.logspace(log10(328),log10(288984470), endpoint=True , num=100)
-    nace.rotor_Fy_distribution = np.zeros(100)
-    nace.rotor_Fy_count = nace.rotor_thrust_count.copy()
-    nace.rotor_Fz_distribution = np.zeros(100)
-    nace.rotor_Fz_count = nace.rotor_thrust_count.copy()
-    nace.rotor_torque_distribution = standard.copy()*0.45*p_o*(R)**2*Mx_factor
-    nace.rotor_torque_count = nace.rotor_thrust_count.copy()
-    nace.rotor_My_distribution = standard.copy()*0.33*p_o*.8*(R)**2*My_factor
-    nace.rotor_My_count = nace.rotor_thrust_count.copy()
-    nace.rotor_Mz_distribution = standard.copy()*0.33*p_o*.8*(R)**2*Mz_factor
-    nace.rotor_Mz_count = nace.rotor_thrust_count.copy()
+    # p_o = 6444.24
+    # R = nace.rotor_diameter*.5
+    # count = np.logspace(log10(328),log10(288984470), endpoint=True , num=100)
+    # standard = count.copy()
+    # for i in range(len(count)):
+    #     standard[i] = .11*2.5*.28*13.4*(log10(288984470)-log10(count[i]))+0.18
+    # Fx_factor = (.3649*log(nace.rotor_diameter)-1.074)
+    # Mx_factor = (.0799*log(nace.rotor_diameter)-.2577)
+    # My_factor = (.172*log(nace.rotor_diameter)-.5943)
+    # Mz_factor = (.1659*log(nace.rotor_diameter)-.5795)
+    # nace.rotor_thrust_distribution = standard.copy()**0.5*p_o*(R)*Fx_factor
+    # nace.rotor_thrust_count = np.logspace(log10(328),log10(288984470), endpoint=True , num=100)
+    # nace.rotor_Fy_distribution = np.zeros(100)
+    # nace.rotor_Fy_count = nace.rotor_thrust_count.copy()
+    # nace.rotor_Fz_distribution = np.zeros(100)
+    # nace.rotor_Fz_count = nace.rotor_thrust_count.copy()
+    # nace.rotor_torque_distribution = standard.copy()*0.45*p_o*(R)**2*Mx_factor
+    # nace.rotor_torque_count = nace.rotor_thrust_count.copy()
+    # nace.rotor_My_distribution = standard.copy()*0.33*p_o*.8*(R)**2*My_factor
+    # nace.rotor_My_count = nace.rotor_thrust_count.copy()
+    # nace.rotor_Mz_distribution = standard.copy()*0.33*p_o*.8*(R)**2*Mz_factor
+    # nace.rotor_Mz_count = nace.rotor_thrust_count.copy()
     # NREL 5 MW Tower Variables
 
     nace.tower_top_diameter = 3.78 # m
@@ -1449,7 +1457,7 @@ def nacelle_example_GE_3pt():
 
     nace.check_fatigue = 1 #0 if no fatigue check, 1 if parameterized fatigue check, 2 if known loads inputs
     #variables if check_fatigue = 1:
-    nace.blade_number=3.
+    nace.blade_number=3
     nace.cut_in=3.5 #cut-in m/s
     nace.cut_out=20. #cut-out m/s
     nace.Vrated=11.5 #rated windspeed m/s
@@ -1558,7 +1566,7 @@ def nacelle_example_GE_4pt():
 
     nace.check_fatigue = 1 #0 if no fatigue check, 1 if parameterized fatigue check, 2 if known loads inputs
     #variables if check_fatigue = 1:
-    nace.blade_number=3.
+    nace.blade_number=3
     nace.cut_in=3.5 #cut-in m/s
     nace.cut_out=20. #cut-out m/s
     nace.Vrated=11.5 #rated windspeed m/s
@@ -1566,6 +1574,7 @@ def nacelle_example_GE_4pt():
     nace.weibull_A = 9. # windspeed distribution scale parameter
     nace.T_life=20. #design life in years
     nace.IEC_Class_Letter = 'B'
+
     #variables if check_fatigue =2:
     # nace.rotor_thrust_distribution = 
     # nace.rotor_thrust_count = 
@@ -1670,7 +1679,7 @@ def nacelle_example_GRC_3pt():
 
     nace.check_fatigue = 1 #0 if no fatigue check, 1 if parameterized fatigue check, 2 if known loads inputs
     #variables if check_fatigue = 1:
-    nace.blade_number=3.
+    nace.blade_number=3
     nace.cut_in=3. #cut-in m/s
     nace.cut_out=25. #cut-out m/s
     nace.Vrated=16. #rated windspeed m/s
@@ -1782,7 +1791,7 @@ def nacelle_example_GRC_4pt():
 
     nace.check_fatigue = 1 #0 if no fatigue check, 1 if parameterized fatigue check, 2 if known loads inputs
     #variables if check_fatigue = 1:
-    nace.blade_number=3.
+    nace.blade_number=3
     nace.cut_in=3. #cut-in m/s
     nace.cut_out=25. #cut-out m/s
     nace.Vrated=16. #rated windspeed m/s
@@ -1857,47 +1866,50 @@ def cm_print(nace):
     print 'bedplate:', nace.bedplate.cm,'\n', nace.bedplate.mass,'\n'
     print 'transformer:', nace.transformer.cm,'\n', nace.transformer.mass,'\n'
     print 'nacelleSystem:', nace.nacelleSystem.nacelle_cm,'\n', nace.nacelleSystem.nacelle_mass,'\n'
+    print 'hub', nace.hub.cm, '\n', nace.hub.mass, '\n'
     print ''
 
 def sys_print(nace):
     print ''
-    # print 'Nacelle system model results'
+    print 'Nacelle system model results'
 
-    # print 'Low speed shaft %8.1f kg %6.2f m %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz '\
-    #       % (nace.lowSpeedShaft.mass , nace.lowSpeedShaft.length, nace.lowSpeedShaft.I[0], nace.lowSpeedShaft.I[1], nace.lowSpeedShaft.I[2], nace.lowSpeedShaft.cm[0], nace.lowSpeedShaft.cm[1], nace.lowSpeedShaft.cm[2])
-    # print 'LSS diameters:', 'upwind', nace.lowSpeedShaft.diameter1   , 'downwind', nace.lowSpeedShaft.diameter2 , 'inner', nace.lowSpeedShaft.diameter1*nace.shaft_ratio
+    print 'Low speed shaft %8.1f kg %6.2f m %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz '\
+          % (nace.lowSpeedShaft.mass , nace.lowSpeedShaft.length, nace.lowSpeedShaft.I[0], nace.lowSpeedShaft.I[1], nace.lowSpeedShaft.I[2], nace.lowSpeedShaft.cm[0], nace.lowSpeedShaft.cm[1], nace.lowSpeedShaft.cm[2])
+    print 'LSS diameters:', 'upwind', nace.lowSpeedShaft.diameter1   , 'downwind', nace.lowSpeedShaft.diameter2 , 'inner', nace.lowSpeedShaft.diameter1*nace.shaft_ratio
 
-    # print 'Main bearing upwind   %8.1f kg. cm %8.1f %8.1f %8.1f' % (nace.mainBearing.mass ,nace.mainBearing.cm[0],nace.mainBearing.cm[1],nace.mainBearing.cm[2])
+    print 'Main bearing upwind   %8.1f kg. cm %8.1f %8.1f %8.1f' % (nace.mainBearing.mass ,nace.mainBearing.cm[0],nace.mainBearing.cm[1],nace.mainBearing.cm[2])
 
-    # print 'Second bearing downwind   %8.1f kg. cm %8.1f %8.1f %8.1f' % (nace.secondBearing.mass ,nace.secondBearing.cm[0],nace.secondBearing.cm[1],nace.secondBearing.cm[2])
+    print 'Second bearing downwind   %8.1f kg. cm %8.1f %8.1f %8.1f' % (nace.secondBearing.mass ,nace.secondBearing.cm[0],nace.secondBearing.cm[1],nace.secondBearing.cm[2])
 
-    # print 'Gearbox         %8.1f kg %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
-    #       % (nace.gearbox.mass, nace.gearbox.I[0], nace.gearbox.I[1], nace.gearbox.I[2], nace.gearbox.cm[0], nace.gearbox.cm[1], nace.gearbox.cm[2] )
+    print 'Gearbox         %8.1f kg %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
+          % (nace.gearbox.mass, nace.gearbox.I[0], nace.gearbox.I[1], nace.gearbox.I[2], nace.gearbox.cm[0], nace.gearbox.cm[1], nace.gearbox.cm[2] )
 
-    # print '     gearbox stage masses: %8.1f kg  %8.1f kg %8.1f kg' % (nace.gearbox.stage_masses[0], nace.gearbox.stage_masses[1], nace.gearbox.stage_masses[2])
-    # print 'High speed shaft & brakes  %8.1f kg %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
-    #       % (nace.highSpeedSide.mass, nace.highSpeedSide.I[0], nace.highSpeedSide.I[1], nace.highSpeedSide.I[2], nace.highSpeedSide.cm[0], nace.highSpeedSide.cm[1], nace.highSpeedSide.cm[2])
+    print '     gearbox stage masses: %8.1f kg  %8.1f kg %8.1f kg' % (nace.gearbox.stage_masses[0], nace.gearbox.stage_masses[1], nace.gearbox.stage_masses[2])
+    print 'High speed shaft & brakes  %8.1f kg %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
+          % (nace.highSpeedSide.mass, nace.highSpeedSide.I[0], nace.highSpeedSide.I[1], nace.highSpeedSide.I[2], nace.highSpeedSide.cm[0], nace.highSpeedSide.cm[1], nace.highSpeedSide.cm[2])
 
-    # print 'Generator       %8.1f kg %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
-    #       % (nace.generator.mass, nace.generator.I[0], nace.generator.I[1], nace.generator.I[2], nace.generator.cm[0], nace.generator.cm[1], nace.generator.cm[2])
+    print 'Generator       %8.1f kg %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
+          % (nace.generator.mass, nace.generator.I[0], nace.generator.I[1], nace.generator.I[2], nace.generator.cm[0], nace.generator.cm[1], nace.generator.cm[2])
 
-    # print 'Variable speed electronics %8.1f kg' % (nace.above_yaw_massAdder.vs_electronics_mass)
+    print 'Variable speed electronics %8.1f kg' % (nace.above_yaw_massAdder.vs_electronics_mass)
 
-    # print 'Overall mainframe %8.1f kg' % (nace.above_yaw_massAdder.mainframe_mass)
+    print 'Overall mainframe %8.1f kg' % (nace.above_yaw_massAdder.mainframe_mass)
 
-    # print 'Bedplate     %8.1f kg %8.1f m length %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
-    #      % (nace.bedplate.mass, nace.bedplate.length, nace.bedplate.I[0], nace.bedplate.I[1], nace.bedplate.I[2], nace.bedplate.cm[0], nace.bedplate.cm[1], nace.bedplate.cm[2])
-    # print 'electrical connections  %8.1f kg' % (nace.above_yaw_massAdder.electrical_mass)
+    print 'Bedplate     %8.1f kg %8.1f m length %6.2f Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
+         % (nace.bedplate.mass, nace.bedplate.length, nace.bedplate.I[0], nace.bedplate.I[1], nace.bedplate.I[2], nace.bedplate.cm[0], nace.bedplate.cm[1], nace.bedplate.cm[2])
+    print 'electrical connections  %8.1f kg' % (nace.above_yaw_massAdder.electrical_mass)
 
-    # print 'HVAC system     %8.1f kg' % (nace.above_yaw_massAdder.hvac_mass )
+    print 'HVAC system     %8.1f kg' % (nace.above_yaw_massAdder.hvac_mass )
 
-    # print 'Nacelle cover:   %8.1f kg %6.2f m Height %6.2f m Width %6.2f m Length' % (nace.above_yaw_massAdder.cover_mass , nace.above_yaw_massAdder.height, nace.above_yaw_massAdder.width, nace.above_yaw_massAdder.length)
+    print 'Nacelle cover:   %8.1f kg %6.2f m Height %6.2f m Width %6.2f m Length' % (nace.above_yaw_massAdder.cover_mass , nace.above_yaw_massAdder.height, nace.above_yaw_massAdder.width, nace.above_yaw_massAdder.length)
 
-    # print 'Yaw system      %8.1f kg' % (nace.yawSystem.mass )
+    print 'Yaw system      %8.1f kg' % (nace.yawSystem.mass )
 
-    # print 'Overall nacelle:  %8.1f kg .cm %6.2f %6.2f %6.2f I %6.2f %6.2f %6.2f' % (nace.nacelle_mass, nace.nacelle_cm[0], nace.nacelle_cm[1], nace.nacelle_cm[2], nace.nacelle_I[0], nace.nacelle_I[1], nace.nacelle_I[2]  )
+    print 'Hub             %8.1f kg. cm %6.2f %6.2f %6.2f' %(nace.hub.mass,nace.hub.cm[0], nace.hub.cm[1],nace.hub.cm[2])
 
-    # print ''
+    print 'Overall nacelle:  %8.1f kg .cm %6.2f %6.2f %6.2f I %6.2f %6.2f %6.2f' % (nace.nacelle_mass, nace.nacelle_cm[0], nace.nacelle_cm[1], nace.nacelle_cm[2], nace.nacelle_I[0], nace.nacelle_I[1], nace.nacelle_I[2]  )
+
+    print ''
 
 if __name__ == '__main__':
     ''' Main runs through tests of several drivetrain configurations with known component masses and dimensions '''

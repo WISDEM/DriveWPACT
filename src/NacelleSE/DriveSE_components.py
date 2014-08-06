@@ -670,6 +670,113 @@ def resize_for_bearings(D_shaft,type):
 def get_rotor_mass(machine_rating): #if user inputs forces and zero rotor mass
     return 23.566*machine_rating
 
+def get_L_rb(rotor_diameter):
+    return 0.007835*rotor_diameter+0.9642
+
+# -------------------------------------------------
+
+class Hub_drive(Component):
+    ''' Hub class    
+          The Hub class is used to represent the hub component of a wind turbine. 
+          It contains the general properties for a wind turbine component as well as additional design load and dimentional attributes as listed below.
+          It contains an update method to determine the mass, mass properties, and dimensions of the component.            
+    '''
+
+    # variables
+    rotorDiameter = Float(iotype='in', units='m', desc='rotor diameter')
+    bladeRootDiam = Float(iotype='in', units='m', desc='blade root diameter')
+    L_rb = Float(iotype='in', units = 'm', desc = 'distance between hub center and upwind main bearing')
+    gamma = Float(iotype = 'in', units = 'rad', desc = 'shaft angle')
+    MB1_location = Array(iotype = 'in', units = 'm', desc = 'center of mass of main bearing in [x,y,z] for an arbitrary coordinate system')
+    machine_rating = Float(iotype = 'in', units = 'MW', desc = 'machine rating of turbine')
+    
+    # parameters
+    bladeNumber = Int(3, iotype='in', desc='number of turbine blades')
+
+    # outputs
+    diameter = Float(0.0, iotype='out', units='m', desc='hub diameter')
+    mass = Float(0.0, iotype='out', units='kg', desc='overall component mass')
+    cm = Array(np.array([0.0, 0.0, 0.0]), iotype='out', desc='center of mass of the component in [x,y,z] for an arbitrary coordinate system')
+    I = Array(np.array([0.0, 0.0, 0.0]), iotype='out', desc=' moments of Inertia for the component [Ixx, Iyy, Izz] around its center of mass')
+    
+    def __init__(self):
+        ''' 
+        Initializes hub component 
+        
+        Parameters
+        ----------
+        rotorDiameter : float
+          The wind turbine rotor diameter [m]
+        bladeRootDiam : float
+          The diameter of the blade root [m]
+        bladeNumber : int
+          Number of wind turbine rotor blades
+
+        
+        Returns
+        -------
+        mass : float
+          mass of the component [kg]
+        cm : array of float
+          center of mass of the component (relative to tower top center) [m, m, m]
+        I : array of float
+          principle moments of inertia for the component (Ixx, iyy, Izz) around its center of mass (relative to tower top center) [kg*m^2, kg*m^2, kg*m^2]   
+        '''
+
+        super(Hub_drive, self).__init__()
+
+    def execute(self):
+
+        print self.rotorDiameter
+        print self.bladeRootDiam
+        print self.L_rb
+        print self.gamma
+        print self.MB1_location
+        print self.machine_rating
+
+        if self.bladeRootDiam:
+            bladeRootDiam = self.bladeRootDiam
+        else:
+            bladeRootDiam = 2.659*self.machine_rating**.3254
+
+        if self.L_rb:
+            L_rb = self.L_rb
+        else:
+            L_rb = get_L_rb(self.rotorDiameter)
+
+        print bladeRootDiam
+
+        #Model hub as a cyclinder with holes for blade root and nacelle flange.
+        rCyl=1.1*bladeRootDiam/2.0
+        hCyl=2.8*bladeRootDiam/2.0
+        castThickness = rCyl/10.0
+        approxCylVol=2*pi*rCyl*castThickness*hCyl
+        bladeRootVol=pi*(bladeRootDiam/2.0)**2*castThickness
+
+        #assume nacelle flange opening is similar to blade root opening
+        approxCylNetVol = approxCylVol - (1.0 + self.bladeNumber)*bladeRootVol
+        castDensity = 7200.0 # kg/m^3
+        self.mass=approxCylNetVol*castDensity
+
+        # calculate mass properties
+        self.diameter=2*rCyl
+        self.thickness=castThickness
+                    
+        cm = np.array([0.0,0.0,0.0])
+        cm[0]     = self.MB1_location[0] - L_rb
+        cm[1]     = 0.0
+        cm[2]     = self.MB1_location[2] + L_rb*sin(self.gamma)
+        self.cm = (cm)
+
+        I = np.array([0.0, 0.0, 0.0])
+
+        I[0] = 0.4 * (self.mass) * ((self.diameter / 2) ** 5 - (self.diameter / 2 - self.thickness) ** 5) / \
+               ((self.diameter / 2) ** 3 - (self.diameter / 2 - self.thickness) ** 3)
+        I[1] = I[0]
+        I[2] = I[1]
+        self.I = (I)
+
+
 #-------------------------------------------------------------------------------
 class LowSpeedShaft_drive4pt(Component):
     ''' LowSpeedShaft class
@@ -3462,7 +3569,7 @@ class Transformer_drive(Component):
             if self.RNA_cm <= -(bottom_OD)/2: #upwind of acceptable. Most likely
                 transformer_x = (bottom_OD/2.*(self.RNA_mass+self.mass) - (self.RNA_mass*self.RNA_cm))/(self.mass)
                 if transformer_x > self.generator_cm[0]*3:
-                    print 'transformer location manipulation not suitable for overall Nacelle CM changes--rear distance too large'
+                    print '\n ---------transformer location manipulation not suitable for overall Nacelle CM changes: rear distance excessively large------- \n'
                     transformer_x = self.generator_cm[0] + (1.6 * 0.015 * self.rotor_diameter) #assuming generator and transformer approximately same length
             else:
                 transformer_x = self.generator_cm[0] + (1.8 * 0.015 * self.rotor_diameter) #assuming generator and transformer approximately same length

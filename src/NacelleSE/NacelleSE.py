@@ -989,14 +989,14 @@ def example2():
     print 'Overall nacelle:  %8.1f kg .cm %6.2f %6.2f %6.2f I %6.2f %6.2f %6.2f' % (nace.nacelle_mass, nace.nacelle_cm[0], nace.nacelle_cm[1], nace.nacelle_cm[2], nace.nacelle_I[0], nace.nacelle_I[1], nace.nacelle_I[2]  )
     # 207727.1
 
-    # GRC Drivetrain variables
+    # p75 Drivetrain variables
     nace.drivetrain_design = 1 # geared 3-stage Gearbox with induction generator machine
     nace.machine_rating = 750 # machine rating [kW]
     nace.gear_ratio = 81.491
     nace.gear_configuration = 'epp'
     nace.bevel = 0
 
-    # GRC Rotor Variables
+    # p75 Rotor Variables
     airdensity = 1.225 # air density [kg / m^3]
     MaxTipSpeed = 8 # max tip speed [m/s]
     nace.rotor_diameter = 48.2 # rotor diameter [m]
@@ -1004,13 +1004,13 @@ def example2():
     nace.rotor_speed = 22
     #rpm nace.DrivetrainEfficiency = 0.944
     nace.rotor_torque = (nace.machine_rating * 1000 / nace.DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30)) # rotor torque [Nm] calculated from max / rated rotor speed and machine rating
-    nace.rotor_thrust = 159000 # based on windpact 750 kW design (GRC information not available)
+    nace.rotor_thrust = 159000 # based on windpact 750 kW design (p75 information not available)
     nace.rotor_mass = 13200 # rotor mass [kg]
 
     # Tower Variables
     nace.tower_top_diameter = 2 # tower top diameter [m] - not given
 
-    print '----- GRC 750 kW Turbine -----'
+    print '----- p75 750 kW Turbine -----'
     nace.run()
 
     print 'Nacelle system model results'
@@ -1108,14 +1108,14 @@ def example3():
     print 'Overall nacelle:  %8.1f kg .cm %6.2f %6.2f %6.2f I %6.2f %6.2f %6.2f' % (nace.nacelle_mass, nace.nacelle_cm[0], nace.nacelle_cm[1], nace.nacelle_cm[2], nace.nacelle_I[0], nace.nacelle_I[1], nace.nacelle_I[2]  )
     # 207727.1
 
-    # GRC Drivetrain variables
+    # p75 Drivetrain variables
     nace.drivetrain_design = 1 # geared 3-stage Gearbox with induction generator machine
     nace.machine_rating = 750 # machine rating [kW]
     nace.gear_ratio = 81.491
     nace.gear_configuration = 'epp'
     nace.bevel = 0
 
-    # GRC Rotor Variables
+    # p75 Rotor Variables
     airdensity = 1.225 # air density [kg / m^3]
     MaxTipSpeed = 8 # max tip speed [m/s]
     nace.rotor_diameter = 48.2 # rotor diameter [m]
@@ -1123,13 +1123,13 @@ def example3():
     nace.rotor_speed = 22
     #rpm nace.DrivetrainEfficiency = 0.944
     nace.rotor_torque = (nace.machine_rating * 1000 / nace.DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30)) # rotor torque [Nm] calculated from max / rated rotor speed and machine rating
-    nace.rotor_thrust = 159000 # based on windpact 750 kW design (GRC information not available)
+    nace.rotor_thrust = 159000 # based on windpact 750 kW design (p75 information not available)
     nace.rotor_mass = 13200 # rotor mass [kg]
 
     # Tower Variables
     nace.tower_top_diameter = 2 # tower top diameter [m] - not given
 
-    print '----- GRC 750 kW Turbine -----'
+    print '----- p75 750 kW Turbine -----'
     nace.run()
 
     print 'Nacelle system model results'
@@ -1410,12 +1410,12 @@ def nacelle_example_80m_baseline_4pt():
     # print 'Overall nacelle:  %8.1f kg cm %6.2f %6.2f %6.2f I %6.2f %6.2f %6.2f' % (nace.nacelle_mass, nace.nacelle_cm[0], nace.nacelle_cm[1], nace.nacelle_cm[2], nace.nacelle_I[0], nace.nacelle_I[1], nace.nacelle_I[2]  )
     # # 207727.1
 
-def nacelle_example_GE_3pt():
+def nacelle_example_1p5MW_3pt():
     
     # test of module for turbine data set
 
-    # GE 1.5 MW Rotor Variables 
-    print '----- NREL GE 1.5MW Drivetrain - 3 Point Suspension-----'
+    # 1p5MW 1.5 MW Rotor Variables 
+    print '----- NREL 1p5MW 1.5MW Drivetrain - 3 Point Suspension-----'
     nace = NacelleSE_drive3pt()
     nace.rotor_diameter = 77 # m
     nace.rotor_speed = 16.18  #rpm# m/s
@@ -1434,7 +1434,7 @@ def nacelle_example_GE_3pt():
     nace.rotor_force_z = -3.4763e5 #-211.53e3 #1e6
 
 
-    # GE 1.5MW Drivetrain variables
+    # 1p5MW 1.5MW Drivetrain variables
     nace.drivetrain_design = 1 # geared 3-stage Gearbox with induction generator machine
     nace.machine_rating = 1500.0 # kW
     nace.gear_ratio = 78 # 97:1 as listed in the 5 MW reference document
@@ -1479,7 +1479,7 @@ def nacelle_example_GE_3pt():
     # nace.rotor_Mz_distribution = 
     # nace.rotor_Mz_count =     
 
-    # GE Tower Variables
+    # 1p5MW Tower Variables
     nace.tower_top_diameter = 2.3 # m
 
     nace.run()
@@ -1519,12 +1519,12 @@ def nacelle_example_GE_3pt():
     # print 'Overall nacelle:  %8.1f kg .cm %6.2f %6.2f %6.2f I %6.2f %6.2f %6.2f' % (nace.nacelle_mass, nace.nacelle_cm[0], nace.nacelle_cm[1], nace.nacelle_cm[2], nace.nacelle_I[0], nace.nacelle_I[1], nace.nacelle_I[2]  )
     # # 207727.1
 
-def nacelle_example_GE_4pt():
+def nacelle_example_1p5MW_4pt():
     
     # test of module for turbine data set
 
-    # GE 1.5 MW Rotor Variables 
-    print '----- NREL GE 1.5MW Drivetrain - 4 Point Suspension-----'
+    # 1p5MW 1.5 MW Rotor Variables 
+    print '----- NREL 1p5MW 1.5MW Drivetrain - 4 Point Suspension-----'
     nace = NacelleSE_drive4pt()
     nace.rotor_diameter = 77 # m
     nace.rotor_speed = 16.18  #rpm# rpm
@@ -1542,7 +1542,7 @@ def nacelle_example_GE_4pt():
     nace.rotor_force_y = 2.8026e4 #37150. #0.0
     nace.rotor_force_z = -3.4763e5 #-211.53e3 #1e6
 
-    # GE 1.5MW Drivetrain variables
+    # 1p5MW 1.5MW Drivetrain variables
     nace.drivetrain_design = 1 # geared 3-stage Gearbox with induction generator machine
     nace.machine_rating = 1500.0 # kW
     nace.gear_ratio = 78 # 97:1 as listed in the 5 MW reference document
@@ -1589,7 +1589,7 @@ def nacelle_example_GE_4pt():
     # nace.rotor_Mz_distribution = 
     # nace.rotor_Mz_count = 
 
-    # GE Tower Variables
+    # 1p5MW Tower Variables
     nace.tower_top_diameter = 2.3 # m
 
     nace.run()
@@ -1631,11 +1631,11 @@ def nacelle_example_GE_4pt():
     # print 'Overall nacelle:  %8.1f kg .cm %6.2f %6.2f %6.2f I %6.2f %6.2f %6.2f' % (nace.nacelle_mass, nace.nacelle_cm[0], nace.nacelle_cm[1], nace.nacelle_cm[2], nace.nacelle_I[0], nace.nacelle_I[1], nace.nacelle_I[2]  )
     # # 207727.1
 
-def nacelle_example_GRC_3pt():
+def nacelle_example_p75_3pt():
 
     # test of module for turbine data set
-    print '----- NREL GRC 750kW Design - 3 Point Suspension----'
-    # GRC Rotor Variables
+    print '----- NREL p75 750kW Design - 3 Point Suspension----'
+    # p75 Rotor Variables
     nace = NacelleSE_drive3pt()
     nace.rotor_diameter = 48.2 # m
     nace.rotor_speed = 22.0 # #rpm m/s
@@ -1702,7 +1702,7 @@ def nacelle_example_GRC_3pt():
     # nace.rotor_Mz_distribution = 
     # nace.rotor_Mz_count = 
 
-    # GRC Tower Variables
+    # p75 Tower Variables
     nace.tower_top_diameter = 2.21 # m
 
     nace.run()
@@ -1743,11 +1743,11 @@ def nacelle_example_GRC_3pt():
     # print 'Overall nacelle:  %8.1f kg .cm %6.2f %6.2f %6.2f I %6.2f %6.2f %6.2f' % (nace.nacelle_mass, nace.nacelle_cm[0], nace.nacelle_cm[1], nace.nacelle_cm[2], nace.nacelle_I[0], nace.nacelle_I[1], nace.nacelle_I[2]  )
     # # 207727.1    
        
-def nacelle_example_GRC_4pt():
+def nacelle_example_p75_4pt():
 
     # test of module for turbine data set
-    print '----- NREL GRC 750kW Design - 4 Point Suspension----'
-    # GRC Rotor Variables
+    print '----- NREL p75 750kW Design - 4 Point Suspension----'
+    # p75 Rotor Variables
     nace = NacelleSE_drive4pt()
     nace.rotor_diameter = 48.2 # m
     nace.rotor_speed = 22.0 # #rpm m/s
@@ -1813,7 +1813,7 @@ def nacelle_example_GRC_4pt():
     # nace.rotor_Mz_distribution = 
     # nace.rotor_Mz_count = 
 
-    # GRC Tower Variables
+    # p75 Tower Variables
     nace.tower_top_diameter = 2.21 # m
 
     nace.run()
@@ -1918,10 +1918,10 @@ if __name__ == '__main__':
 
     #nacelle_example_80m_baseline_3pt()
     nacelle_example_80m_baseline_4pt()
-    #nacelle_example_GE_3pt()
-    #nacelle_example_GE_4pt()
-    #nacelle_example_GRC_3pt()
-    #nacelle_example_GRC_4pt()
+    #nacelle_example_1p5MW_3pt()
+    #nacelle_example_1p5MW_4pt()
+    #nacelle_example_p75_3pt()
+    #nacelle_example_p75_4pt()
 
 
 

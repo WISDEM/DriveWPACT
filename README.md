@@ -1,5 +1,3 @@
-# NacelleSE
-
 NacelleSE is a semi-empirical sizing model for a wind turbine hub and drivetrain based on WindPACT, the NREL Cost and Scaling, and University of Sunderland Cost Models.
 
 Author: [K. Dykes](mailto:katherine.dykes@nrel.gov)

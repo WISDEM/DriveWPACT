@@ -1,6 +1,10 @@
-DriveWPACT is a set of model to size wind turbine components from the hub system, drivetrain and overall nacelle.  It is based on a collection of models beginning with a sizing model set from the University of Sunderland which was extended by the Wind Parntnerships for Advanced Component Technology (WindPACT) and later model developments at NREL as part of the NREL Cost and Scaling Model for wind plant cost analysis.
+DriveWPACT is a set of models to size wind turbine components from the hub system, drivetrain and overall nacelle.  It is based on a collection of models beginning with a sizing model set from the University of Sunderland which was extended by the Wind Parntnerships for Advanced Component Technology (WindPACT) and later model developments at NREL as part of the NREL Cost and Scaling Model for wind plant cost analysis.
 
 Author: [K. Dykes](mailto:katherine.dykes@nrel.gov)
+
+## Detailed Documentation
+
+For detailed documentation see <http://wisdem.github.io/DriveWPACT/>
 
 ## Prerequisites
 
@@ -26,6 +30,3 @@ You may also run the unit tests.
 
 	$ python src/test/test_DriveWPACT_gradients.py
 
-## Detailed Documentation
-
-Online documentation is available at <http://wisdem.github.io/DriveWPACT/>

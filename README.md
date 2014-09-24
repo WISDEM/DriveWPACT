@@ -2,6 +2,10 @@ DriveWPACT is a set of models to size wind turbine components from the hub syste
 
 Author: [K. Dykes](mailto:katherine.dykes@nrel.gov)
 
+## Version
+
+This software is a beta version 0.1.0.
+
 ## Detailed Documentation
 
 For detailed documentation see <http://wisdem.github.io/DriveWPACT/>

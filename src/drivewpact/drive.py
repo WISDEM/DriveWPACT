@@ -1024,7 +1024,7 @@ class Bedplate(Component):
 
 
         # compute masses, dimensions and cost
-        # bedplate sizing based on superposition of loads for rotor torque, thurst, weight         #TODO: only handles bedplate for a traditional drivetrain configuration
+        # bedplate sizing based on superposition of loads for rotor torque, thrust, weight         #TODO: only handles bedplate for a traditional drivetrain configuration
         bedplateWeightFact = 2.86                                   # toruqe weight factor for bedplate (should depend on drivetrain, bedplate type)
 
         torqueweightCoeff = 0.00368                   # regression coefficient multiplier for bedplate weight based on rotor torque

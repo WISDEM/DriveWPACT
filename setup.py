@@ -6,7 +6,7 @@
 
 from setuptools import setup, find_packages
 
-kwargs = {'author': 'Katherine Dykes, Ryan King and Yi Guo',
+kwargs = {'author': 'Katherine Dykes',
  'author_email': 'systems.engineering@nrel.gov',
  'description': 'Sizing model for wind turbine hub and nacelle components.',
  'include_package_data': True,
@@ -16,7 +16,7 @@ kwargs = {'author': 'Katherine Dykes, Ryan King and Yi Guo',
  'name': 'DriveWPACT',
  'package_data': {'DriveWPACT': []},
  'package_dir': {'': 'src'},
- 'packages': ['drivewpact'],
+ 'packages': ['drivewpact', 'test'],
  'zip_safe': False}
 
 

@@ -6,7 +6,7 @@ Copyright (c) NREL. All rights reserved.
 """
 
 from openmdao.main.api import Assembly, Component
-from openmdao.main.datatypes.api import Float, Bool, Int, Str, Array
+from openmdao.main.datatypes.api import Float, Bool, Int, Str, Array, Enum
 from math import pi, log10, log
 import numpy as np
 import algopy
@@ -29,7 +29,7 @@ class NacelleBase(Assembly):
     rotor_bending_moment = Float(iotype='in', units='N*m', desc='maximum aerodynamic bending moment')
 
     # parameters
-    drivetrain_design = Int(iotype='in', desc='type of gearbox based on drivetrain type: 1 = standard 3-stage gearbox, 2 = single-stage, 3 = multi-gen, 4 = direct drive', deriv_ignore=True)
+    drivetrain_design = Enum('geared', ('geared', 'single_stage', 'multi_drive', 'pm_direct_drive'), iotype='in')
     crane = Bool(iotype='in', desc='flag for presence of crane', deriv_ignore=True)
     bevel = Int(0, iotype='in', desc='Flag for the presence of a bevel stage - 1 if present, 0 if not')
     gear_configuration = Str(iotype='in', desc='tring that represents the configuration of the gearbox (stage number and types)')
@@ -69,7 +69,7 @@ class DriveWPACT(Assembly):
     rotor_bending_moment = Float(iotype='in', units='N*m', desc='maximum aerodynamic bending moment')
 
     # parameters
-    drivetrain_design = Int(iotype='in', desc='type of gearbox based on drivetrain type: 1 = standard 3-stage gearbox, 2 = single-stage, 3 = multi-gen, 4 = direct drive', deriv_ignore=True)
+    drivetrain_design = Enum('geared', ('geared', 'single_stage', 'multi_drive', 'pm_direct_drive'), iotype='in')
     crane = Bool(iotype='in', desc='flag for presence of crane', deriv_ignore=True)
     bevel = Int(0, iotype='in', desc='Flag for the presence of a bevel stage - 1 if present, 0 if not')
     gear_configuration = Str(iotype='in', desc='tring that represents the configuration of the gearbox (stage number and types)')
@@ -525,7 +525,7 @@ class Gearbox(Component):
     gear_ratio = Float(iotype='in', desc='overall gearbox ratio')
 
     # parameters
-    drivetrain_design = Int(iotype='in', desc='type of gearbox based on drivetrain type: 1 = standard 3-stage gearbox, 2 = single-stage, 3 = multi-gen, 4 = direct drive')
+    drivetrain_design = Enum('geared', ('geared', 'single_stage', 'multi_drive', 'pm_direct_drive'), iotype='in')
     gear_configuration = Str(iotype='in', desc='string that represents the configuration of the gearbox (stage number and types)')
     bevel = Int(iotype='in', desc='Flag for the presence of a bevel stage - 1 if present, 0 if not')
 
@@ -861,7 +861,7 @@ class Generator(Component):
     gear_ratio = Float(iotype='in', desc='overall gearbox ratio')
 
     # parameters
-    drivetrain_design = Int(iotype='in', desc='type of gearbox based on drivetrain type: 1 = standard 3-stage gearbox, 2 = single-stage, 3 = multi-gen, 4 = direct drive')
+    drivetrain_design = Enum('geared', ('geared', 'single_stage', 'multi_drive', 'pm_direct_drive'), iotype='in')
     rotor_speed = Float(0.0,iotype='in', units='rpm', desc='rotor speed at rated')
 
     # returns
@@ -891,10 +891,19 @@ class Generator(Component):
         CalcTorque = (self.machine_rating*1.1) / (CalcRPM * pi/30)
         #TODO: missing derivatives on rotor speed / torque
 
-        if (self.drivetrain_design < 4):
-            self.mass = (massCoeff[self.drivetrain_design] * self.machine_rating ** massExp[self.drivetrain_design])
+        if self.drivetrain_design == 'geared':
+            drivetrain_design = 1
+        elif self.drivetrain_design == 'single_stage':
+            drivetrain_design = 2
+        elif self.drivetrain_design == 'multi_drive':
+            drivetrain_design = 3
+        elif self.drivetrain_design == 'pm_direct_drive':
+            drivetrain_design = 4
+
+        if (drivetrain_design < 4):
+            self.mass = (massCoeff[drivetrain_design] * self.machine_rating ** massExp[drivetrain_design])
         else:  # direct drive
-            self.mass = (massCoeff[self.drivetrain_design] * CalcTorque ** massExp[self.drivetrain_design])
+            self.mass = (massCoeff[drivetrain_design] * CalcTorque ** massExp[drivetrain_design])
 
         # calculate mass properties
         cm = np.array([0.0,0.0,0.0])
@@ -915,15 +924,15 @@ class Generator(Component):
         self.I = I
 
         # derivatives
-        if (self.drivetrain_design < 4):
+        if (drivetrain_design < 4):
             self.d_mass_d_rotor_diameter = 0.0
         else:  # direct drive
-            self.d_mass_d_rotor_diameter = massExp[self.drivetrain_design] * (massCoeff[self.drivetrain_design] * CalcTorque ** (massExp[self.drivetrain_design] - 1)) * (self.machine_rating * 1.1 * 0.5 / 80)
+            self.d_mass_d_rotor_diameter = massExp[drivetrain_design] * (massCoeff[drivetrain_design] * CalcTorque ** (massExp[drivetrain_design] - 1)) * (self.machine_rating * 1.1 * 0.5 / 80)
 
-        if (self.drivetrain_design < 4):
-            self.d_mass_d_machine_rating = massExp[self.drivetrain_design] * (massCoeff[self.drivetrain_design] * self.machine_rating ** (massExp[self.drivetrain_design]-1))
+        if (drivetrain_design < 4):
+            self.d_mass_d_machine_rating = massExp[drivetrain_design] * (massCoeff[drivetrain_design] * self.machine_rating ** (massExp[drivetrain_design]-1))
         else:  # direct drive
-            self.d_mass_d_machine_rating = massExp[self.drivetrain_design] * (massCoeff[self.drivetrain_design] * CalcTorque ** (massExp[self.drivetrain_design] - 1)) * (self.rotor_diameter * 1.1 * 0.5 / 80)
+            self.d_mass_d_machine_rating = massExp[drivetrain_design] * (massCoeff[drivetrain_design] * CalcTorque ** (massExp[drivetrain_design] - 1)) * (self.rotor_diameter * 1.1 * 0.5 / 80)
 
         self.d_cm_d_rotor_diameter = np.array([0.0125, 0.0, 0.025])
 
@@ -983,7 +992,7 @@ class Bedplate(Component):
     tower_top_diameter = Float(iotype='in', units='m', desc='tower top diameter')
 
     # parameters
-    drivetrain_design = Int(iotype='in', desc='type of gearbox based on drivetrain type: 1 = standard 3-stage gearbox, 2 = single-stage, 3 = multi-gen, 4 = direct drive')
+    drivetrain_design = Enum('geared', ('geared', 'single_stage', 'multi_drive', 'pm_direct_drive'), iotype='in')
 
     # returns
     mass = Float(0.0, iotype='out', units='kg', desc='overall component mass')
@@ -1003,6 +1012,16 @@ class Bedplate(Component):
         self.missing_deriv_policy = 'assume_zero'
 
     def execute(self):
+
+        if self.drivetrain_design == 'geared':
+            drivetrain_design = 1
+        elif self.drivetrain_design == 'single_stage':
+            drivetrain_design = 2
+        elif self.drivetrain_design == 'multi_drive':
+            drivetrain_design = 3
+        elif self.drivetrain_design == 'pm_direct_drive':
+            drivetrain_design = 4
+
 
         # compute masses, dimensions and cost
         # bedplate sizing based on superposition of loads for rotor torque, thurst, weight         #TODO: only handles bedplate for a traditional drivetrain configuration
@@ -1038,7 +1057,7 @@ class Bedplate(Component):
         ddweightfact = 0.55                                         # direct drive bedplate weight assumed to be 55% of modular geared type
         massCoeff[4] = TotalMass * ddweightfact
 
-        self.mass = (massCoeff[self.drivetrain_design] * self.rotor_diameter ** massExp[self.drivetrain_design] )
+        self.mass = (massCoeff[drivetrain_design] * self.rotor_diameter ** massExp[drivetrain_design] )
 
         # calculate mass properties
         cm = np.array([0.0,0.0,0.0])
@@ -1199,7 +1218,7 @@ class AboveYawMassAdder(Component):
 
         # derivatives
         self.d_hvac_mass_d_machine_rating = 0.08
-        self.d_vs_mass_d_machine_rating = 2.4445
+        self.d_vs_mass_d_machine_rating = 0.0
         self.d_platforms_mass_d_bedplate_mass = 0.125
         self.d_mainframe_mass_d_bedplate_mass = 1.0 + self.d_platforms_mass_d_bedplate_mass
         self.d_cover_mass_d_bedplate_length = (84.1 / 2) * (2*2) * self.bedplate_length
@@ -1655,19 +1674,17 @@ def example_5MW():
     # test of module for turbine data set
 
     # NREL 5 MW Rotor Variables
-    print '----- NREL 5 MW Turbine -----'
     nace = DriveWPACT()
     nace.rotor_diameter = 126.0 # m
     nace.rotor_speed = 12.1 # rpm m/s
     nace.machine_rating = 5000.0
     nace.DrivetrainEfficiency = 0.95
-    nace.rotor_torque =  1.5 * (nace.machine_rating * 1000 / nace.DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30)) # 6.35e6 #4365248.74 # Nm
+    nace.rotor_torque =  1.5 * (nace.machine_rating * 1000. / nace.DrivetrainEfficiency) / (nace.rotor_speed * (pi / 30.)) # 6.35e6 #4365248.74 # Nm
     nace.rotor_thrust = 2.5448e5
     nace.rotor_mass = 142585.75 #kg
-    nace.rotor_speed = 12.1 #rpm
 
     # NREL 5 MW Drivetrain variables
-    nace.drivetrain_design = 1 # geared 3-stage Gearbox with induction generator machine
+    nace.drivetrain_design = 'geared' # geared 3-stage Gearbox with induction generator machine
     nace.gear_ratio = 96.76 # 97:1 as listed in the 5 MW reference document
     nace.gear_configuration = 'eep' # epicyclic-epicyclic-parallel
     nace.bevel = 0 # no bevel stage
@@ -1678,7 +1695,7 @@ def example_5MW():
 
     nace.run()
 
-    print 'Nacelle system model results'
+    print "Estimate of Nacelle Component Sizes for the NREL 5 MW Reference Turbine"
     print 'Low speed shaft %8.1f kg %6.2f m Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
           % (nace.lowSpeedShaft.mass , nace.lowSpeedShaft.I[0], nace.lowSpeedShaft.I[1], nace.lowSpeedShaft.I[2], nace.lowSpeedShaft.cm[0], nace.lowSpeedShaft.cm[1], nace.lowSpeedShaft.cm[2])
     print 'Main bearings   %8.1f kg ' % (nace.mainBearing.mass + nace.secondBearing.mass)
@@ -1714,7 +1731,7 @@ def example_WPACT():
     nace.overhang = 3.3
 
     # WindPACT 1.5 MW Drivetrain variables
-    nace.drivetrain_design = 1 # geared 3-stage Gearbox with induction generator machine
+    nace.drivetrain_design = 'geared' # geared 3-stage Gearbox with induction generator machine
     nace.gear_ratio = 87.965
     nace.gear_configuration = 'epp'
     nace.bevel = 0
@@ -1723,10 +1740,9 @@ def example_WPACT():
     # WindPACT 1.5 MW Tower Variables
     nace.tower_top_diameter = 2.7 # tower top diameter [m]
 
-    print '----- WindPACT 1.5 MW Turbine -----'
     nace.run()
 
-    print 'Nacelle system model results'
+    print "Estimate of Nacelle Component Sizes for the 1.5 MW WindPACT Reference Turbine"
     print 'Low speed shaft %8.1f kg %6.2f m Ixx %6.2f Iyy %6.2f Izz %6.2f CGx %6.2f CGy %6.2f CGz' \
           % (nace.lowSpeedShaft.mass , nace.lowSpeedShaft.I[0], nace.lowSpeedShaft.I[1], nace.lowSpeedShaft.I[2], nace.lowSpeedShaft.cm[0], nace.lowSpeedShaft.cm[1], nace.lowSpeedShaft.cm[2])
     print 'Main bearings   %8.1f kg ' % (nace.mainBearing.mass + nace.secondBearing.mass)
@@ -1750,5 +1766,5 @@ if __name__ == '__main__':
 
     # Main runs through tests of several drivetrain configurations with known component masses and dimensions
     example_5MW()
-
+    print
     example_WPACT()

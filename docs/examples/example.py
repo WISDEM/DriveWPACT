@@ -29,14 +29,15 @@ hub.run()
 # 3 ----------
 # 4 ----------
 
-print "NREL 5 MW turbine test"
+print "Estimate of Hub Component Sizes for the NREL 5 MW Reference Turbine"
 print "Hub Components"
-print '  hub         {0:8.1f} kg'.format(hub.hub.mass)  # 31644.47
-print '  pitch mech  {0:8.1f} kg'.format(hub.pitchSystem.mass) # 17003.98
-print '  nose cone   {0:8.1f} kg'.format(hub.spinner.mass) # 1810.50
-print 'Hub system total {0:8.1f} kg'.format(hub.hub_system_mass) # 50458.95
-print '    cm {0:6.2f} {1:6.2f} {2:6.2f}'.format(hub.hub_system_cm[0], hub.hub_system_cm[1], hub.hub_system_cm[2])
-print '    I {0:6.1f} {1:6.1f} {2:6.1f}'.format(hub.hub_system_I[0], hub.hub_system_I[1], hub.hub_system_I[2])
+print '  Hub: {0:8.1f} kg'.format(hub.hub.mass)  # 31644.47
+print '  Pitch system: {0:8.1f} kg'.format(hub.pitchSystem.mass) # 17003.98
+print '  Nose cone: {0:8.1f} kg'.format(hub.spinner.mass) # 1810.50
+print 'Hub system total: {0:8.1f} kg'.format(hub.hub_system_mass) # 50458.95
+print '    cm {0:6.2f} {1:6.2f} {2:6.2f} [m, m, m]'.format(hub.hub_system_cm[0], hub.hub_system_cm[1], hub.hub_system_cm[2])
+print '    I {0:6.1f} {1:6.1f} {2:6.1f} [kg*m^2, kg*m^2, kg*m^2]'.format(hub.hub_system_I[0], hub.hub_system_I[1], hub.hub_system_I[2])
+print
 
 # 4 ---------
 # 5 ---------
@@ -56,7 +57,7 @@ nace.rotor_mass = 142585.75 #kg
 nace.rotor_speed = 12.1 #rpm
 
 # NREL 5 MW Drivetrain variables
-nace.drivetrain_design = 1 # geared 3-stage Gearbox with induction generator machine
+nace.drivetrain_design = 'geared' # geared 3-stage Gearbox with induction generator machine
 nace.gear_ratio = 96.76 # 97:1 as listed in the 5 MW reference document
 nace.gear_configuration = 'eep' # epicyclic-epicyclic-parallel
 nace.bevel = 0 # no bevel stage
@@ -73,20 +74,20 @@ nace.run()
 # 6 ---------
 # 7 ---------
 
-print '----- NREL 5 MW Turbine -----'
-print 'Nacelle system model results'
-print 'Low speed shaft %8.1f kg' % (nace.lowSpeedShaft.mass)
-print 'Main bearings   %8.1f kg' % (nace.mainBearing.mass + nace.secondBearing.mass)
-print 'Gearbox         %8.1f kg' % (nace.gearbox.mass)
-print 'High speed shaft & brakes  %8.1f kg' % (nace.highSpeedSide.mass)
-print 'Generator       %8.1f kg' % (nace.generator.mass)
-print 'Variable speed electronics %8.1f kg' % (nace.above_yaw_massAdder.vs_electronics_mass)
-print 'Overall mainframe %8.1f kg' % (nace.above_yaw_massAdder.mainframe_mass)
-print '     Bedplate     %8.1f kg' % (nace.bedplate.mass)
-print 'electrical connections  %8.1f kg' % (nace.above_yaw_massAdder.electrical_mass)
-print 'HVAC system     %8.1f kg' % (nace.above_yaw_massAdder.hvac_mass )
-print 'Nacelle cover:   %8.1f kg ' % (nace.above_yaw_massAdder.cover_mass)
-print 'Yaw system      %8.1f kg' % (nace.yawSystem.mass)
-print 'Overall nacelle:  %8.1f kg cm %6.2f %6.2f %6.2f I %6.2f %6.2f %6.2f' % (nace.nacelle_mass, nace.nacelle_cm[0], nace.nacelle_cm[1], nace.nacelle_cm[2], nace.nacelle_I[0], nace.nacelle_I[1], nace.nacelle_I[2]  )
-
+print "Estimate of Nacelle Component Sizes for the NREL 5 MW Reference Turbine"
+print 'Low speed shaft: {0:8.1f} kg'.format(nace.lowSpeedShaft.mass)
+print 'Main bearings: {0:8.1f} kg'.format(nace.mainBearing.mass + nace.secondBearing.mass)
+print 'Gearbox: {0:8.1f} kg'.format(nace.gearbox.mass)
+print 'High speed shaft & brakes: {0:8.1f} kg'.format(nace.highSpeedSide.mass)
+print 'Generator: {0:8.1f} kg'.format(nace.generator.mass)
+print 'Variable speed electronics: {0:8.1f} kg'.format(nace.above_yaw_massAdder.vs_electronics_mass)
+print 'Overall mainframe:{0:8.1f} kg'.format(nace.above_yaw_massAdder.mainframe_mass)
+print '     Bedplate: {0:8.1f} kg'.format(nace.bedplate.mass)
+print 'Electrical connections: {0:8.1f} kg'.format(nace.above_yaw_massAdder.electrical_mass)
+print 'HVAC system: {0:8.1f} kg'.format(nace.above_yaw_massAdder.hvac_mass )
+print 'Nacelle cover: {0:8.1f} kg'.format(nace.above_yaw_massAdder.cover_mass)
+print 'Yaw system: {0:8.1f} kg'.format(nace.yawSystem.mass)
+print 'Overall nacelle: {0:8.1f} kg'.format(nace.nacelle_mass, nace.nacelle_cm[0], nace.nacelle_cm[1], nace.nacelle_cm[2], nace.nacelle_I[0], nace.nacelle_I[1], nace.nacelle_I[2]  )
+print '    cm {0:6.2f} {1:6.2f} {2:6.2f} [m, m, m]'.format(nace.nacelle_cm[0], nace.nacelle_cm[1], nace.nacelle_cm[2])
+print '    I {0:6.1f} {1:6.1f} {2:6.1f} [kg*m^2, kg*m^2, kg*m^2]'.format(nace.nacelle_I[0], nace.nacelle_I[1], nace.nacelle_I[2])
 # 7 ---------

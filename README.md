@@ -1,41 +1,23 @@
+# DriveWPACT
+## WARNING- This repository is deprecated
+
 DriveWPACT is a set of models to size wind turbine components from the hub system, drivetrain and overall nacelle.  It is based on a collection of models beginning with a sizing model set from the University of Sunderland which was extended by the Wind Parntnerships for Advanced Component Technology (WindPACT) and later model developments at NREL as part of the NREL Cost and Scaling Model for wind plant cost analysis.
 
-Author: [K. Dykes](mailto:nrel.wisdem+drivewpact@gmail.com)
+Author: [NREL WISDEM Team](mailto:systems.engineering@nrel.gov) 
 
-## Version
+## Documentation
 
-This software is a beta version 0.1.0.
-
-## Detailed Documentation
-
-For detailed documentation see <http://wisdem.github.io/DriveWPACT/>
-
-## Prerequisites
-
-General: NumPy, SciPy, Swig, pyWin32, MatlPlotLib, Lxml, OpenMDAO
-
-## Dependencies
-
-Wind Plant Framework: [FUSED-Wind](http://fusedwind.org) (Framework for Unified Systems Engineering and Design of Wind Plants)
-
-Sub-Models: CommonSE
-
-Supporting python packages: Pandas, Algopy, Zope.interface, Sphinx, Xlrd, PyOpt, py2exe, Pyzmq, Sphinxcontrib-bibtex, Sphinxcontrib-zopeext, Numpydoc, Ipython
+See local documentation in the `docs`-directory or access the online version at <http://wisdem.github.io/DriveWPACT/>
 
 ## Installation
 
-First, clone the [repository](https://github.com/WISDEM/DriveWPACT)
-or download the releases and uncompress/unpack (DriveWPACT.py-|release|.tar.gz or DriveWPACT.py-|release|.zip) from the website link at the bottom the [DriveWPACT site](http://nwtc.nrel.gov/DriveWPACT).
+For detailed installation instructions of WISDEM modules see <https://github.com/WISDEM/WISDEM> or to install DriveWPACT by itself do:
 
-Install DriveWPACT within an activated OpenMDAO environment:
-
-	$ plugin install
-
-It is not recommended to install the software outside of OpenMDAO.
+    $ python setup.py install
 
 ## Run Unit Tests
 
-To check if installation was successful try to import the module from within an activated OpenMDAO environment:
+To check if installation was successful try to import the package:
 
 	$ python
 	> import drivewpact.drive
